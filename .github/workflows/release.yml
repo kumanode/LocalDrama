@@ -40,6 +40,12 @@ jobs:
         working-directory: frontweb
         run: node --test test/*.test.js
 
+      # Fase 0 guard: fails the build when hardcoded Chinese is added to
+      # frontweb/src (see frontweb/test/source-scan.test.js).
+      - name: Run frontend i18n source scan
+        working-directory: frontweb
+        run: node --test test/source-scan.test.js
+
       - name: Build frontend
         working-directory: frontweb
         run: npm run build
@@ -53,6 +59,12 @@ jobs:
       - name: Run backend tests
         working-directory: backend-node
         run: node --test test/*.test.js
+
+      # Fase 0 guard: fails the build when Chinese user-facing messages are
+      # hardcoded in backend-node/src (see test/source-scan.test.js).
+      - name: Run backend i18n source scan
+        working-directory: backend-node
+        run: node --test test/source-scan.test.js
 
       - name: Install desktop dependencies & rebuild native modules
         working-directory: desktop

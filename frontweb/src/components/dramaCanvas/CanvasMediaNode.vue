@@ -6,18 +6,18 @@
       <CanvasNodeStatusOverlay :node-id="id" />
       <div class="tag">{{ kindLabel }}</div>
       <template v-if="data.kind === 'text'">
-        <p class="text-body">{{ data.summary || '暂无脚本' }}</p>
+        <p class="text-body">{{ data.summary || t('dramaCanvas.noScriptYet') }}</p>
       </template>
       <template v-else-if="data.kind === 'universal'">
-        <p class="text-body universal-body">{{ data.summary || '暂无全能分镜词' }}</p>
+        <p class="text-body universal-body">{{ data.summary || t('dramaCanvas.noUniversalPrompt') }}</p>
       </template>
       <template v-else-if="data.kind === 'image'">
         <img v-if="data.url" :src="data.url" alt="" class="media-img" />
-        <div v-else class="empty">无分镜图</div>
+        <div v-else class="empty">{{ t('dramaCanvas.noImage') }}</div>
       </template>
       <template v-else-if="data.kind === 'video'">
         <video v-if="data.url" :src="data.url" class="media-vid" muted playsinline />
-        <div v-else class="empty">无视频</div>
+        <div v-else class="empty">{{ t('dramaCanvas.noVideo') }}</div>
       </template>
       <template v-else-if="data.kind === 'audio'">
         <div class="audio-wrap">
@@ -39,11 +39,14 @@
 </template>
 
 <script setup>
+import { useI18n } from '@/i18n'
 import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import { useCanvasContext } from '@/composables/useCanvasContext'
 import CanvasMediaPanel from './CanvasMediaPanel.vue'
 import CanvasNodeStatusOverlay from './CanvasNodeStatusOverlay.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -60,7 +63,7 @@ const isNodeBusy = computed(() => {
 
 const kindLabel = computed(() => {
   if (props.data.frameLabel) return props.data.frameLabel
-  const map = { text: '脚本摘要', universal: '全能分镜词', image: '分镜图', video: '视频', audio: '音频' }
+  const map = { text: t('dramaCanvas.scriptSummary'), universal: t('dramaCanvas.universalShotPrompt'), image: t('dramaCanvas.storyboardImage'), video: t('mediaLibrary.typeVideo'), audio: t('dramaCanvas.audio') }
   return map[props.data.kind] || props.data.kind
 })
 </script>

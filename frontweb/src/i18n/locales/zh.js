@@ -54,6 +54,14 @@ export default {
     language: '语言',
     switchLanguage: '切换语言',
     networkError: '网络请求异常，请稍后重试',
+    project: '项目',
+    generateScriptFor: '{name} 生成剧本',
+    dark: '深色',
+    light: '浅色',
+    title: '标题',
+    unnamed: '未命名',
+    deleted: '已删除',
+    generating: '生成中',
   },
 
   header: {
@@ -84,6 +92,7 @@ export default {
     unnamedProject: '未命名项目',
     noDescription: '暂无描述',
     projectCount: '{count} 个项目',
+    statusDraft: '草稿',
     exportTooltip: '导出项目',
     editTooltip: '编辑',
     deleteTooltip: '删除',
@@ -111,6 +120,7 @@ export default {
 
   filmCreate: {
     backToList: '返回项目列表',
+    episodeScripts: '分集剧本',
     canvasMode: '画布模式',
     tabOutline: '故事设定',
     tabCharacters: '角色管理',
@@ -359,6 +369,7 @@ export default {
 
   dramaCanvas: {
     backToDetail: '返回项目',
+    save: '保存',
     canvasMode: '画布模式',
     saving: '保存中…',
     saved: '已保存',
@@ -708,6 +719,7 @@ export default {
   },
 
   library: {
+    title: '素材库',
     charTitle: '素材库 · 角色',
     sceneTitle: '素材库 · 场景',
     propTitle: '素材库 · 道具',

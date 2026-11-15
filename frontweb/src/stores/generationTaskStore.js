@@ -1,3 +1,4 @@
+import { t as i18nT } from '../i18n/index.js'
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { taskAPI } from '@/api/task'
@@ -60,12 +61,19 @@ function isOrphanedProcessingTask(remote, staleMs = ORPHAN_PROCESSING_MS) {
   return Date.now() - updatedAt > staleMs
 }
 
-const ORPHAN_TASK_MSG = '任务长时间无进展，可能因服务重启而中断，请重新操作'
-const USER_CANCEL_TASK_MSG = '用户已取消'
+// Resolved at call time: these messages must follow the active locale instead
+// of the language that was active when this module was first imported.
+function orphanTaskMsg() {
+  return i18nT('messages.theTaskMadeNoProgressForALongTimeAndMayHaveB')
+}
+
+function userCancelTaskMsg() {
+  return i18nT('messages.cancelledByUser')
+}
 
 function taskFailMessage(t) {
-  if (!t) return '任务失败'
-  return (t.error || t.message || '任务失败').trim()
+  if (!t) return i18nT('messages.taskFailed')
+  return (t.error || t.message || i18nT('messages.taskFailed')).trim()
 }
 
 export const useGenerationTaskStore = defineStore('generationTask', () => {
@@ -167,12 +175,12 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
   function stopPollingTask(taskId, reason) {
     if (!taskId) return
     cancelledPollTaskIds.value = new Set([...cancelledPollTaskIds.value, taskId])
-    markFailed({ taskId }, reason || '任务已停止')
+    markFailed({ taskId }, reason || i18nT('messages.taskStopped'))
   }
 
   /** 取消任务：通知后端并停止前端轮询 */
   async function cancelTask(meta, options = {}) {
-    const reason = options.reason || USER_CANCEL_TASK_MSG
+    const reason = options.reason || userCancelTaskMsg()
     const taskId = typeof meta === 'string' ? meta : meta?.taskId
     if (taskId) {
       try {
@@ -191,7 +199,7 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
   function clearAllRunningTasks(reason) {
     for (const t of [...runningTasks.value]) {
       if (t.taskId) stopPollingTask(t.taskId, reason)
-      else markFailed(t, reason || '已清除')
+      else markFailed(t, reason || i18nT('messages.cleared'))
     }
   }
 
@@ -205,7 +213,7 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
 
     for (const t of running) {
       if (t.startedAt && now - t.startedAt > STALE_TASK_MS) {
-        markFailed(t, '任务等待超时，已自动清除（请刷新确认是否已完成）')
+        markFailed(t, i18nT('messages.theTaskTimedOutAndWasClearedAutomaticallyRef'))
         continue
       }
 
@@ -225,7 +233,7 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
             continue
           }
           if (isOrphanedProcessingTask(remote)) {
-            markFailed(t, ORPHAN_TASK_MSG)
+            markFailed(t, orphanTaskMsg())
           }
         } catch (_) {
           // 网络异常跳过，下次 reconcile 再试
@@ -252,7 +260,7 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
    * 轮询异步任务；同一 taskId 只轮询一次，多路 await 共享结果。
    */
   function pollTask(taskId, meta, onDone, options = {}) {
-    if (!taskId) return Promise.resolve({ status: 'failed', error: '缺少 task_id' })
+    if (!taskId) return Promise.resolve({ status: 'failed', error: i18nT('messages.missingTaskId') })
 
     const key = markRunning({ ...meta, taskId })
 
@@ -270,14 +278,14 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
     const promise = new Promise((resolve) => {
       const tick = async () => {
         if (stopped || cancelledPollTaskIds.value.has(taskId)) {
-          markFailed(key, '任务轮询已停止')
-          return resolve({ status: 'cancelled', error: '任务轮询已停止' })
+          markFailed(key, i18nT('messages.taskPollingStopped'))
+          return resolve({ status: 'cancelled', error: i18nT('messages.taskPollingStopped') })
         }
         attempts++
         try {
           const t = await taskAPI.get(taskId)
           if (isOrphanedProcessingTask(t)) {
-            const errMsg = ORPHAN_TASK_MSG
+            const errMsg = orphanTaskMsg()
             markFailed(key, errMsg)
             if (showErrorToast && options.ElMessage) {
               options.ElMessage.warning(errMsg)
@@ -310,7 +318,7 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
           setTimeout(tick, interval)
         } else {
           const timeoutMsg = options.timeoutMessage
-            || '生成任务已超时（超过15分钟），请刷新页面查看是否已完成'
+            || i18nT('messages.generationTimedOutAfter15MinutesRefreshThePa')
           markFailed(key, timeoutMsg)
           if (showTimeoutToast && options.ElMessage) {
             options.ElMessage.warning(timeoutMsg)
@@ -348,8 +356,8 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
     try {
       const t = await taskAPI.get(taskId)
       if (isOrphanedProcessingTask(t)) {
-        markFailed({ ...meta, taskId }, ORPHAN_TASK_MSG)
-        return { status: 'failed', error: ORPHAN_TASK_MSG }
+        markFailed({ ...meta, taskId }, orphanTaskMsg())
+        return { status: 'failed', error: orphanTaskMsg() }
       }
       if (t.status === 'completed') {
         if (onDone) await onDone()
@@ -380,7 +388,7 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
         if (t.status === 'completed') markDone({ ...meta, taskId })
         else if (t.status === 'failed') markFailed({ ...meta, taskId }, taskFailMessage(t))
         else if (!isActiveTaskStatus(t.status)) markDone({ ...meta, taskId })
-        else if (cancelledPollTaskIds.value.has(taskId)) markFailed({ ...meta, taskId }, '任务轮询已停止')
+        else if (cancelledPollTaskIds.value.has(taskId)) markFailed({ ...meta, taskId }, i18nT('messages.taskPollingStopped'))
       } catch (_) {}
       return
     }
@@ -588,7 +596,7 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
           episodeNumber,
           resourceType: GEN_RESOURCE.GENERATE_STORY,
           resourceId: Number(dramaId),
-          label: `${dramaTitle || '项目'} 生成剧本`,
+          label: i18nT('common.generateScriptFor', { name: dramaTitle || i18nT('common.project') }),
           taskId: t.id,
         }
         _recoverAttachTask(t.id, meta, () => callbacks.onDramaRefresh?.(), pollOpts)

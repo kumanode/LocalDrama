@@ -1,16 +1,19 @@
 <template>
   <div class="canvas-floating-toolbar nodrag nopan">
-    <span class="toolbar-label">快速新建</span>
-    <el-button size="small" @click="create('storyboard')">分镜</el-button>
-    <el-button size="small" @click="create('character')">角色</el-button>
-    <el-button size="small" @click="create('scene')">场景</el-button>
-    <el-button size="small" @click="create('prop')">道具</el-button>
-    <el-button size="small" @click="create('episode')">集</el-button>
+    <span class="toolbar-label">{{ t('dramaCanvas.quickCreate') }}</span>
+    <el-button size="small" @click="create('storyboard')">{{ t('dramaCanvas.shot') }}</el-button>
+    <el-button size="small" @click="create('character')">{{ t('dramaDetail.characters') }}</el-button>
+    <el-button size="small" @click="create('scene')">{{ t('dramaDetail.scenes') }}</el-button>
+    <el-button size="small" @click="create('prop')">{{ t('dramaDetail.props') }}</el-button>
+    <el-button size="small" @click="create('episode')">{{ t('filmCreate.episodeCountUnit') }}</el-button>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from '@/i18n'
 import { useCanvasContext } from '@/composables/useCanvasContext'
+
+const { t } = useI18n()
 
 const ctx = useCanvasContext()
 

@@ -1,12 +1,13 @@
 import request from '@/utils/request'
 import { parseSseBlock } from '@/utils/agentStream'
+import { t } from '../i18n/index.js'
 
 async function readError(response) {
   try {
     const data = await response.json()
-    return data?.error?.message || '请求失败'
+    return data?.error?.message || t('messages.requestFailed')
   } catch (_) {
-    return '请求失败'
+    return t('messages.requestFailed')
   }
 }
 

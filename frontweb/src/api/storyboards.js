@@ -1,3 +1,4 @@
+import { t as i18nT } from '../i18n/index.js'
 import request from '@/utils/request'
 
 /**
@@ -26,7 +27,7 @@ function postUniversalSegmentNdjsonStream(url, body, onDelta) {
       throw new Error(msg)
     }
     const reader = res.body && res.body.getReader()
-    if (!reader) throw new Error('浏览器不支持流式读取')
+    if (!reader) throw new Error(i18nT('messages.thisBrowserDoesNotSupportStreamingResponses'))
     const dec = new TextDecoder()
     let buf = ''
     let finalText = ''

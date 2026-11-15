@@ -4,6 +4,7 @@ import { dramaAPI } from '@/api/drama'
 import { storyboardsAPI } from '@/api/storyboards'
 import { sceneAPI } from '@/api/scenes'
 import { propAPI } from '@/api/props'
+import { t } from '../i18n/index.js'
 
 /** 合并 drama 级与本集已关联角色，避免 drama.characters 被布局保存截断后漏传 */
 function collectExistingCharacters(dramaData, episodeId) {
@@ -58,7 +59,7 @@ export function useCanvasCrud(deps) {
 
   function openCreateDialog(type, flowPosition = null) {
     if (['storyboard', 'character', 'scene', 'prop'].includes(type) && !resolveEpisodeId()) {
-      ElMessage.warning('请先选择集数（或确保项目至少有一集）')
+      ElMessage.warning(t('dramaCanvas.selectAnEpisodeFirstOrMakeSureTheProjectHasA'))
       return
     }
     createDialogType.value = type
@@ -88,7 +89,7 @@ export function useCanvasCrud(deps) {
 
   async function createStoryboard(form) {
     const episodeId = resolveEpisodeId()
-    if (!episodeId) throw new Error('请先选择集数')
+    if (!episodeId) throw new Error(t('dramaCanvas.selectAnEpisodeFirst'))
 
     const boards = (drama.value?.episodes || [])
       .find((ep) => ep.id === episodeId)?.storyboards || []
@@ -107,13 +108,13 @@ export function useCanvasCrud(deps) {
     const pos = pendingFlowPosition.value
     if (pos) await saveNodePosition(nodeId, pos)
     await focusAfterCreate(nodeId)
-    ElMessage.success('分镜已添加')
+    ElMessage.success(t('dramaCanvas.shotAdded'))
     return sb
   }
 
   async function createEpisode(form) {
     const dramaId = drama.value?.id
-    if (!dramaId) throw new Error('项目未加载')
+    if (!dramaId) throw new Error(t('dramaCanvas.projectNotLoaded'))
 
     const list = drama.value.episodes || []
     const nextNum = list.length > 0
@@ -153,7 +154,7 @@ export function useCanvasCrud(deps) {
   async function createCharacter(form) {
     const dramaId = drama.value?.id
     const episodeId = resolveEpisodeId()
-    if (!dramaId) throw new Error('项目未加载')
+    if (!dramaId) throw new Error(t('dramaCanvas.projectNotLoaded'))
 
     const beforeIds = new Set((drama.value?.characters || []).map((c) => c.id))
 
@@ -177,13 +178,13 @@ export function useCanvasCrud(deps) {
     const pos = pendingFlowPosition.value
     if (nodeId && pos) await saveNodePosition(nodeId, pos)
     await focusAfterCreate(nodeId)
-    ElMessage.success('角色已添加')
+    ElMessage.success(t('filmCreate.msgCharAdded'))
   }
 
   async function createScene(form) {
     const dramaId = drama.value?.id
     const episodeId = resolveEpisodeId()
-    if (!dramaId) throw new Error('项目未加载')
+    if (!dramaId) throw new Error(t('dramaCanvas.projectNotLoaded'))
 
     const scene = await sceneAPI.create({
       drama_id: dramaId,
@@ -198,13 +199,13 @@ export function useCanvasCrud(deps) {
     const pos = pendingFlowPosition.value
     if (nodeId && pos) await saveNodePosition(nodeId, pos)
     await focusAfterCreate(nodeId)
-    ElMessage.success('场景已添加')
+    ElMessage.success(t('filmCreate.msgSceneAdded'))
   }
 
   async function createProp(form) {
     const dramaId = drama.value?.id
     const episodeId = resolveEpisodeId()
-    if (!dramaId) throw new Error('项目未加载')
+    if (!dramaId) throw new Error(t('dramaCanvas.projectNotLoaded'))
 
     const prop = await propAPI.create({
       drama_id: dramaId,
@@ -219,7 +220,7 @@ export function useCanvasCrud(deps) {
     const pos = pendingFlowPosition.value
     if (nodeId && pos) await saveNodePosition(nodeId, pos)
     await focusAfterCreate(nodeId)
-    ElMessage.success('道具已添加')
+    ElMessage.success(t('filmCreate.msgPropAdded'))
   }
 
   async function submitCreate(form) {

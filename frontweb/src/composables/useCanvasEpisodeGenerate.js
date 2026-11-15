@@ -1,3 +1,4 @@
+import { t as i18nT } from '../i18n/index.js'
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dramaAPI } from '@/api/drama'
@@ -17,14 +18,14 @@ async function pollTask(taskId, onTick, maxAttempts = 450, interval = 2000) {
       const t = await taskAPI.get(taskId)
       if (t.status === 'completed') return { status: 'completed', result: t.result }
       if (t.status === 'failed') {
-        return { status: 'failed', error: t.error?.message || t.error || '任务失败' }
+        return { status: 'failed', error: t.error?.message || t.error || i18nT('messages.taskFailed') }
       }
       onTick?.()
     } catch (e) {
       if (i === maxAttempts - 1) return { status: 'failed', error: e.message || '轮询失败' }
     }
   }
-  return { status: 'timeout', error: '任务超时' }
+  return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
 }
 
 /** 画布模式：当前集 AI 生成分镜 + 批量生图/生视频 */
@@ -98,11 +99,11 @@ export function useCanvasEpisodeGenerate(deps) {
   async function aiGenerateStoryboards() {
     const ep = getEpisode()
     if (!ep) {
-      ElMessage.warning('请先在顶栏选择某一集（AI 生成针对单集剧本）')
+      ElMessage.warning(i18nT('dramaCanvas.pickAnEpisodeInTheTopBarFirstAiGenerationWor'))
       return
     }
     if (!(ep.script_content || '').trim()) {
-      ElMessage.warning('该集暂无剧本，请先在列表模式编写或导入剧本')
+      ElMessage.warning(i18nT('dramaCanvas.thisEpisodeHasNoScriptYetWriteOrImportOneInL'))
       return
     }
     const existing = getStoryboardsForEpisode()
@@ -110,8 +111,8 @@ export function useCanvasEpisodeGenerate(deps) {
       try {
         await ElMessageBox.confirm(
           `第 ${ep.episode_number || ''} 集已有 ${existing.length} 个分镜。重新生成可能追加或覆盖内容，是否继续？`,
-          'AI 生成分镜',
-          { type: 'warning', confirmButtonText: '继续生成' }
+          i18nT('dramaCanvas.aiStoryboard'),
+          { type: 'warning', confirmButtonText: i18nT('dramaCanvas.continueGenerating') }
         )
       } catch {
         return
@@ -119,7 +120,7 @@ export function useCanvasEpisodeGenerate(deps) {
     }
 
     episodeGenerating.value = true
-    episodeGenProgress.value = 'AI 正在根据剧本解析分镜…'
+    episodeGenProgress.value = i18nT('dramaCanvas.aiIsBreakingTheScriptIntoShots')
     for (const sb of existing) {
       setSbBusy(sb, 'generate_sb', CANVAS_NODE_STATUS_LABELS.generate_sb)
     }
@@ -130,10 +131,10 @@ export function useCanvasEpisodeGenerate(deps) {
       if (taskId) {
         const polled = await pollTask(taskId, () => refreshCanvas(true))
         if (polled.status !== 'completed') {
-          throw new Error(polled.error || '分镜生成失败')
+          throw new Error(polled.error || i18nT('dramaCanvas.storyboardGenerationFailed'))
         }
         if (polled.result?.truncated) {
-          ElMessage.warning('AI 输出可能被截断，请检查分镜数量是否完整')
+          ElMessage.warning(i18nT('dramaCanvas.theAiOutputMayHaveBeenTruncatedCheckThatAllS'))
         }
       }
       await refreshCanvas(true)
@@ -141,7 +142,7 @@ export function useCanvasEpisodeGenerate(deps) {
       const count = getStoryboardsForEpisode().length
       ElMessage.success(`分镜生成完成，共 ${count} 镜`)
     } catch (e) {
-      ElMessage.error(e?.message || 'AI 生成分镜失败')
+      ElMessage.error(e?.message || i18nT('dramaCanvas.aiStoryboardGenerationFailed'))
     } finally {
       clearInterval(refreshTimer)
       clearEpisodeSbBusy()
@@ -153,7 +154,7 @@ export function useCanvasEpisodeGenerate(deps) {
   async function batchGenerateImages() {
     const ep = getEpisode()
     if (!ep) {
-      ElMessage.warning('请先选择集数')
+      ElMessage.warning(i18nT('dramaCanvas.selectAnEpisodeFirst'))
       return
     }
     const boards = getStoryboardsForEpisode()
@@ -161,14 +162,14 @@ export function useCanvasEpisodeGenerate(deps) {
       (sb) => sb.creation_mode !== 'universal' && !hasStoryboardImage(sb, imagesBySbId.value, drama.value)
     )
     if (!todo.length) {
-      ElMessage.info('当前集分镜均已有图片（全能模式分镜请直接生视频）')
+      ElMessage.info(i18nT('dramaCanvas.everyShotInThisEpisodeAlreadyHasAnImageOmniS'))
       return
     }
     try {
       await ElMessageBox.confirm(
         `将为 ${todo.length} 个分镜依次生图，耗时可能较长，是否继续？`,
-        '批量生成分镜图',
-        { type: 'info', confirmButtonText: '开始' }
+        i18nT('dramaCanvas.generateAllStoryboardImages'),
+        { type: 'info', confirmButtonText: i18nT('dramaCanvas.start') }
       )
     } catch {
       return
@@ -204,20 +205,20 @@ export function useCanvasEpisodeGenerate(deps) {
   async function batchGenerateVideos() {
     const ep = getEpisode()
     if (!ep) {
-      ElMessage.warning('请先选择集数')
+      ElMessage.warning(i18nT('dramaCanvas.selectAnEpisodeFirst'))
       return
     }
     const boards = getStoryboardsForEpisode()
     const todo = boards.filter((sb) => !hasStoryboardVideo(sb, videosBySbId.value))
     if (!todo.length) {
-      ElMessage.info('当前集分镜均已有视频')
+      ElMessage.info(i18nT('dramaCanvas.everyShotInThisEpisodeAlreadyHasAVideo'))
       return
     }
     try {
       await ElMessageBox.confirm(
         `将为 ${todo.length} 个分镜依次生视频，是否继续？`,
-        '批量生成分镜视频',
-        { type: 'info', confirmButtonText: '开始' }
+        i18nT('dramaCanvas.generateAllStoryboardVideos'),
+        { type: 'info', confirmButtonText: i18nT('dramaCanvas.start') }
       )
     } catch {
       return

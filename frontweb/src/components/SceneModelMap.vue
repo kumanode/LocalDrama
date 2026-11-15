@@ -49,7 +49,7 @@
             <span v-else class="text-muted">{{ locale === 'en' ? 'Use config default model' : '使用配置默认模型' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="description" :label="locale === 'en' ? 'Description' : '描述'" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="description" :label="t('common.description')" min-width="200" show-overflow-tooltip />
         <el-table-column :label="$t('common.actions')" width="150" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
@@ -93,10 +93,10 @@
 
         <el-form-item prop="service_type" :label="locale === 'en' ? 'Service Type' : '服务类型'">
           <el-select v-model="form.service_type" :placeholder="locale === 'en' ? 'Select service type' : '选择服务类型'" style="width: 100%" disabled>
-            <el-option :label="locale === 'en' ? 'Text / Chat' : '文本/对话'" value="text" />
-            <el-option :label="locale === 'en' ? 'Text to Image' : '文本生成图片'" value="image" />
-            <el-option :label="locale === 'en' ? 'Storyboard Image' : '分镜图片生成'" value="storyboard_image" />
-            <el-option :label="locale === 'en' ? 'Video Generation' : '视频生成'" value="video" />
+            <el-option :label="t('sceneModelMap.textChat')" value="text" />
+            <el-option :label="t('sceneModelMap.textToImage')" value="image" />
+            <el-option :label="t('sceneModelMap.storyboardImage')" value="storyboard_image" />
+            <el-option :label="t('sceneModelMap.videoGeneration')" value="video" />
             <el-option :label="locale === 'en' ? 'Voice Synthesis TTS' : '语音合成 TTS'" value="tts" />
           </el-select>
           <p class="field-tip">{{ locale === 'en' ? 'Determined automatically by scene key' : '由场景键自动决定，不可更改' }}</p>
@@ -139,7 +139,7 @@
             {{ selectedConfigModels.length ? (locale === 'en' ? 'Select from available models' : '从该配置的可用模型中选择') : (locale === 'en' ? 'Please select AI config first' : '请先选择 AI 配置') }}
           </p>
         </el-form-item>
-        <el-form-item prop="description" :label="locale === 'en' ? 'Description' : '描述'">
+        <el-form-item prop="description" :label="t('common.description')">
           <el-input
             v-model="form.description"
             :placeholder="locale === 'en' ? 'Enter scenario description' : '输入场景描述，便于理解用途'"
@@ -190,18 +190,18 @@ const rules = computed(() => ({
 const predefinedKeys = computed(() => {
   const isEn = locale.value === 'en'
   return [
-    { value: 'image_polish', label: isEn ? 'image_polish - Storyboard Image Prompt Polish' : 'image_polish - 分镜图提示词润色', service_type: 'text' },
-    { value: 'role_image_polish', label: isEn ? 'role_image_polish - Character Image Prompt Polish' : 'role_image_polish - 角色图提示词润色', service_type: 'text' },
-    { value: 'prop_image_polish', label: isEn ? 'prop_image_polish - Prop Image Prompt Polish' : 'prop_image_polish - 道具图提示词润色', service_type: 'text' },
-    { value: 'scene_image_polish', label: isEn ? 'scene_image_polish - Scene Image Prompt Polish' : 'scene_image_polish - 场景图提示词润色', service_type: 'text' },
-    { value: 'role_extraction', label: isEn ? 'role_extraction - Character Extraction' : 'role_extraction - 角色提取', service_type: 'text' },
-    { value: 'prop_extraction', label: isEn ? 'prop_extraction - Prop Extraction' : 'prop_extraction - 道具提取', service_type: 'text' },
-    { value: 'scene_extraction', label: isEn ? 'scene_extraction - Scene Extraction' : 'scene_extraction - 场景提取', service_type: 'text' },
-    { value: 'storyboard_extraction', label: isEn ? 'storyboard_extraction - Storyboard Generation' : 'storyboard_extraction - 分镜生成', service_type: 'text' },
-    { value: 'identity_anchors', label: isEn ? 'identity_anchors - Character Visual Anchors' : 'identity_anchors - 角色视觉锚点提炼', service_type: 'text' },
-    { value: 'frame_prompt', label: isEn ? 'frame_prompt - Frame Prompt Generation' : 'frame_prompt - 帧提示词生成', service_type: 'text' },
-    { value: 'novel_import', label: isEn ? 'novel_import - Novel Import Rewrite' : 'novel_import - 小说导入改写', service_type: 'text' },
-    { value: 'story_generation', label: isEn ? 'story_generation - Story Outline Generation' : 'story_generation - 故事生成', service_type: 'text' },
+    { value: 'image_polish', label: isEn ? 'image_polish - Storyboard Image Prompt Polish' : t('sceneModelMap.imagePolishStoryboardImagePromptPolishing'), service_type: 'text' },
+    { value: 'role_image_polish', label: isEn ? 'role_image_polish - Character Image Prompt Polish' : t('sceneModelMap.roleImagePolishCharacterImagePromptPolishing'), service_type: 'text' },
+    { value: 'prop_image_polish', label: isEn ? 'prop_image_polish - Prop Image Prompt Polish' : t('sceneModelMap.propImagePolishPropImagePromptPolishing'), service_type: 'text' },
+    { value: 'scene_image_polish', label: isEn ? 'scene_image_polish - Scene Image Prompt Polish' : t('sceneModelMap.sceneImagePolishSceneImagePromptPolishing'), service_type: 'text' },
+    { value: 'role_extraction', label: isEn ? 'role_extraction - Character Extraction' : t('sceneModelMap.roleExtractionCharacterExtraction'), service_type: 'text' },
+    { value: 'prop_extraction', label: isEn ? 'prop_extraction - Prop Extraction' : t('sceneModelMap.propExtractionPropExtraction'), service_type: 'text' },
+    { value: 'scene_extraction', label: isEn ? 'scene_extraction - Scene Extraction' : t('sceneModelMap.sceneExtractionSceneExtraction'), service_type: 'text' },
+    { value: 'storyboard_extraction', label: isEn ? 'storyboard_extraction - Storyboard Generation' : t('sceneModelMap.storyboardExtractionStoryboardGeneration'), service_type: 'text' },
+    { value: 'identity_anchors', label: isEn ? 'identity_anchors - Character Visual Anchors' : t('sceneModelMap.identityAnchorsCharacterVisualAnchors'), service_type: 'text' },
+    { value: 'frame_prompt', label: isEn ? 'frame_prompt - Frame Prompt Generation' : t('sceneModelMap.framePromptFramePromptGeneration'), service_type: 'text' },
+    { value: 'novel_import', label: isEn ? 'novel_import - Novel Import Rewrite' : t('sceneModelMap.novelImportNovelImportRewrite'), service_type: 'text' },
+    { value: 'story_generation', label: isEn ? 'story_generation - Story Outline Generation' : t('sceneModelMap.storyGenerationStoryGeneration'), service_type: 'text' },
   ]
 })
 
@@ -219,11 +219,11 @@ const selectedConfigModels = computed(() => {
 function serviceTypeLabel(type) {
   const isEn = locale.value === 'en'
   const map = {
-    text: isEn ? 'Text / Chat' : '文本/对话',
-    image: isEn ? 'Text to Image' : '文本生成图片',
-    storyboard_image: isEn ? 'Storyboard Image' : '分镜图片生成',
-    video: isEn ? 'Video Generation' : '视频生成',
-    tts: isEn ? 'Voice Synthesis TTS' : '语音合成 TTS'
+    text: isEn ? 'Text / Chat' : t('sceneModelMap.textChat'),
+    image: isEn ? 'Text to Image' : t('sceneModelMap.textToImage'),
+    storyboard_image: isEn ? 'Storyboard Image' : t('sceneModelMap.storyboardImage'),
+    video: isEn ? 'Video Generation' : t('sceneModelMap.videoGeneration'),
+    tts: isEn ? 'Voice Synthesis TTS' : t('sceneModelMap.speechSynthesisTts')
   }
   return map[type] || type
 }

@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js'
 import { parseCanvasLayout, resolveNodePosition } from './canvasLayout'
 import { getStoryboardGroupMap, parseWorkflowGroups } from './canvasWorkflow'
 import { assetImageUrl, storyboardImageUrl, storyboardVideoUrl, audioUrl } from './mediaUrl'
@@ -48,7 +49,7 @@ function storyboardSummary(sb) {
     return truncate(sb.universal_segment_text, 90)
   }
   const parts = [sb.action, sb.dialogue, sb.result].filter(Boolean)
-  return truncate(parts.join(' · '), 90) || truncate(sb.description, 90) || '暂无脚本内容'
+  return truncate(parts.join(' · '), 90) || truncate(sb.description, 90) || t('dramaCanvas.noScriptContent')
 }
 
 function sectionLabel(id, label, x, y) {
@@ -75,9 +76,9 @@ function buildAssetNodes(drama, savedLayout, startY) {
   let y = startY
 
   const sections = [
-    { key: 'characters', label: '👤 角色', hint: '从剧本提取', items: drama.characters || [], kind: 'character', prefix: 'char' },
-    { key: 'scenes', label: '🏞 场景', hint: '从剧本提取', items: drama.scenes || [], kind: 'scene', prefix: 'scene' },
-    { key: 'props', label: '🎭 道具', hint: '从剧本提取', items: drama.props || [], kind: 'prop', prefix: 'prop' },
+    { key: 'characters', label: t('dramaCanvas.character2'), hint: t('dramaCanvas.extractFromScript'), items: drama.characters || [], kind: 'character', prefix: 'char' },
+    { key: 'scenes', label: t('dramaCanvas.scene2'), hint: t('dramaCanvas.extractFromScript'), items: drama.scenes || [], kind: 'scene', prefix: 'scene' },
+    { key: 'props', label: t('dramaCanvas.prop2'), hint: t('dramaCanvas.extractFromScript'), items: drama.props || [], kind: 'prop', prefix: 'prop' },
   ]
 
   for (const sec of sections) {
@@ -98,7 +99,7 @@ function buildAssetNodes(drama, savedLayout, startY) {
       id: addId,
       type: 'canvasAddButton',
       position: resolveNodePosition(savedLayout, addId, { x: ASSET_X, y }),
-      data: { assetType: sec.kind, label: '+ 新建' },
+      data: { assetType: sec.kind, label: t('dramaCanvas.new') },
       draggable: false,
       selectable: false,
       connectable: false,
@@ -255,7 +256,7 @@ function buildEpisodePipeline(episode, savedLayout, startY, options = {}) {
           const imgId = `sbimg-first:${sb.id}`
           pipelineTailId = appendMediaImageNode(nodes, edges, {
             savedLayout, sb, sbId, fromId: pipelineTailId, mediaX, mediaY, imgId, url: firstUrl,
-            frameKind: 'first', frameLabel: '首帧',
+            frameKind: 'first', frameLabel: t('dramaCanvas.firstFrame'),
           })
           mediaX += MEDIA_GAP_X
         }
@@ -264,7 +265,7 @@ function buildEpisodePipeline(episode, savedLayout, startY, options = {}) {
           const imgId = `sbimg-last:${sb.id}`
           pipelineTailId = appendMediaImageNode(nodes, edges, {
             savedLayout, sb, sbId, fromId: pipelineTailId, mediaX, mediaY, imgId, url: lastUrl,
-            frameKind: 'last', frameLabel: '尾帧',
+            frameKind: 'last', frameLabel: t('dramaCanvas.lastFrame'),
           })
           mediaX += MEDIA_GAP_X
         }
@@ -274,7 +275,7 @@ function buildEpisodePipeline(episode, savedLayout, startY, options = {}) {
           const imgId = `sbimg:${sb.id}`
           pipelineTailId = appendMediaImageNode(nodes, edges, {
             savedLayout, sb, sbId, fromId: pipelineTailId, mediaX, mediaY, imgId, url: mainUrl,
-            frameKind: null, frameLabel: '分镜图',
+            frameKind: null, frameLabel: t('dramaCanvas.storyboardImage'),
           })
           mediaX += MEDIA_GAP_X
         }
@@ -364,7 +365,7 @@ function buildEpisodePipeline(episode, savedLayout, startY, options = {}) {
     id: addSbId,
     type: 'canvasAddButton',
     position: resolveNodePosition(savedLayout, addSbId, { x: PIPELINE_X, y: addY }),
-    data: { assetType: 'storyboard', label: '+ 新建分镜', episodeId: episode.id },
+    data: { assetType: 'storyboard', label: t('dramaCanvas.newShot2'), episodeId: episode.id },
     draggable: false,
     selectable: false,
     connectable: false,
@@ -423,7 +424,7 @@ export function buildDramaCanvasGraph(drama, options = {}) {
   }
 
   if (!episodes.length) {
-    nodes.push(sectionLabel('label:empty', '暂无剧集，可点顶栏「+ 集」或右键空白处新建', PIPELINE_X, pipelineY))
+    nodes.push(sectionLabel('label:empty', t('dramaCanvas.noEpisodesYetUseEpisodeInTheTopBarOrRightCli'), PIPELINE_X, pipelineY))
   }
 
   return {

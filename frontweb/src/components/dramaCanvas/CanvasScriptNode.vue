@@ -17,8 +17,8 @@
       <div class="preview">{{ previewText }}</div>
       <div class="meta">
         <span>{{ charCount }} {{ locale === 'en' ? 'Chars' : '角色' }}</span>
-        <span>{{ sceneCount }} {{ locale === 'en' ? 'Scenes' : '场景' }}</span>
-        <span>{{ propCount }} {{ locale === 'en' ? 'Props' : '道具' }}</span>
+        <span>{{ sceneCount }} {{ t('dramaDetail.scenes') }}</span>
+        <span>{{ propCount }} {{ t('dramaDetail.props') }}</span>
       </div>
       <div class="hint">{{ showPanel ? (locale === 'en' ? 'Edit & extract below' : '下方可编辑与提取') : (locale === 'en' ? 'Click to expand' : '单击展开 · 创作起点') }}</div>
     </div>
@@ -51,7 +51,7 @@ const hasScript = computed(() => !!(props.data.episode?.script_content || '').tr
 const previewText = computed(() => {
   if (props.data.summary) return props.data.summary
   const isEn = locale.value === 'en'
-  return hasScript.value ? (isEn ? '(Script written)' : '（剧本已填写）') : (isEn ? 'No script yet, click to edit' : '暂无剧本，点击编辑')
+  return hasScript.value ? (isEn ? '(Script written)' : t('dramaCanvas.scriptWritten')) : (isEn ? 'No script yet, click to edit' : t('dramaCanvas.noScriptYetClickToEdit'))
 })
 
 const charCount = computed(() => (ctx?.drama?.value?.characters || []).length)

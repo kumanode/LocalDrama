@@ -1,8 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import zh from '../src/i18n/locales/zh.js'
-import en from '../src/i18n/locales/en.js'
-import { t, currentLocale, setLocale } from '../src/i18n/index.js'
+import { messages } from '../src/i18n/messages.js'
+import { t, currentLocale, setLocale, setDevModeForTesting, getMissingKeys, resetMissingKeys } from '../src/i18n/index.js'
 
 test('i18n core - translation in zh and en', async () => {
   currentLocale.value = 'zh'
@@ -27,6 +26,45 @@ test('i18n core - fallback to alternative locale if key missing', () => {
   assert.equal(t('nonexistent.path.key'), 'nonexistent.path.key')
 })
 
+test('i18n core - development mode reports missing keys loudly instead of falling back', () => {
+  const warnings = []
+  const originalWarn = console.warn
+  console.warn = (msg) => warnings.push(String(msg))
+  try {
+    setDevModeForTesting(true)
+    resetMissingKeys()
+    currentLocale.value = 'en'
+
+    assert.equal(t('nonexistent.path.key'), '⟦missing:nonexistent.path.key⟧')
+    // Warns once per key, not once per render.
+    assert.equal(t('nonexistent.path.key'), '⟦missing:nonexistent.path.key⟧')
+    assert.equal(warnings.filter((w) => w.includes('nonexistent.path.key')).length, 1)
+    assert.deepEqual(getMissingKeys(), ['nonexistent.path.key'])
+  } finally {
+    console.warn = originalWarn
+    setDevModeForTesting(null)
+    resetMissingKeys()
+    currentLocale.value = 'zh'
+  }
+})
+
+test('i18n core - production never falls back to Chinese', () => {
+  const originalWarn = console.warn
+  console.warn = () => {}
+  try {
+    setDevModeForTesting(false)
+    currentLocale.value = 'zh'
+    // Missing in both locales: the key itself is returned, never zh text.
+    assert.equal(t('nonexistent.path.key'), 'nonexistent.path.key')
+    // A real key still resolves normally.
+    assert.equal(t('common.save'), '保存')
+  } finally {
+    console.warn = originalWarn
+    setDevModeForTesting(null)
+    currentLocale.value = 'zh'
+  }
+})
+
 function getLeafKeys(obj, prefix = '') {
   let keys = []
   for (const [k, v] of Object.entries(obj)) {
@@ -41,8 +79,8 @@ function getLeafKeys(obj, prefix = '') {
 }
 
 test('i18n dictionaries - 100% key parity between zh and en', () => {
-  const zhKeys = getLeafKeys(zh).sort()
-  const enKeys = getLeafKeys(en).sort()
+  const zhKeys = getLeafKeys(messages.zh).sort()
+  const enKeys = getLeafKeys(messages.en).sort()
 
   const missingInEn = zhKeys.filter((k) => !enKeys.includes(k))
   const extraInEn = enKeys.filter((k) => !zhKeys.includes(k))

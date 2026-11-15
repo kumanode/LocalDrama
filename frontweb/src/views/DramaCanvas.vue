@@ -604,7 +604,7 @@ async function persistCanvasState({ layoutOnly = false, groupsOnly = false } = {
     }, 2000)
   } catch (e) {
     layoutSaveState.value = 'error'
-    ElMessage.error(e?.message || '保存失败')
+    ElMessage.error(e?.message || t('dramaCanvas.saveFailed'))
   }
 }
 
@@ -796,10 +796,10 @@ async function onRunActiveGroup() {
       },
       onStepStart: ({ storyboardId, step }) => {
         const stepLabel = step === 'image' ? t('dramaCanvas.stepImage') : step === 'video' ? t('dramaCanvas.stepVideo') : t('dramaCanvas.stepAudio')
-        workflowProgress.value = `${locale.value === 'en' ? 'Shot' : '分镜'} #${storyboardId}：${stepLabel}…`
+        workflowProgress.value = `${t('dramaCanvas.shot')} #${storyboardId}：${stepLabel}…`
       },
       onStoryboardError: ({ storyboardId, error }) => {
-        ElMessage.error(`${locale.value === 'en' ? 'Shot' : '分镜'} #${storyboardId} ${locale.value === 'en' ? 'failed' : '失败'}：${error?.message || error}`)
+        ElMessage.error(`${t('dramaCanvas.shot')} #${storyboardId} ${locale.value === 'en' ? 'failed' : '失败'}：${error?.message || error}`)
       },
     })
     await loadDrama(true)

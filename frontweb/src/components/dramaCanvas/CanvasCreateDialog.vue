@@ -17,7 +17,7 @@
       </template>
 
       <template v-else-if="type === 'episode'">
-        <el-form-item :label="locale === 'en' ? 'Episode Title' : '集标题'">
+        <el-form-item :label="t('dramaCanvas.episodeTitle')">
           <el-input v-model="form.title" :placeholder="locale === 'en' ? 'Auto-named if blank' : '留空则自动命名'" />
         </el-form-item>
       </template>
@@ -27,7 +27,7 @@
           <el-input v-model="form.name" :placeholder="locale === 'en' ? 'Required' : '必填'" />
         </el-form-item>
         <el-form-item :label="locale === 'en' ? 'Role Type' : '角色类型'">
-          <el-select v-model="form.role" :placeholder="locale === 'en' ? 'Optional' : '可选'" clearable style="width: 100%">
+          <el-select v-model="form.role" :placeholder="t('library.optional')" clearable style="width: 100%">
             <el-option :label="$t('filmCreate.roleMain')" value="main" />
             <el-option :label="$t('filmCreate.roleSupporting')" value="supporting" />
           </el-select>
@@ -53,13 +53,13 @@
       </template>
 
       <template v-else-if="type === 'prop'">
-        <el-form-item :label="locale === 'en' ? 'Prop Name' : '道具名称'" required>
+        <el-form-item :label="t('filmCreate.propName')" required>
           <el-input v-model="form.name" :placeholder="locale === 'en' ? 'Required' : '必填'" />
         </el-form-item>
-        <el-form-item :label="locale === 'en' ? 'Description' : '描述'">
+        <el-form-item :label="t('common.description')">
           <el-input v-model="form.description" type="textarea" :rows="2" />
         </el-form-item>
-        <el-form-item :label="locale === 'en' ? 'Prompt' : '提示词'">
+        <el-form-item :label="t('freeCreate.promptLabel')">
           <el-input v-model="form.prompt" type="textarea" :rows="2" />
         </el-form-item>
       </template>
@@ -106,13 +106,13 @@ const form = reactive({
 const dialogTitle = computed(() => {
   const isEn = locale.value === 'en'
   const map = {
-    storyboard: isEn ? 'New Shot' : '新建分镜',
-    episode: isEn ? 'New Episode' : '新建集',
-    character: isEn ? 'New Character' : '新建角色',
-    scene: isEn ? 'New Scene' : '新建场景',
-    prop: isEn ? 'New Prop' : '新建道具',
+    storyboard: isEn ? 'New Shot' : t('dramaCanvas.newShot'),
+    episode: isEn ? 'New Episode' : t('dramaCanvas.newEpisode'),
+    character: isEn ? 'New Character' : t('dramaCanvas.newCharacter'),
+    scene: isEn ? 'New Scene' : t('dramaCanvas.newScene'),
+    prop: isEn ? 'New Prop' : t('dramaCanvas.newProp'),
   }
-  return map[props.type] || (isEn ? 'Create' : '新建')
+  return map[props.type] || (isEn ? 'Create' : t('common.create'))
 })
 
 function resetForm() {

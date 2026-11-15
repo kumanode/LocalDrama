@@ -1,4 +1,5 @@
 import { parseDramaMetadata } from './canvasLayout'
+import { t } from '../i18n/index.js'
 
 export const DEFAULT_PIPELINE = ['image', 'video', 'audio']
 
@@ -31,7 +32,7 @@ export function getStoryboardGroupMap(workflowGroups) {
 
 export function createWorkflowGroup(existingGroups, { title, storyboardIds, pipeline = DEFAULT_PIPELINE }) {
   const ids = [...new Set((storyboardIds || []).map(Number).filter(Number.isFinite))]
-  if (!ids.length) throw new Error('请至少选择一个分镜')
+  if (!ids.length) throw new Error(t('dramaCanvas.selectAtLeastOneShot'))
   const group = {
     id: `wg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     title: title || `工作流 ${(existingGroups?.length || 0) + 1}`,

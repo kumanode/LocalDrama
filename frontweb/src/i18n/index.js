@@ -1,12 +1,51 @@
 import { ref, computed } from 'vue'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import enLocale from 'element-plus/dist/locale/en.mjs'
-import zh from './locales/zh.js'
-import en from './locales/en.js'
+import messages from './messages.js'
 import request from '../utils/request.js'
 
 const STORAGE_KEY = 'app_locale'
-const messages = { zh, en }
+
+// Vite statically replaces `import.meta.env.DEV`. The guard keeps the module
+// importable from plain Node (unit tests) where `import.meta.env` is undefined.
+const IS_DEV = (() => {
+  try {
+    return Boolean(import.meta.env && import.meta.env.DEV)
+  } catch (_) {
+    return false
+  }
+})()
+
+// Keys already reported in this session, so a missing key warns only once.
+const reportedMissingKeys = new Set()
+
+let devModeOverride = null
+
+/** Test hook: force dev/prod resolution without a Vite build. */
+export function setDevModeForTesting(value) {
+  devModeOverride = value === null ? null : Boolean(value)
+}
+
+function isDevEnabled() {
+  return devModeOverride === null ? IS_DEV : devModeOverride
+}
+
+export function getMissingKeys() {
+  return [...reportedMissingKeys]
+}
+
+export function resetMissingKeys() {
+  reportedMissingKeys.clear()
+}
+
+function missing(key) {
+  if (!reportedMissingKeys.has(key)) {
+    reportedMissingKeys.add(key)
+    console.warn(`[i18n] missing key: ${key} (locale: ${currentLocale.value})`)
+  }
+  // Marker is intentionally loud so leaks are obvious during development.
+  return `⟦missing:${key}⟧`
+}
 
 function getStorage(key) {
   try {
@@ -46,14 +85,19 @@ function getNestedValue(obj, path) {
 export function t(key, params = {}) {
   const lang = currentLocale.value
   let val = getNestedValue(messages[lang], key)
-  
-  // Fallback to alternative language if key is missing in active locale
+
   if (val === undefined) {
-    const fallbackLang = lang === 'en' ? 'zh' : 'en'
-    val = getNestedValue(messages[fallbackLang], key)
+    if (isDevEnabled()) {
+      // Development has no cross-language fallback: a missing key must be
+      // visible immediately instead of silently resolving to Chinese.
+      return missing(key)
+    }
+    // Production falls back to English only — never to Chinese. This keeps an
+    // English UI from turning Chinese just because one key is missing.
+    val = getNestedValue(messages.en, key)
   }
-  
-  if (val === undefined) return key
+
+  if (val === undefined) return isDevEnabled() ? missing(key) : key
   if (typeof val !== 'string') return val
 
   // Interpolation: replace {name} with params.name

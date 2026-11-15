@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { currentLocale } from '../i18n/index.js'
+import { currentLocale, t } from '../i18n/index.js'
 
 /** 画布节点操作状态（生图/生视频/生成参考图等） */
 export function createCanvasNodeStatusStore() {
@@ -34,40 +34,27 @@ export function createCanvasNodeStatusStore() {
   return { map, set, clear, get, isBusy }
 }
 
-const STATUS_DICT = {
-  zh: {
-    image: '生图中',
-    video: '生视频中',
-    audio: '配音中',
-    polish: '润色中',
-    save: '保存中',
-    ref_image: '生成参考图',
-    generate_sb: 'AI 生成分镜',
-    save_script: '保存剧本',
-    extract_chars: '提取角色',
-    extract_scenes: '提取场景',
-    extract_props: '提取道具',
-    extract_all: '一键提取',
-  },
-  en: {
-    image: 'Generating image',
-    video: 'Generating video',
-    audio: 'Generating voice',
-    polish: 'Polishing prompt',
-    save: 'Saving',
-    ref_image: 'Generating ref image',
-    generate_sb: 'Generating shots',
-    save_script: 'Saving script',
-    extract_chars: 'Extracting characters',
-    extract_scenes: 'Extracting scenes',
-    extract_props: 'Extracting props',
-    extract_all: 'Extracting all assets',
-  },
+// Label keys only: translating at module scope would freeze the labels in the
+// language that happened to be active when this module was first imported.
+const STATUS_LABEL_KEYS = {
+  image: 'dramaCanvas.generatingImage2',
+  video: 'dramaCanvas.generatingVideo2',
+  audio: 'dramaCanvas.dubbing2',
+  polish: 'dramaCanvas.polishing',
+  save: 'dramaCanvas.saving2',
+  ref_image: 'dramaCanvas.generateReferenceImage',
+  generate_sb: 'dramaCanvas.aiStoryboard',
+  save_script: 'dramaCanvas.saveScript',
+  extract_chars: 'dramaCanvas.extractChars',
+  extract_scenes: 'dramaCanvas.extractScenes',
+  extract_props: 'dramaCanvas.extractProps',
+  extract_all: 'dramaCanvas.extractAll',
 }
 
 export const CANVAS_NODE_STATUS_LABELS = new Proxy({}, {
   get(_, prop) {
-    const lang = currentLocale.value === 'en' ? 'en' : 'zh'
-    return STATUS_DICT[lang]?.[prop] || STATUS_DICT.zh[prop] || prop
+    if (typeof prop !== 'string') return undefined
+    const key = STATUS_LABEL_KEYS[prop]
+    return key ? t(key) : prop
   },
 })

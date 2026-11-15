@@ -1,6 +1,6 @@
 <template>
   <div class="canvas-drama-header">
-    <div class="title">{{ data.drama?.title || '未命名项目' }}</div>
+    <div class="title">{{ data.drama?.title || t('filmList.unnamedProject') }}</div>
     <div class="meta">
       <span v-if="data.drama?.style">风格 {{ data.drama.style }}</span>
       <span>{{ (data.drama?.episodes || []).length }} 集</span>
@@ -11,7 +11,10 @@
 </template>
 
 <script setup>
+import { useI18n } from '@/i18n'
 import { computed } from 'vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   data: { type: Object, required: true },

@@ -60,7 +60,7 @@ import { ElMessage } from 'element-plus'
 import { DocumentCopy } from '@element-plus/icons-vue'
 import { useI18n } from '@/i18n'
 
-const { locale, t } = useI18n()
+const { locale, t, t: i18nT } = useI18n()
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -95,7 +95,7 @@ function kindLabel(kind) {
   if (kind === 'scene') return '场景'
   if (kind === 'character') return '角色'
   if (kind === 'prop') return '物品'
-  return '参考'
+  return i18nT('universalEditor.reference')
 }
 
 function slotByIndex(index) {
@@ -105,7 +105,7 @@ function slotByIndex(index) {
 
 function canonicalAt(index) {
   const n = Number(index)
-  if (!Number.isFinite(n) || n < 1) return '@图片1'
+  if (!Number.isFinite(n) || n < 1) return i18nT('universalEditor.image1')
   return `@图片${n}`
 }
 
@@ -465,9 +465,9 @@ async function onCopyCanonical() {
       ta.select()
       document.execCommand('copy')
       document.body.removeChild(ta)
-      ElMessage.success('已复制（@图片N 格式）')
+      ElMessage.success(i18nT('universalEditor.copiedAsImagen'))
     } catch (e2) {
-      ElMessage.error(e2?.message || '复制失败')
+      ElMessage.error(e2?.message || i18nT('universalEditor.copyFailed'))
     }
   }
 }

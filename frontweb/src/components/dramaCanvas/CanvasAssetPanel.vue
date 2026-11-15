@@ -10,7 +10,7 @@
   >
     <div class="panel-head">
       <span>{{ kindLabel }}</span>
-      <el-button link size="small" @click.stop="closePanel">{{ locale === 'en' ? 'Collapse' : '收起' }}</el-button>
+      <el-button link size="small" @click.stop="closePanel">{{ t('dramaCanvas.collapse') }}</el-button>
     </div>
 
     <div class="panel-body">
@@ -30,8 +30,8 @@
         <el-form label-position="left" label-width="44px" size="small" class="panel-form compact-form">
           <template v-if="kind === 'character'">
             <div class="form-row-2">
-              <el-form-item :label="locale === 'en' ? 'Name' : '名称'" class="flex-1">
-                <el-input v-model="form.name" :placeholder="locale === 'en' ? 'Character Name' : '角色名'" />
+              <el-form-item :label="t('common.name')" class="flex-1">
+                <el-input v-model="form.name" :placeholder="t('filmCreate.charName')" />
               </el-form-item>
               <el-form-item :label="locale === 'en' ? 'Role' : '类型'" class="type-field">
                 <el-select
@@ -47,7 +47,7 @@
                 </el-select>
               </el-form-item>
             </div>
-            <el-form-item :label="locale === 'en' ? 'Appearance' : '外貌'">
+            <el-form-item :label="t('dramaDetail.charAppearance')">
               <el-input
                 v-model="form.appearance"
                 type="textarea"
@@ -69,14 +69,14 @@
 
           <template v-else-if="kind === 'scene'">
             <div class="form-row-2">
-              <el-form-item :label="locale === 'en' ? 'Location' : '地点'" class="flex-1">
+              <el-form-item :label="t('library.location')" class="flex-1">
                 <el-input v-model="form.location" :placeholder="locale === 'en' ? 'Scene location' : '场景地点'" />
               </el-form-item>
-              <el-form-item :label="locale === 'en' ? 'Time' : '时间'" class="time-field">
+              <el-form-item :label="t('library.time')" class="time-field">
                 <el-input v-model="form.time" :placeholder="locale === 'en' ? 'Day / Night' : '白天/夜'" />
               </el-form-item>
             </div>
-            <el-form-item :label="locale === 'en' ? 'Description' : '描述'">
+            <el-form-item :label="t('common.description')">
               <el-input
                 v-model="form.prompt"
                 type="textarea"
@@ -88,10 +88,10 @@
           </template>
 
           <template v-else>
-            <el-form-item :label="locale === 'en' ? 'Name' : '名称'">
+            <el-form-item :label="t('common.name')">
               <el-input v-model="form.name" :placeholder="locale === 'en' ? 'Prop name' : '道具名称'" />
             </el-form-item>
-            <el-form-item :label="locale === 'en' ? 'Description' : '描述'">
+            <el-form-item :label="t('common.description')">
               <el-input
                 v-model="form.description"
                 type="textarea"
@@ -164,8 +164,8 @@ const form = reactive({
 
 const kindLabel = computed(() => {
   const isEn = locale.value === 'en'
-  const map = { character: isEn ? 'Character' : '角色', scene: isEn ? 'Scene' : '场景', prop: isEn ? 'Prop' : '道具' }
-  return map[props.kind] || (isEn ? 'Asset' : '素材')
+  const map = { character: isEn ? 'Character' : t('dramaDetail.characters'), scene: isEn ? 'Scene' : t('dramaDetail.scenes'), prop: isEn ? 'Prop' : t('dramaDetail.props') }
+  return map[props.kind] || (isEn ? 'Asset' : t('dramaCanvas.asset'))
 })
 
 const kindIcon = computed(() => {
@@ -180,12 +180,12 @@ const entityStatusLabel = computed(() => {
   const isEn = locale.value === 'en'
   const s = entityStatus.value
   const map = {
-    pending: isEn ? 'Pending' : '待生成',
-    processing: isEn ? 'Generating' : '生成中',
-    completed: isEn ? 'Completed' : '已完成',
-    failed: isEn ? 'Failed' : '失败',
+    pending: isEn ? 'Pending' : t('dramaCanvas.pending'),
+    processing: isEn ? 'Generating' : t('dramaCanvas.generating'),
+    completed: isEn ? 'Completed' : t('dramaCanvas.statusCompleted'),
+    failed: isEn ? 'Failed' : t('dramaCanvas.statusFailed'),
   }
-  return map[s] || (previewUrl.value ? (isEn ? 'Has reference' : '已有参考图') : (isEn ? 'No reference' : '无参考图'))
+  return map[s] || (previewUrl.value ? (isEn ? 'Has reference' : t('dramaCanvas.referenceImageSet')) : (isEn ? 'No reference' : t('dramaCanvas.noReferenceImage')))
 })
 
 const nodeBusy = computed(() => {
@@ -216,7 +216,7 @@ function closePanel() {
 
 async function saveAsset() {
   saving.value = true
-  ctx?.nodeStatus?.set(props.nodeId, { step: 'save', message: locale.value === 'en' ? 'Saving…' : '保存中…' })
+  ctx?.nodeStatus?.set(props.nodeId, { step: 'save', message: t('dramaCanvas.saving') })
   try {
     if (props.kind === 'character') {
       if (!form.name.trim()) {
@@ -267,7 +267,7 @@ async function deleteAsset() {
   try {
     await ElMessageBox.confirm(
       locale.value === 'en' ? `Are you sure you want to delete "${label.slice(0, 20)}"?` : `确定删除「${label.slice(0, 20)}」？`,
-      locale.value === 'en' ? 'Confirm Deletion' : '删除确认',
+      t('filmList.deleteConfirmTitle'),
       {
         type: 'warning',
         confirmButtonText: t('common.delete'),
@@ -300,7 +300,7 @@ async function generateImage() {
     })
     ElMessage.success(locale.value === 'en' ? 'Reference image generated' : '参考图已生成')
   } catch (e) {
-    ElMessage.error(e?.message || (locale.value === 'en' ? 'Generation failed' : '生成失败'))
+    ElMessage.error(e?.message || t('filmCreate.msgGenFailed'))
   } finally {
     generating.value = false
   }

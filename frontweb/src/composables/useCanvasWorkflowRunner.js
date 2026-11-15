@@ -1,3 +1,4 @@
+import { t as i18nT } from '../i18n/index.js'
 import { taskAPI } from '@/api/task'
 import { imagesAPI } from '@/api/images'
 import { videosAPI } from '@/api/videos'
@@ -12,7 +13,7 @@ import {
 import { dramaUsesFirstLastFrame, sbVideoFirstLastUrls } from '@/utils/storyboardMedia'
 
 async function pollTaskSimple(taskId, options = {}) {
-  if (!taskId) return { status: 'failed', error: '缺少 task_id' }
+  if (!taskId) return { status: 'failed', error: i18nT('messages.missingTaskId') }
   const maxAttempts = options.maxAttempts ?? 450
   const interval = options.interval ?? 2000
   for (let i = 0; i < maxAttempts; i++) {
@@ -21,13 +22,13 @@ async function pollTaskSimple(taskId, options = {}) {
       const t = await taskAPI.get(taskId)
       if (t.status === 'completed') return { status: 'completed', result: t.result }
       if (t.status === 'failed') {
-        return { status: 'failed', error: t.error?.message || t.error || '任务失败' }
+        return { status: 'failed', error: t.error?.message || t.error || i18nT('messages.taskFailed') }
       }
     } catch (e) {
       if (i === maxAttempts - 1) return { status: 'failed', error: e.message || '轮询失败' }
     }
   }
-  return { status: 'timeout', error: '任务超时' }
+  return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
 }
 
 export async function runImageStep(drama, sb, genOpts) {
@@ -77,7 +78,7 @@ export async function runVideoStep(drama, sb, genOpts) {
 
 export async function runAudioStep(sb) {
   const text = (sb.dialogue || '').trim()
-  if (!text) return { skipped: true, reason: '无对白' }
+  if (!text) return { skipped: true, reason: i18nT('dramaCanvas.noDialogue') }
   await request.post('/audio/extract', {
     storyboard_id: sb.id,
     text,

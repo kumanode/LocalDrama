@@ -104,11 +104,11 @@ function watchTask(taskId, message) {
       message.imageUrl = result.image_url || message.imageUrl
       message.localPath = result.local_path || message.localPath
       if (data.status === 'failed') {
-        message.summary = data.error || data.message || '生成失败'
+        message.summary = data.error || data.message || t('filmCreate.msgGenFailed')
       } else if (result.count != null) {
         message.summary = `已完成，共 ${result.count} 个`
       } else {
-        message.summary = '已完成'
+        message.summary = t('dramaCanvas.statusCompleted')
       }
       notifyChanged('generate_image')
     } catch (_) {
@@ -125,7 +125,7 @@ function onEvent(event) {
     if (last && last.role === 'assistant' && last.streaming) last.text += event.text || ''
     else messages.value.push({ role: 'assistant', text: event.text || '', streaming: true })
   } else if (event.type === 'tool-call') {
-    messages.value.push({ role: 'assistant', text: '', summary: `正在使用 ${event.toolName || '工具'}` })
+    messages.value.push({ role: 'assistant', text: '', summary: `正在使用 ${event.toolName || t('agent.tool')}` })
   } else if (event.type === 'tool-result') {
     const message = {
       role: 'assistant',
@@ -150,7 +150,7 @@ function onEvent(event) {
       },
     })
   } else if (event.type === 'error') {
-    errorText.value = event.message || '对话失败'
+    errorText.value = event.message || t('agent.chatFailed')
   }
   scrollDown()
 }
@@ -172,7 +172,7 @@ async function send() {
   try {
     await agentAPI.chat(chatBody({ message }), onEvent)
   } catch (err) {
-    errorText.value = err.message || '对话失败'
+    errorText.value = err.message || t('agent.chatFailed')
   } finally {
     busy.value = false
     for (const item of messages.value) item.streaming = false
@@ -189,7 +189,7 @@ async function decide(message, approved) {
     const call = approved ? agentAPI.approve : agentAPI.decline
     await call(chatBody({ runId: card.runId, toolCallId: card.toolCallId }), onEvent)
   } catch (err) {
-    errorText.value = err.message || '确认失败'
+    errorText.value = err.message || t('agent.confirmationFailed')
     card.pending = true
   } finally {
     busy.value = false
@@ -210,7 +210,7 @@ async function loadHistory() {
     }
     scrollDown()
   } catch (err) {
-    errorText.value = err.message || '助手未就绪'
+    errorText.value = err.message || t('agent.assistantIsNotReady')
   }
 }
 

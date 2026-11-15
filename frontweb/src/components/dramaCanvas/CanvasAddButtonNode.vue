@@ -19,17 +19,17 @@ const props = defineProps({
 })
 
 const ctx = useCanvasContext()
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 
 const defaultLabel = computed(() => {
   const isEn = locale.value === 'en'
   const map = {
-    character: isEn ? 'New Character' : '新建角色',
-    scene: isEn ? 'New Scene' : '新建场景',
-    prop: isEn ? 'New Prop' : '新建道具',
-    storyboard: isEn ? 'New Shot' : '新建分镜',
+    character: isEn ? 'New Character' : t('dramaCanvas.newCharacter'),
+    scene: isEn ? 'New Scene' : t('dramaCanvas.newScene'),
+    prop: isEn ? 'New Prop' : t('dramaCanvas.newProp'),
+    storyboard: isEn ? 'New Shot' : t('dramaCanvas.newShot'),
   }
-  return map[props.data.assetType] || (isEn ? 'New' : '新建')
+  return map[props.data.assetType] || (isEn ? 'New' : t('common.create'))
 })
 
 function onClick() {

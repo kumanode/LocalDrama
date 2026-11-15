@@ -1,7 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import zh from '../src/i18n/locales/zh.js'
-import en from '../src/i18n/locales/en.js'
+import { messages } from '../src/i18n/messages.js'
 import { currentLocale, t, setLocale } from '../src/i18n/index.js'
 import { generationStyleOptions, getStyleLabel } from '../src/constants/styleOptions.js'
 import { CANVAS_NODE_STATUS_LABELS } from '../src/composables/useCanvasNodeStatus.js'
@@ -20,8 +19,8 @@ function getLeafEntries(obj, prefix = '') {
 }
 
 test('anti-leak: 100% key parity between zh and en dictionaries', () => {
-  const zhEntries = getLeafEntries(zh)
-  const enEntries = getLeafEntries(en)
+  const zhEntries = getLeafEntries(messages.zh)
+  const enEntries = getLeafEntries(messages.en)
 
   const zhKeys = zhEntries.map(e => e.key).sort()
   const enKeys = enEntries.map(e => e.key).sort()
@@ -36,7 +35,7 @@ test('anti-leak: 100% key parity between zh and en dictionaries', () => {
 })
 
 test('anti-leak: English dictionary has zero Chinese characters (0% leakage)', () => {
-  const enEntries = getLeafEntries(en)
+  const enEntries = getLeafEntries(messages.en)
   const chineseRegex = /[\u4e00-\u9fa5]/
   const leaked = []
 
@@ -50,7 +49,7 @@ test('anti-leak: English dictionary has zero Chinese characters (0% leakage)', (
 })
 
 test('anti-leak: Chinese dictionary has no untranslated raw key strings', () => {
-  const zhEntries = getLeafEntries(zh)
+  const zhEntries = getLeafEntries(messages.zh)
   const rawKeyPattern = /^(common|header|filmList|filmCreate|dramaCanvas|dramaDetail|aiConfig|agent|styleOptions)\./
   const leaked = []
 

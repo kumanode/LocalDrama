@@ -1,3 +1,4 @@
+import { t as i18nT } from '../i18n/index.js'
 import { taskAPI } from '@/api/task'
 import { characterAPI } from '@/api/characters'
 import { sceneAPI } from '@/api/scenes'
@@ -14,13 +15,13 @@ async function pollTask(taskId, onTick, maxAttempts = 450, interval = 2000) {
       const t = await taskAPI.get(taskId)
       if (t.status === 'completed') return { status: 'completed', result: t.result }
       if (t.status === 'failed') {
-        return { status: 'failed', error: t.error?.message || t.error || '任务失败' }
+        return { status: 'failed', error: t.error?.message || t.error || i18nT('messages.taskFailed') }
       }
     } catch (e) {
       if (i === maxAttempts - 1) return { status: 'failed', error: e.message || '轮询失败' }
     }
   }
-  return { status: 'timeout', error: '任务超时' }
+  return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
 }
 
 async function pollUntilHasImage(findEntity, maxAttempts = 120, interval = 2000) {
@@ -64,7 +65,7 @@ export async function generateAssetReferenceImage(ctx, { kind, entity, nodeId })
             : ctx?.drama?.value?.props
         return (list || []).find((x) => Number(x.id) === Number(entity.id))
       })
-      if (!ok) throw new Error('生成超时，请稍后刷新查看')
+      if (!ok) throw new Error(i18nT('dramaCanvas.generationTimedOutRefreshLaterToCheck'))
     }
     await ctx?.refresh?.(true)
     return { ok: true }

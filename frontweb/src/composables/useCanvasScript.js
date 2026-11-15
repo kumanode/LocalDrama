@@ -1,3 +1,4 @@
+import { t as i18nT } from '../i18n/index.js'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { dramaAPI } from '@/api/drama'
@@ -16,13 +17,13 @@ async function pollTask(taskId, onTick, maxAttempts = 450, interval = 2000) {
       const t = await taskAPI.get(taskId)
       if (t.status === 'completed') return { status: 'completed', result: t.result }
       if (t.status === 'failed') {
-        return { status: 'failed', error: t.error?.message || t.error || '任务失败' }
+        return { status: 'failed', error: t.error?.message || t.error || i18nT('messages.taskFailed') }
       }
     } catch (e) {
       if (i === maxAttempts - 1) return { status: 'failed', error: e.message || '轮询失败' }
     }
   }
-  return { status: 'timeout', error: '任务超时' }
+  return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
 }
 
 export function scriptNodeId(episodeId) {
@@ -73,7 +74,7 @@ export function useCanvasScript(deps) {
   async function saveScript(episodeId, { scriptContent, title }) {
     const did = dramaId.value
     const d = drama.value
-    if (!did || !d || !episodeId) throw new Error('缺少项目或集数')
+    if (!did || !d || !episodeId) throw new Error(i18nT('dramaCanvas.missingProjectOrEpisode'))
 
     scriptBusy.value = true
     setScriptBusy(episodeId, 'save_script', CANVAS_NODE_STATUS_LABELS.save_script)
@@ -84,7 +85,7 @@ export function useCanvasScript(deps) {
       })
       await dramaAPI.saveEpisodes(did, payload)
       await refreshCanvas(true)
-      ElMessage.success('剧本已保存')
+      ElMessage.success(i18nT('dramaCanvas.scriptSaved'))
     } finally {
       scriptBusy.value = false
       clearScriptBusy(episodeId)
@@ -98,7 +99,7 @@ export function useCanvasScript(deps) {
       episode_id: episodeId,
       outline,
     })
-    await runExtractTask(res?.task_id, '提取角色')
+    await runExtractTask(res?.task_id, i18nT('dramaCanvas.extractChars'))
   }
 
   async function _extractScenes(episodeId) {
@@ -108,21 +109,21 @@ export function useCanvasScript(deps) {
       style,
       language: 'zh',
     })
-    await runExtractTask(res?.task_id, '提取场景')
+    await runExtractTask(res?.task_id, i18nT('dramaCanvas.extractScenes'))
   }
 
   async function _extractProps(episodeId) {
     const res = await propAPI.extractFromScript(episodeId)
-    await runExtractTask(res?.task_id, '提取道具')
+    await runExtractTask(res?.task_id, i18nT('dramaCanvas.extractProps'))
   }
 
   async function extractCharacters(episodeId, scriptContent) {
-    if (!dramaId.value || !episodeId) throw new Error('请先选择集数')
+    if (!dramaId.value || !episodeId) throw new Error(i18nT('dramaCanvas.selectAnEpisodeFirst'))
     scriptBusy.value = true
     setScriptBusy(episodeId, 'extract_chars', CANVAS_NODE_STATUS_LABELS.extract_chars)
     try {
       await _extractCharacters(episodeId, scriptContent)
-      ElMessage.success('角色提取完成')
+      ElMessage.success(i18nT('dramaCanvas.characterExtractionFinished'))
     } finally {
       scriptBusy.value = false
       clearScriptBusy(episodeId)
@@ -130,12 +131,12 @@ export function useCanvasScript(deps) {
   }
 
   async function extractScenes(episodeId) {
-    if (!episodeId) throw new Error('请先选择集数')
+    if (!episodeId) throw new Error(i18nT('dramaCanvas.selectAnEpisodeFirst'))
     scriptBusy.value = true
     setScriptBusy(episodeId, 'extract_scenes', CANVAS_NODE_STATUS_LABELS.extract_scenes)
     try {
       await _extractScenes(episodeId)
-      ElMessage.success('场景提取完成')
+      ElMessage.success(i18nT('filmCreate.msgScenesExtracted'))
     } finally {
       scriptBusy.value = false
       clearScriptBusy(episodeId)
@@ -143,12 +144,12 @@ export function useCanvasScript(deps) {
   }
 
   async function extractProps(episodeId) {
-    if (!episodeId) throw new Error('请先选择集数')
+    if (!episodeId) throw new Error(i18nT('dramaCanvas.selectAnEpisodeFirst'))
     scriptBusy.value = true
     setScriptBusy(episodeId, 'extract_props', CANVAS_NODE_STATUS_LABELS.extract_props)
     try {
       await _extractProps(episodeId)
-      ElMessage.success('道具提取完成')
+      ElMessage.success(i18nT('filmCreate.msgPropsExtracted'))
     } finally {
       scriptBusy.value = false
       clearScriptBusy(episodeId)
@@ -156,38 +157,38 @@ export function useCanvasScript(deps) {
   }
 
   async function extractAll(episodeId, scriptContent) {
-    if (!episodeId) throw new Error('请先选择集数')
+    if (!episodeId) throw new Error(i18nT('dramaCanvas.selectAnEpisodeFirst'))
     const content = (scriptContent || '').trim()
-    if (!content) throw new Error('请先填写剧本内容')
+    if (!content) throw new Error(i18nT('dramaCanvas.fillScriptFirst'))
 
     scriptBusy.value = true
     let didWork = false
     try {
       if ((drama.value?.characters || []).length === 0) {
-        setScriptBusy(episodeId, 'extract_chars', '1/3 提取角色…')
+        setScriptBusy(episodeId, 'extract_chars', i18nT('dramaCanvas.13ExtractingCharacters'))
         await _extractCharacters(episodeId, content)
         didWork = true
       }
       if ((drama.value?.scenes || []).length === 0) {
-        setScriptBusy(episodeId, 'extract_scenes', '2/3 提取场景…')
+        setScriptBusy(episodeId, 'extract_scenes', i18nT('dramaCanvas.23ExtractingScenes'))
         await _extractScenes(episodeId)
         didWork = true
       }
       if ((drama.value?.props || []).length === 0) {
-        setScriptBusy(episodeId, 'extract_props', '3/3 提取道具…')
+        setScriptBusy(episodeId, 'extract_props', i18nT('dramaCanvas.33ExtractingProps'))
         await _extractProps(episodeId)
         didWork = true
       }
 
       if (!didWork) {
-        ElMessage.info('角色、场景、道具均已存在，无需重复提取')
+        ElMessage.info(i18nT('dramaCanvas.charactersScenesAndPropsAlreadyExistNothingT'))
       } else {
         ElMessage.success(
           `提取完成：${(drama.value?.characters || []).length} 角色 · ${(drama.value?.scenes || []).length} 场景 · ${(drama.value?.props || []).length} 道具`
         )
       }
     } catch (e) {
-      ElMessage.error(e?.message || '提取失败')
+      ElMessage.error(e?.message || i18nT('dramaCanvas.extractionFailed'))
       throw e
     } finally {
       scriptBusy.value = false

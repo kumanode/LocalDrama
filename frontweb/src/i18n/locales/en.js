@@ -54,6 +54,14 @@ export default {
     language: 'Language',
     switchLanguage: 'Switch Language',
     networkError: 'Network error, please try again later',
+    project: 'Project',
+    generateScriptFor: 'Generating script for {name}',
+    dark: 'Dark',
+    light: 'Light',
+    title: 'Title',
+    unnamed: 'Unnamed',
+    deleted: 'Deleted',
+    generating: 'Generating',
   },
 
   header: {
@@ -84,6 +92,7 @@ export default {
     unnamedProject: 'Untitled Project',
     noDescription: 'No description provided',
     projectCount: '{count} Projects',
+    statusDraft: 'Draft',
     exportTooltip: 'Export Project',
     editTooltip: 'Edit',
     deleteTooltip: 'Delete',
@@ -111,6 +120,7 @@ export default {
 
   filmCreate: {
     backToList: 'Back to Projects',
+    episodeScripts: 'Episode Scripts',
     canvasMode: 'Canvas Mode',
     tabOutline: 'Story & Script',
     tabCharacters: 'Characters',
@@ -359,6 +369,7 @@ export default {
 
   dramaCanvas: {
     backToDetail: 'Back to Project',
+    save: 'Save',
     canvasMode: 'Canvas Mode',
     saving: 'Saving…',
     saved: 'Saved',
@@ -708,6 +719,7 @@ export default {
   },
 
   library: {
+    title: 'Asset Library',
     charTitle: 'Asset Library · Characters',
     sceneTitle: 'Asset Library · Scenes',
     propTitle: 'Asset Library · Props',

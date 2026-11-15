@@ -12,7 +12,7 @@
         <span v-if="data.storyboard?.segment_title" class="seg">{{ data.storyboard.segment_title }}</span>
       <span v-if="data.storyboard?.creation_mode === 'universal'" class="mode-badge">{{ locale === 'en' ? 'Omni' : '全能' }}</span>
       </div>
-      <div class="title">{{ data.storyboard?.title || (locale === 'en' ? 'Shot' : '分镜') }}</div>
+      <div class="title">{{ data.storyboard?.title || t('dramaCanvas.shot') }}</div>
       <div class="chips">
         <span v-if="data.storyboard?.shot_type">{{ data.storyboard.shot_type }}</span>
         <span v-if="data.storyboard?.duration">{{ data.storyboard.duration }}s</span>
@@ -44,17 +44,17 @@ const props = defineProps({
 })
 
 const ctx = useCanvasContext()
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const showPanel = computed(() => ctx?.focusedNodeId?.value === props.id)
 
 const statusLabel = computed(() => {
   const isEn = locale.value === 'en'
   const s = props.data.storyboard?.status || 'pending'
   const map = {
-    pending: isEn ? 'Pending' : '待处理',
-    processing: isEn ? 'Generating' : '生成中',
-    completed: isEn ? 'Completed' : '已完成',
-    failed: isEn ? 'Failed' : '失败',
+    pending: isEn ? 'Pending' : t('dramaCanvas.pending2'),
+    processing: isEn ? 'Generating' : t('dramaCanvas.generating'),
+    completed: isEn ? 'Completed' : t('dramaCanvas.statusCompleted'),
+    failed: isEn ? 'Failed' : t('dramaCanvas.statusFailed'),
   }
   return map[s] || s
 })
