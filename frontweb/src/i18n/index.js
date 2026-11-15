@@ -110,6 +110,11 @@ export function t(key, params = {}) {
   return val
 }
 
+export function te(key, locale = currentLocale.value) {
+  const dict = messages[locale] || messages.en || {}
+  return getNestedValue(dict, key) !== undefined
+}
+
 export async function setLocale(lang) {
   if (lang !== 'zh' && lang !== 'en') return
   currentLocale.value = lang
@@ -145,6 +150,7 @@ export function useI18n() {
   return {
     locale: currentLocale,
     t,
+    te,
     setLocale,
     elementLocale,
   }
@@ -153,10 +159,12 @@ export function useI18n() {
 export default {
   install(app) {
     app.config.globalProperties.$t = t
+    app.config.globalProperties.$te = te
     app.config.globalProperties.$locale = currentLocale
     app.provide('i18n', {
       locale: currentLocale,
       t,
+      te,
       setLocale,
       elementLocale,
     })

@@ -1,9 +1,8 @@
 {
   "note": "Temporary allowlist for Fase 0/1 of task/update.md. Counts are leaking LINES per file. Lower a number whenever a file shrinks; delete the entry at 0.",
   "generatedAt": "2026-11-15",
-  "total": 1307,
+  "total": 918,
   "files": {
-    "views/FilmCreate.vue": 918,
-    "components/AIConfigContent.vue": 389
+    "views/FilmCreate.vue": 918
   }
 }

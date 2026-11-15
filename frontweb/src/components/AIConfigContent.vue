@@ -3,7 +3,7 @@
     <el-tabs v-model="activeTab" class="config-tabs">
       <el-tab-pane :label="$t('aiConfig.tabConfigs')" name="configs">
         <div class="tab-content">
-          <!-- 普通模式操作栏 -->
+          <!-- Normal mode actions -->
           <div v-if="!vendorLock.enabled" class="content-actions">
             <div class="actions-left">
               <el-button type="primary" @click="openAdd">
@@ -51,7 +51,7 @@
               </transition>
             </div>
           </div>
-          <!-- 锁定模式提示栏 -->
+          <!-- Vendor lock mode tip bar -->
           <div v-else class="vendor-lock-bar">
             <el-alert
               type="info"
@@ -59,15 +59,15 @@
               class="vendor-lock-tip"
             >
               <template #title>
-                <span>🔒 当前为厂商锁定模式，AI 服务由管理员统一配置。你只能修改 <b>API Key</b> 和 <b>默认模型</b>。</span>
+                <span v-html="$t('aiConfig.vendorLockTip')"></span>
               </template>
             </el-alert>
             <el-button type="primary" size="small" class="vendor-bulk-key-btn" @click="openBulkKey">
               <el-icon><Key /></el-icon>
-              一键换Key
+              {{ $t('aiConfig.bulkKeyBtn') }}
             </el-button>
           </div>
-          <p class="default-tip">每种服务类型仅有一个默认配置：文本用于生成故事；文本生成图片用于角色/场景/道具图；分镜图片生成用于分镜图（支持参考图）；视频用于生成视频；语音合成 TTS 用于分镜配音；即梦2角色认证用于创作页 SD2 认证（网关 Token）；SD2 资产库用于官方 ModelArk 私有资产（在未配置即梦2角色认证时供 SD2 认证使用）。</p>
+          <p class="default-tip">{{ $t('aiConfig.defaultTip') }}</p>
           <el-table
             v-loading="loading"
             :data="list"
@@ -109,7 +109,7 @@
             <el-table-column :label="$t('aiConfig.actions')" width="180" fixed="right">
               <template #default="{ row }">
                 <el-button link type="primary" size="small" @click="openTest(row)">{{ $t('aiConfig.testConnection') }}</el-button>
-                <el-button link type="primary" size="small" @click="onRowEdit(row)">{{ vendorLock.enabled ? '修改Key' : $t('common.edit') }}</el-button>
+                <el-button link type="primary" size="small" @click="onRowEdit(row)">{{ vendorLock.enabled ? $t('aiConfig.modifyKey') : $t('common.edit') }}</el-button>
                 <el-button v-if="!vendorLock.enabled" link type="danger" size="small" @click="onDelete(row)">{{ $t('common.delete') }}</el-button>
               </template>
             </el-table-column>
@@ -128,49 +128,49 @@
       </el-tab-pane>
       <el-tab-pane :label="$t('aiConfig.tabGeneration')" name="generation">
         <div class="tab-content generation-settings">
-          <div class="gs-section-title">⚡ 一键生成并发设置</div>
-          <p class="gs-desc">控制「一键生成视频」和「补全并生成」流水线中，各类任务同时并行生成的数量。并发数越高速度越快，但过高可能触发 API 限流（429 错误）。建议根据你的 API 额度选择。</p>
+          <div class="gs-section-title">{{ $t('aiConfig.genConcurrencyTitle') }}</div>
+          <p class="gs-desc">{{ $t('aiConfig.genConcurrencyDesc') }}</p>
 
           <div class="gs-row">
-            <span class="gs-label">图片并发数</span>
+            <span class="gs-label">{{ $t('aiConfig.imageConcurrency') }}</span>
             <el-select
               v-model="genConcurrencyInput"
               filterable
               allow-create
               default-first-option
-              placeholder="选择或输入并发数"
+              :placeholder="$t('aiConfig.concurrencyPlaceholder')"
               style="width: 180px"
               @change="onConcurrencyChange"
             >
-              <el-option label="1（串行，最稳定）" :value="1" />
+              <el-option :label="$t('aiConfig.concurrencySerial')" :value="1" />
               <el-option label="2" :value="2" />
-              <el-option label="3（默认）" :value="3" />
+              <el-option :label="$t('aiConfig.concurrencyDefault')" :value="3" />
               <el-option label="5" :value="5" />
               <el-option label="8" :value="8" />
               <el-option label="10" :value="10" />
             </el-select>
-            <span class="gs-unit">个任务同时生成</span>
+            <span class="gs-unit">{{ $t('aiConfig.tasksAtSameTime') }}</span>
           </div>
 
           <div class="gs-row" style="margin-top: 10px">
-            <span class="gs-label">视频并发数</span>
+            <span class="gs-label">{{ $t('aiConfig.videoConcurrency') }}</span>
             <el-select
               v-model="genVideoConcurrencyInput"
               filterable
               allow-create
               default-first-option
-              placeholder="选择或输入并发数"
+              :placeholder="$t('aiConfig.concurrencyPlaceholder')"
               style="width: 180px"
               @change="onVideoConcurrencyChange"
             >
-              <el-option label="1（串行，最稳定）" :value="1" />
+              <el-option :label="$t('aiConfig.concurrencySerial')" :value="1" />
               <el-option label="2" :value="2" />
-              <el-option label="3（默认）" :value="3" />
+              <el-option :label="$t('aiConfig.concurrencyDefault')" :value="3" />
               <el-option label="5" :value="5" />
               <el-option label="8" :value="8" />
               <el-option label="10" :value="10" />
             </el-select>
-            <span class="gs-unit">个任务同时生成</span>
+            <span class="gs-unit">{{ $t('aiConfig.tasksAtSameTime') }}</span>
           </div>
 
           <div style="margin-top: 14px">
@@ -179,21 +179,21 @@
               size="small"
               :loading="genSettingSaving"
               @click="saveGenerationSettings"
-            >保存</el-button>
+            >{{ $t('common.save') }}</el-button>
           </div>
           <el-alert
             v-if="genSettingSaved"
             type="success"
-            title="已保存"
+            :title="$t('aiConfig.saved')"
             :closable="false"
             show-icon
             style="margin-top: 12px; width: fit-content"
           />
           <div class="gs-tip-box">
-            <div class="gs-tip-title">📌 适用范围</div>
+            <div class="gs-tip-title">{{ $t('aiConfig.scopeTitle') }}</div>
             <ul class="gs-tip-list">
-              <li>图片并发：步骤 2 角色图、步骤 4 场景图、步骤 6 分镜图</li>
-              <li>视频并发：步骤 7 分镜视频</li>
+              <li>{{ $t('aiConfig.imageConcurrencyScope') }}</li>
+              <li>{{ $t('aiConfig.videoConcurrencyScope') }}</li>
             </ul>
           </div>
         </div>
@@ -205,47 +205,44 @@
       </el-tab-pane>
     </el-tabs>
 
-    <!-- 添加/编辑 -->
+    <!-- Add / Edit Dialog -->
     <el-dialog
       v-model="dialogVisible"
-      :title="vendorLock.enabled ? '修改 API Key / 默认模型' : (editingId ? '编辑配置' : '添加配置')"
+      :title="vendorLock.enabled ? $t('aiConfig.editKeyModelTitle') : (editingId ? $t('aiConfig.editConfig') : $t('aiConfig.addConfig'))"
       width="520px"
       :close-on-click-modal="false"
       @closed="resetForm"
     >
-      <!-- 锁定模式：只展示 api_key 和 default_model -->
+      <!-- Lock mode: only show api_key and default_model -->
       <template v-if="vendorLock.enabled">
         <el-descriptions :column="1" border style="margin-bottom: 16px">
-          <el-descriptions-item label="名称">{{ form.name }}</el-descriptions-item>
-          <el-descriptions-item label="类型">{{ serviceTypeLabel(form.service_type) }}</el-descriptions-item>
-          <el-descriptions-item label="厂商">{{ form.provider }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('common.name')">{{ form.name }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('aiConfig.serviceType')">{{ serviceTypeLabel(form.service_type) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('aiConfig.provider')">{{ form.provider }}</el-descriptions-item>
         </el-descriptions>
         <el-form ref="formRef" :model="form" label-width="100px">
-          <el-form-item prop="api_key" :rules="[{ required: true, message: '请输入 API Key', trigger: 'blur' }]">
+          <el-form-item prop="api_key" :rules="[{ required: true, message: $t('aiConfig.rules.apiKeyRequired'), trigger: 'blur' }]">
             <template #label><span class="form-label-tip">API Key</span></template>
             <el-input
               v-model="form.api_key"
               type="password"
-              :placeholder="form.provider === 'jimeng_ai_api' ? '即梦 Session，多个用英文逗号分隔' : '输入你的 API 密钥'"
+              :placeholder="form.provider === 'jimeng_ai_api' ? $t('aiConfig.jimengSessionPlaceholder') : $t('aiConfig.apiKeyPlaceholder')"
               show-password
             />
           </el-form-item>
           <el-form-item>
-            <template #label><span class="form-label-tip">默认模型</span></template>
+            <template #label><span class="form-label-tip">{{ $t('aiConfig.defaultModel') }}</span></template>
             <el-select v-model="form.default_model" clearable style="width: 100%">
               <el-option v-for="m in formModelList" :key="m" :label="m" :value="m" />
             </el-select>
-            <p class="field-tip">实际调用时使用的模型，可从预设列表中选择。</p>
+            <p class="field-tip">{{ $t('aiConfig.defaultModelTip') }}</p>
           </el-form-item>
           <el-form-item>
             <template #label>
-              <span class="form-label-tip">设为默认
+              <span class="form-label-tip">{{ $t('aiConfig.setDefault') }}
                 <el-tooltip placement="top" popper-class="cfg-tip-popper">
                   <template #content>
-                    <div class="cfg-tip-content">
-                      每种服务类型只有一个「默认」配置。<br>
-                      生成时系统会优先使用默认配置，建议每类至少设一个默认。
-                    </div>
+                    <div class="cfg-tip-content" v-html="$t('aiConfig.setDefaultTip')"></div>
                   </template>
                   <el-icon class="tip-icon"><QuestionFilled /></el-icon>
                 </el-tooltip>
@@ -256,45 +253,34 @@
         </el-form>
       </template>
 
-      <!-- 普通模式：完整表单 -->
+      <!-- Normal mode: full form -->
       <el-form v-else ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item prop="service_type">
           <template #label>
-            <span class="form-label-tip">服务类型
+            <span class="form-label-tip">{{ $t('aiConfig.serviceType') }}
               <el-tooltip placement="top" :show-arrow="true" popper-class="cfg-tip-popper">
                 <template #content>
-                  <div class="cfg-tip-content">
-                    <b>文本/对话</b>：用于 AI 生成故事剧本<br>
-                    <b>文本生成图片</b>：角色、场景、道具的图片生成（不支持参考图）<br>
-                    <b>分镜图片生成</b>：生成分镜图片，支持传入角色参考图<br>
-                    <b>视频生成</b>：根据分镜图生成视频片段<br>
-                    <b>语音合成 TTS</b>：为分镜对白自动合成语音（点分镜配音按钮时使用）<br>
-                    <b>即梦2角色认证</b>：将角色主图登记到即梦业务素材库（SD2 认证），仅填网关 URL 与 Token
-                  </div>
+                  <div class="cfg-tip-content" v-html="$t('aiConfig.serviceTypeTooltip')"></div>
                 </template>
                 <el-icon class="tip-icon"><QuestionFilled /></el-icon>
               </el-tooltip>
             </span>
           </template>
-          <el-select v-model="form.service_type" placeholder="选择类型" style="width: 100%" @change="onServiceTypeChange">
-            <el-option label="文本/对话" value="text" />
-            <el-option label="文本生成图片" value="image" />
-            <el-option label="分镜图片生成" value="storyboard_image" />
-            <el-option label="视频生成" value="video" />
-            <el-option label="语音合成 TTS" value="tts" />
-            <el-option label="即梦2角色认证" value="jimeng2_character_auth" />
+          <el-select v-model="form.service_type" :placeholder="$t('aiConfig.selectTypePlaceholder')" style="width: 100%" @change="onServiceTypeChange">
+            <el-option :label="$t('aiConfig.types.text')" value="text" />
+            <el-option :label="$t('aiConfig.types.image')" value="image" />
+            <el-option :label="$t('aiConfig.types.storyboard_image')" value="storyboard_image" />
+            <el-option :label="$t('aiConfig.types.video')" value="video" />
+            <el-option :label="$t('aiConfig.types.tts')" value="tts" />
+            <el-option :label="$t('aiConfig.types.jimeng2_character_auth')" value="jimeng2_character_auth" />
           </el-select>
         </el-form-item>
         <el-form-item prop="provider">
           <template #label>
-            <span class="form-label-tip">厂商
+            <span class="form-label-tip">{{ $t('aiConfig.provider') }}
               <el-tooltip placement="top" popper-class="cfg-tip-popper">
                 <template #content>
-                  <div class="cfg-tip-content">
-                    从下拉选择预设厂商，会自动填入 Base URL 和模型列表。<br>
-                    也可直接输入自定义厂商名（需手动填写其他字段）。<br>
-                    <b>推荐</b>：通义千问 / 火山引擎，国内访问稳定。
-                  </div>
+                  <div class="cfg-tip-content" v-html="$t('aiConfig.providerTooltip')"></div>
                 </template>
                 <el-icon class="tip-icon"><QuestionFilled /></el-icon>
               </el-tooltip>
@@ -302,7 +288,7 @@
           </template>
           <el-select
             v-model="form.provider"
-            placeholder="选择预设厂商（自动填充 URL 和模型）"
+            :placeholder="$t('aiConfig.presetProviderPlaceholder')"
             clearable
             filterable
             allow-create
@@ -321,13 +307,10 @@
         </el-form-item>
         <el-form-item v-if="form.service_type === 'video'">
           <template #label>
-            <span class="form-label-tip">全能多图
+            <span class="form-label-tip">{{ $t('aiConfig.omniMultiRef') }}
               <el-tooltip placement="top" popper-class="cfg-tip-popper">
                 <template #content>
-                  <div class="cfg-tip-content">
-                    勾选后，全能模式分镜生视频会走多参考图（场景+角色+道具），不再弹出「模型不匹配」降级提示。<br>
-                    「低价 Seedance2」默认开启；其他厂商仅在确认上游支持多图参考时勾选。
-                  </div>
+                  <div class="cfg-tip-content" v-html="$t('aiConfig.omniMultiRefTooltip')"></div>
                 </template>
                 <el-icon class="tip-icon"><QuestionFilled /></el-icon>
               </el-tooltip>
@@ -335,8 +318,8 @@
           </template>
           <el-switch
             v-model="form.supports_universal_omni"
-            active-text="确认支持全能模式（多图参考）"
-            inactive-text="未确认（全能将降级）"
+            :active-text="$t('aiConfig.omniSupportActive')"
+            :inactive-text="$t('aiConfig.omniSupportInactive')"
           />
         </el-form-item>
         <el-alert
@@ -348,50 +331,49 @@
         >
           <template #title>
             <span>
-              适合练手与流水剧制作，价格便宜，一次约 1 元，不按秒计费。
-              官网：
+              {{ $t('aiConfig.cheapSeedance2Tip') }}
               <a href="https://workbench.ohmybb.xyz/" target="_blank" rel="noopener noreferrer" class="cheap-seedance2-link">workbench.ohmybb.xyz</a>
             </span>
           </template>
         </el-alert>
-        <!-- 接口规范：仅图片/分镜/视频类型显示，预设厂商自动填充；自定义厂商必选 -->
+        <!-- Protocol: only shown for image/storyboard/video -->
         <el-form-item v-if="form.service_type !== 'text' && form.service_type !== 'tts' && form.service_type !== 'jimeng2_character_auth'">
           <template #label>
-            <span class="form-label-tip">接口规范
+            <span class="form-label-tip">{{ $t('aiConfig.apiProtocol') }}
               <el-icon class="tip-icon" style="cursor:pointer;color:#409eff" @click="showProtocolHelp = true"><QuestionFilled /></el-icon>
             </span>
           </template>
-          <el-select v-model="form.api_protocol" style="width: 100%" placeholder="选择接口规范（自定义厂商必选）" clearable>
-            <el-option label="OpenAI 兼容（大多数中转站默认）" value="openai" />
-            <el-option label="火山引擎（豆包 Seedream / Seedance）" value="volcengine" />
-            <el-option label="火山即梦 Seedance 全能（方舟多图参考，Seedance 2.0 等）" value="volcengine_omni" />
-            <el-option label="通义万象 DashScope" value="dashscope" />
-            <el-option label="Google Gemini（图片 / Veo 视频）" value="gemini" />
-            <el-option label="Sora 中转站（multipart/form-data，seconds+size）" value="sora" />
-            <el-option label="Veo3 兼容（JSON，images+enhance_prompt，自动翻译英文）" value="veo3" />
-            <el-option label="Vidu 视频" value="vidu" />
-            <el-option label="可灵 Omni-Video（官方 api-beijing / ffir 中转，O1 全能）" value="kling_omni" />
-            <el-option label="xAI Grok Imagine（官方 prompt + aspect_ratio，/v1/videos/generations）" value="xai" />
-            <el-option label="MiniMax H3（官方 V2：/v2/video_generation，模型 MiniMax-H3）" value="minimax_h3" />
+          <el-select v-model="form.api_protocol" style="width: 100%" :placeholder="$t('aiConfig.apiProtocolPlaceholder')" clearable>
+            <el-option :label="$t('aiConfig.protocols.openai')" value="openai" />
+            <el-option :label="$t('aiConfig.protocols.volcengine')" value="volcengine" />
+            <el-option :label="$t('aiConfig.protocols.volcengine_omni')" value="volcengine_omni" />
+            <el-option :label="$t('aiConfig.protocols.dashscope')" value="dashscope" />
+            <el-option :label="$t('aiConfig.protocols.gemini')" value="gemini" />
+            <el-option :label="$t('aiConfig.protocols.sora')" value="sora" />
+            <el-option :label="$t('aiConfig.protocols.veo3')" value="veo3" />
+            <el-option :label="$t('aiConfig.protocols.vidu')" value="vidu" />
+            <el-option :label="$t('aiConfig.protocols.kling_omni')" value="kling_omni" />
+            <el-option :label="$t('aiConfig.protocols.xai')" value="xai" />
+            <el-option :label="$t('aiConfig.protocols.minimax_h3')" value="minimax_h3" />
             <el-option label="NanoBanana" value="nano_banana" />
           </el-select>
         </el-form-item>
 
-        <!-- 接口规范帮助 Dialog -->
-        <el-dialog v-model="showProtocolHelp" title="接口规范说明" width="700px" top="5vh">
+        <!-- Protocol help dialog -->
+        <el-dialog v-model="showProtocolHelp" :title="$t('aiConfig.protoHelp.title')" width="700px" top="5vh">
           <div class="protocol-help">
-            <div class="ph-section-title">🖼 图片 / 分镜图 协议</div>
+            <div class="ph-section-title">{{ $t('aiConfig.protoHelp.imgSection') }}</div>
             <el-collapse accordion>
               <el-collapse-item name="openai-img">
-                <template #title><span class="ph-tag ph-tag-img">图片</span> OpenAI 兼容 — 绝大多数中转站默认</template>
+                <template #title><span class="ph-tag ph-tag-img">{{ $t('aiConfig.protoHelp.tagImg') }}</span> {{ $t('aiConfig.protoHelp.openaiImgTitle') }}</template>
                 <div class="ph-body">
-                  <b>适用场景：</b>OpenAI 官方、各类中转/代理站（ChatFire、硅基流动等）<br>
+                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.openaiImgScenario') }}<br>
                   <b>Endpoint：</b><code>POST /v1/images/generations</code><br>
                   <pre>{ "model": "dall-e-3", "prompt": "...", "n": 1, "size": "1024x1024" }</pre>
                 </div>
               </el-collapse-item>
               <el-collapse-item name="volcengine-img">
-                <template #title><span class="ph-tag ph-tag-img">图片</span> 火山引擎 — 豆包 Seedream</template>
+                <template #title><span class="ph-tag ph-tag-img">{{ $t('aiConfig.protoHelp.tagImg') }}</span> {{ $t('aiConfig.protoHelp.volcengineImgTitle') }}</template>
                 <div class="ph-body">
                   <b>Endpoint：</b><code>POST /api/v3/images/generations</code><br>
                   <b>Base URL：</b><code>https://ark.cn-beijing.volces.com/api/v3</code><br>
@@ -399,40 +381,40 @@
                 </div>
               </el-collapse-item>
               <el-collapse-item name="dashscope-img">
-                <template #title><span class="ph-tag ph-tag-img">图片</span> 通义万象 DashScope</template>
+                <template #title><span class="ph-tag ph-tag-img">{{ $t('aiConfig.protoHelp.tagImg') }}</span> {{ $t('aiConfig.protoHelp.dashscopeImgTitle') }}</template>
                 <div class="ph-body">
                   <b>Base URL：</b><code>https://dashscope.aliyuncs.com</code><br>
                   <b>Endpoint：</b><code>POST /api/v1/services/aigc/text2image/image-synthesis</code>
                 </div>
               </el-collapse-item>
               <el-collapse-item name="gemini-img">
-                <template #title><span class="ph-tag ph-tag-img">图片</span> Google Gemini</template>
+                <template #title><span class="ph-tag ph-tag-img">{{ $t('aiConfig.protoHelp.tagImg') }}</span> {{ $t('aiConfig.protoHelp.geminiImgTitle') }}</template>
                 <div class="ph-body">
-                  <b>认证：</b>URL 参数 <code>?key=API_KEY</code><br>
+                  <b>{{ $t('aiConfig.protoHelp.auth') }}：</b>{{ $t('aiConfig.protoHelp.geminiAuth') }}<br>
                   <b>Endpoint：</b><code>POST /v1beta/models/{model}:generateContent</code>
                 </div>
               </el-collapse-item>
             </el-collapse>
 
-            <div class="ph-section-title" style="margin-top:16px">🎬 视频 协议</div>
+            <div class="ph-section-title" style="margin-top:16px">{{ $t('aiConfig.protoHelp.videoSection') }}</div>
             <el-collapse accordion>
               <el-collapse-item name="cheap-seedance2-vid">
-                <template #title><span class="ph-tag ph-tag-vid">视频</span> 低价 Seedance2 — Sora 兼容（ohmybb）</template>
+                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.cheapSeedance2VidTitle') }}</template>
                 <div class="ph-body">
-                  <b>适用场景：</b>练手、流水剧制作；按次计费（约 1 元/次），不按秒计费。<br>
-                  <b>厂商：</b>选择「低价 Seedance2」即可自动填好 Base URL / 协议 / 模型，并默认勾选「确认支持全能模式」。<br>
+                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidScenario') }}<br>
+                  <b>{{ $t('aiConfig.provider') }}：</b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidProvider') }}<br>
                   <b>Base URL：</b><code>https://workbench.ohmybb.xyz/api/openai</code><br>
-                  <b>接口规范：</b><code>sora</code>（multipart/form-data；多图参考时用 JSON <code>images</code> 数组，最多 9 张）<br>
-                  <b>默认 Endpoint：</b><code>POST /v1/videos</code>，查询 <code>GET /v1/videos/{taskId}</code>；成片需带 Key 下载 <code>/v1/videos/{id}/content</code>（本系统会自动处理）。<br>
-                  <b>模型：</b><code>wb-seedance-2-fast</code>（5/10 秒）、<code>yk-seedance-mini</code> / <code>yk-seedance2.0-fast</code> / <code>yk-seedance2.0</code>（4–15 秒）、<code>minimax-h3-1080p-15s</code>（4–15 秒，仅 1 张参考图）<br>
-                  <b>官网 / 充值：</b><a href="https://workbench.ohmybb.xyz/" target="_blank" rel="noopener noreferrer">https://workbench.ohmybb.xyz/</a>
+                  <b>{{ $t('aiConfig.apiProtocol') }}：</b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidProto') }}<br>
+                  <b>Endpoint：</b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidEndpoint') }}<br>
+                  <b>{{ $t('aiConfig.defaultModel') }}：</b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidModels') }}<br>
+                  <b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidWebsite') }}</b><a href="https://workbench.ohmybb.xyz/" target="_blank" rel="noopener noreferrer">https://workbench.ohmybb.xyz/</a>
                 </div>
               </el-collapse-item>
               <el-collapse-item name="openai-vid">
-                <template #title><span class="ph-tag ph-tag-vid">视频</span> OpenAI 兼容 — content 数组格式</template>
+                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.openaiVidTitle') }}</template>
                 <div class="ph-body">
-                  <b>适用场景：</b>各类中转站视频接口（ChatFire 等）<br>
-                  <b>Endpoint：</b>自定义，如 <code>POST /v1/video/create</code><br>
+                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.openaiVidScenario') }}<br>
+                  <b>Endpoint：</b>Custom, e.g. <code>POST /v1/video/create</code><br>
                   <pre>{ "model": "sora-2-pro",
   "content": [
     { "type": "text", "text": "..." },
@@ -442,38 +424,38 @@
                 </div>
               </el-collapse-item>
               <el-collapse-item name="sora-vid">
-                <template #title><span class="ph-tag ph-tag-vid">视频</span> Sora 中转站 — multipart/form-data</template>
+                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.soraVidTitle') }}</template>
                 <div class="ph-body">
-                  <b>适用场景：</b>Sora API 格式的中转站<br>
-                  <b>默认 Endpoint：</b><code>POST /v1/videos</code>（创建），<code>GET /v1/videos/{taskId}</code>（查询）<br>
-                  <b>请求格式：</b>multipart/form-data（非 JSON）<br>
+                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.soraVidScenario') }}<br>
+                  <b>{{ $t('aiConfig.protoHelp.soraVidDefaultEndpoint') }}</b><br>
+                  <b>{{ $t('aiConfig.protoHelp.soraVidReqFormat') }}</b><br>
                   <pre>model       = "sora-2"
 prompt      = "..."
 seconds     = "4" | "8" | "12"
 size        = "720x1280" | "1280x720" | "1024x1792" | "1792x1024"
 watermark   = "false"
 private     = "false"
-input_reference = (图片文件，可选)</pre>
-                  <b>注意：</b>参考图会自动 resize 到与 size 一致后上传。
+input_reference = (image file, optional)</pre>
+                  <b>{{ $t('aiConfig.protoHelp.notice') }}：</b>{{ $t('aiConfig.protoHelp.soraVidNotice') }}
                 </div>
               </el-collapse-item>
               <el-collapse-item name="veo3-vid">
-                <template #title><span class="ph-tag ph-tag-vid">视频</span> Veo3 兼容 — images + enhance_prompt</template>
+                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.veo3VidTitle') }}</template>
                 <div class="ph-body">
-                  <b>适用场景：</b>Veo3 系列模型的 JSON 格式接口<br>
-                  <b>默认 Endpoint：</b><code>POST /v1/video/create</code>（创建），<code>GET /v1/video/query?id={taskId}</code>（查询）<br>
+                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.veo3VidScenario') }}<br>
+                  <b>{{ $t('aiConfig.protoHelp.veo3VidDefaultEndpoint') }}</b><br>
                   <pre>{ "model": "veo3.1",
   "prompt": "...",
   "enhance_prompt": true,
   "images": ["data:image/jpeg;base64,..."]
 }</pre>
-                  <b>注意：</b><code>enhance_prompt: true</code> 会让接口自动将提示词翻译为英文。localhost 图片会自动转为 base64 内嵌。
+                  <b>{{ $t('aiConfig.protoHelp.notice') }}：</b>{{ $t('aiConfig.protoHelp.veo3VidNotice') }}
                 </div>
               </el-collapse-item>
               <el-collapse-item name="volcengine-vid">
-                <template #title><span class="ph-tag ph-tag-vid">视频</span> 火山引擎 — 豆包 Seedance</template>
+                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.volcengineVidTitle') }}</template>
                 <div class="ph-body">
-                  <b>Endpoint：</b><code>POST …/contents/generations/tasks</code>（与后端一致）<br>
+                  <b>Endpoint：</b><code>POST …/contents/generations/tasks</code><br>
                   <b>Base URL：</b><code>https://ark.cn-beijing.volces.com/api/v3</code><br>
                   <pre>{ "model": "doubao-seedance-2-0-fast-260128",
   "content": [{ "type": "text", "text": "..." }],
@@ -482,24 +464,24 @@ input_reference = (图片文件，可选)</pre>
                 </div>
               </el-collapse-item>
               <el-collapse-item name="volcengine-omni-vid">
-                <template #title><span class="ph-tag ph-tag-vid">视频</span> 火山即梦 Seedance 全能（多图参考）</template>
+                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.volcengineOmniVidTitle') }}</template>
                 <div class="ph-body">
-                  <b>适用：</b>方舟 Seedance 2.0 等支持多参考图的全能链路；与「全能模式」分镜、<code>@图片1</code>… 提示词配合使用。<br>
-                  <b>Endpoint：</b><code>POST {base}/contents/generations/tasks</code>，轮询 <code>GET {base}/contents/generations/tasks/{taskId}</code><br>
-                  <b>厂商：</b>仍选「火山引擎」，<b>接口规范</b>选本项；模型填控制台接入点（如 <code>doubao-seedance-2-0-260128</code>，以控制台为准）。<br>
+                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.volcengineOmniVidScenario') }}<br>
+                  <b>Endpoint：</b><code>POST {base}/contents/generations/tasks</code>, <code>GET {base}/contents/generations/tasks/{taskId}</code><br>
+                  <b>{{ $t('aiConfig.provider') }}：</b>{{ $t('aiConfig.protoHelp.volcengineOmniVidProvider') }}<br>
                   <pre>{ "model": "doubao-seedance-2-0-260128",
   "task_type": "i2v",
   "content": [
-    { "type": "text", "text": "… @图片1 … @图片2 …" },
+    { "type": "text", "text": "… @图片1 … @图片2 …" }, // i18n-scan-ignore: omni prompt token protocol
     { "type": "image_url", "image_url": { "url": "https://..." } },
     { "type": "image_url", "image_url": { "url": "https://..." }, "role": "reference_image" }
   ],
   "ratio": "9:16", "duration": 8, "watermark": false }</pre>
-                  <b>说明：</b>全能模式下列均为参考图（场景、角色…），每张均 <code>role: reference_image</code>；最多 9 张，时长 Seedance 2.x 按 4–15 秒吸附。
+                  <b>{{ $t('aiConfig.protoHelp.desc') }}：</b>{{ $t('aiConfig.protoHelp.volcengineOmniVidDesc') }}
                 </div>
               </el-collapse-item>
               <el-collapse-item name="dashscope-vid">
-                <template #title><span class="ph-tag ph-tag-vid">视频</span> 通义万象 DashScope</template>
+                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.dashscopeVidTitle') }}</template>
                 <div class="ph-body">
                   <b>Base URL：</b><code>https://dashscope.aliyuncs.com</code><br>
                   <b>Endpoint：</b><code>POST /api/v1/services/aigc/video-generation/video-synthesis</code><br>
@@ -509,18 +491,18 @@ input_reference = (图片文件，可选)</pre>
                 </div>
               </el-collapse-item>
               <el-collapse-item name="gemini-vid">
-                <template #title><span class="ph-tag ph-tag-vid">视频</span> Google Gemini — Veo 视频</template>
+                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.geminiVidTitle') }}</template>
                 <div class="ph-body">
-                  <b>认证：</b>URL 参数 <code>?key=API_KEY</code><br>
+                  <b>{{ $t('aiConfig.protoHelp.auth') }}：</b>{{ $t('aiConfig.protoHelp.geminiAuth') }}<br>
                   <b>Endpoint：</b><code>POST /v1beta/models/{model}:generateVideo</code>
                 </div>
               </el-collapse-item>
               <el-collapse-item name="vidu-vid">
-                <template #title><span class="ph-tag ph-tag-vid">视频</span> Vidu</template>
+                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.viduVidTitle') }}</template>
                 <div class="ph-body">
-                  <b>适用场景：</b>Vidu 官方及兼容接口<br>
-                  <b>认证：</b><code>Authorization: Token {api_key}</code>（非 Bearer）<br>
-                  <b>默认 Endpoint：</b><code>POST /ent/v2/img2video</code>（创建），<code>GET /ent/v2/tasks/{taskId}/creations</code>（查询）<br>
+                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.viduVidScenario') }}<br>
+                  <b>{{ $t('aiConfig.protoHelp.auth') }}：</b><code>Authorization: Token {api_key}</code><br>
+                  <b>Endpoint：</b>{{ $t('aiConfig.protoHelp.viduVidDefaultEndpoint') }}<br>
                   <pre>{ "model": "viduq3-pro",
   "images": ["https://..."],
   "prompt": "...",
@@ -530,46 +512,45 @@ input_reference = (图片文件，可选)</pre>
   "audio": false,
   "watermark": false
 }</pre>
-                  <b>注意：</b>官方 api.vidu.cn 用 <code>Token</code> 认证，中转站用 <code>Bearer</code>，系统自动识别。localhost 图片自动上传图床。
+                  <b>{{ $t('aiConfig.protoHelp.notice') }}：</b>{{ $t('aiConfig.protoHelp.viduVidNotice') }}
                 </div>
               </el-collapse-item>
               <el-collapse-item name="jimeng-ai-api-vid">
-                <template #title><span class="ph-tag ph-tag-vid">视频</span> Jimeng AI API（自建服务）</template>
+                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.jimengAiApiVidTitle') }}</template>
                 <div class="ph-body">
-                  <b>说明：</b>需自行部署 <code>jimeng-free-api-all</code> 等即梦 OpenAI 兼容服务并启动（如 <code>http://127.0.0.1:8000</code>）。本系统仅作为客户端转发请求。<br>
-                  <b>Base URL：</b>填你的服务根地址，无尾斜杠。<br>
-                  <b>API Key：</b>填即梦网页 <b>Session</b>；多个账号用<b>英文逗号</b>分隔，由对方服务轮询使用。<br>
-                  <b>默认路径：</b><code>POST /v1/videos/generations</code>（可在「Endpoint」覆盖）。Seedance 多图需分镜参考图；响应为同步 <code>data[0].url</code>。
+                  <b>{{ $t('aiConfig.protoHelp.desc') }}：</b>{{ $t('aiConfig.protoHelp.jimengAiApiVidDesc') }}<br>
+                  <b>Base URL：</b>{{ $t('aiConfig.protoHelp.jimengAiApiVidBaseUrl') }}<br>
+                  <b>API Key：</b>{{ $t('aiConfig.protoHelp.jimengAiApiVidApiKey') }}<br>
+                  <b>Endpoint：</b>{{ $t('aiConfig.protoHelp.jimengAiApiVidDefaultPath') }}
                 </div>
               </el-collapse-item>
             </el-collapse>
           </div>
           <template #footer>
-            <el-button @click="showProtocolHelp = false">关闭</el-button>
+            <el-button @click="showProtocolHelp = false">{{ $t('common.close') }}</el-button>
           </template>
         </el-dialog>
         <el-form-item prop="name">
           <template #label>
-            <span class="form-label-tip">名称
-              <el-tooltip content="配置的显示名，用于在列表中区分不同配置，选择厂商后可自动生成。" placement="top" popper-class="cfg-tip-popper">
+            <span class="form-label-tip">{{ $t('common.name') }}
+              <el-tooltip :content="$t('aiConfig.nameTooltip')" placement="top" popper-class="cfg-tip-popper">
                 <el-icon class="tip-icon"><QuestionFilled /></el-icon>
               </el-tooltip>
             </span>
           </template>
-          <el-input v-model="form.name" placeholder="如：OpenAI 图文，可自动生成" />
+          <el-input v-model="form.name" :placeholder="$t('aiConfig.namePlaceholder')" />
         </el-form-item>
         <el-form-item prop="base_url">
           <template #label>
-            <span class="form-label-tip">{{ form.service_type === 'jimeng2_character_auth' ? '网关 URL' : 'Base URL' }}
+            <span class="form-label-tip">{{ form.service_type === 'jimeng2_character_auth' ? $t('aiConfig.gatewayUrl') : 'Base URL' }}
               <el-tooltip placement="top" popper-class="cfg-tip-popper">
                 <template #content>
                   <div class="cfg-tip-content">
                     <template v-if="form.service_type === 'jimeng2_character_auth'">
-                      即梦业务素材库网关的<b>根地址</b>（不含 <code>/api/business/v1</code> 路径）。须与素材库实际部署一致。
+                      <span v-html="$t('aiConfig.gatewayRootTip')"></span>
                     </template>
                     <template v-else>
-                      API 接口地址，选择预设厂商后自动填入，一般无需修改。<br>
-                      示例：https://dashscope.aliyuncs.com
+                      <span v-html="$t('aiConfig.baseUrlTip')"></span>
                     </template>
                   </div>
                 </template>
@@ -579,7 +560,7 @@ input_reference = (图片文件，可选)</pre>
           </template>
           <el-input
             v-model="form.base_url"
-            :placeholder="form.service_type === 'jimeng2_character_auth' ? '如 https://your-gateway.com' : '选择预设厂商后自动填充，可修改'"
+            :placeholder="form.service_type === 'jimeng2_character_auth' ? $t('aiConfig.gatewayUrlPlaceholder') : $t('aiConfig.baseUrlPlaceholderModifiable')"
           />
         </el-form-item>
         <el-form-item prop="api_key">
@@ -589,12 +570,10 @@ input_reference = (图片文件，可选)</pre>
                 <template #content>
                   <div class="cfg-tip-content">
                     <template v-if="form.service_type === 'jimeng2_character_auth'">
-                      素材库要求的 <code>Authorization: Bearer …</code> Token，由网关或即梦侧签发。
+                      <span v-html="$t('aiConfig.tokenTip')"></span>
                     </template>
                     <template v-else>
-                      在对应 AI 平台申请的密钥，用于身份验证。<br>
-                      通义：<b>dashscope.aliyuncs.com</b><br>
-                      火山：<b>console.volcengine.com/ark</b>
+                      <span v-html="$t('aiConfig.apiKeyTip')"></span>
                     </template>
                   </div>
                 </template>
@@ -605,22 +584,22 @@ input_reference = (图片文件，可选)</pre>
           <el-input
             v-model="form.api_key"
             type="password"
-            :placeholder="form.service_type === 'jimeng2_character_auth' ? 'Bearer Token' : (form.provider === 'jimeng_ai_api' ? '即梦 Session，多个用英文逗号分隔' : 'API 密钥')"
+            :placeholder="form.service_type === 'jimeng2_character_auth' ? $t('aiConfig.bearerTokenPlaceholder') : (form.provider === 'jimeng_ai_api' ? $t('aiConfig.jimengSessionPlaceholder') : $t('aiConfig.apiKeyShortPlaceholder'))"
             show-password
           />
         </el-form-item>
         <el-form-item v-if="form.service_type === 'jimeng2_character_auth'">
-          <template #label><span class="form-label-tip">素材列表</span></template>
+          <template #label><span class="form-label-tip">{{ $t('aiConfig.materialList') }}</span></template>
           <div class="jimeng2-assets-actions">
             <el-button type="primary" plain :loading="jimeng2AssetsLoading" @click="openJimeng2MaterialAssetsDialog">
-              列出素材
+              {{ $t('aiConfig.listMaterialsBtn') }}
             </el-button>
             <span class="field-tip jimeng2-assets-tip">
-              调用网关
+              {{ $t('aiConfig.callGateway') }}
               <code>GET /api/business/v1/assets</code>
-              ，与
-              <a href="https://83zi.com/sd2realperson.html" target="_blank" rel="noopener noreferrer">素材管理 API 文档</a>
-              一致（使用当前表单中的网关 URL 与 Token，无需先保存）。
+              {{ $t('aiConfig.sameAs') }}
+              <a href="https://83zi.com/sd2realperson.html" target="_blank" rel="noopener noreferrer">{{ $t('aiConfig.materialApiDoc') }}</a>
+              {{ $t('aiConfig.consistentWith') }}
             </span>
           </div>
         </el-form-item>
@@ -630,8 +609,8 @@ input_reference = (图片文件，可选)</pre>
           :closable="false"
           show-icon
           style="margin-bottom: 12px"
-          title="用于创作页「角色生成 → SD2认证」"
-          description="保存后，系统从此处读取网关与 Token 调用 POST /api/business/v1/assets 登记角色图；可用「列出素材」核对素材状态。角色主图需为外网可访问的 http(s) 地址（图床或本服务 storage.base_url）。"
+          :title="$t('aiConfig.sd2AuthCardTitle')"
+          :description="$t('aiConfig.sd2AuthCardDesc')"
         />
         <template v-if="form.service_type === 'video' && form.api_protocol === 'kling_omni'">
           <el-form-item>
@@ -640,16 +619,14 @@ input_reference = (图片文件，可选)</pre>
               v-model="form.kling_access_key"
               type="password"
               show-password
-              placeholder="可灵开放平台 AccessKey（与 SecretKey 成对，可不填上方 API Key）"
+              :placeholder="$t('aiConfig.klingAkPlaceholder')"
               autocomplete="off"
             />
             <p class="field-tip">
-              官方 JWT 规则见
+              {{ $t('aiConfig.officialJwtRules') }}
               <a href="https://klingai.com/document-api/apiReference/commonInfo" target="_blank" rel="noopener noreferrer">commonInfo</a>
-              （<a href="https://app.klingai.com/cn/dev/document-api/apiReference/commonInfo" target="_blank" rel="noopener noreferrer">中文版</a>）。
-              后端使用与官方示例一致的 HS256（<code>iss</code>=AccessKey，<code>exp</code>、<code>nbf</code>）生成 Token。
-              若接口返回 <code>1000 Authorization signature is invalid</code>：请确认 AccessKey/SecretKey 未填反、无多余空格；并尝试勾选下方「SecretKey 为 Base64」；
-              Base URL 区域（<code>api-beijing.klingai.com</code> / <code>api-singapore.klingai.com</code>）须与密钥所属区域一致。
+              （<a href="https://app.klingai.com/cn/dev/document-api/apiReference/commonInfo" target="_blank" rel="noopener noreferrer">{{ $t('aiConfig.chineseVersion') }}</a>）。
+              <span v-html="$t('aiConfig.klingTokenGenDesc')"></span>
             </p>
           </el-form-item>
           <el-form-item>
@@ -658,35 +635,26 @@ input_reference = (图片文件，可选)</pre>
               v-model="form.kling_secret_key"
               type="password"
               show-password
-              placeholder="可灵开放平台 SecretKey"
+              :placeholder="$t('aiConfig.klingSkPlaceholder')"
               autocomplete="off"
             />
             <el-checkbox v-model="form.kling_secret_key_base64" style="margin-top: 8px; display: block">
-              SecretKey 为 Base64 字符串（解码后的二进制再用于签名；若仍报签名无效可切换此项重试）
+              {{ $t('aiConfig.klingSkBase64Label') }}
             </el-checkbox>
             <p class="field-tip">
-              官方域名：<code>POST {base}/v1/videos/omni-video</code>，轮询
-              <code>GET {base}/v1/videos/omni-video/{taskId}</code>；飞儿等中转仍为
-              <code>/kling/v1/videos/omni-video</code> 与
-              <code>/kling/v1/images/omni-image/{taskId}</code>。详见
+              <span v-html="$t('aiConfig.klingDomainTip')"></span>
               <a href="https://klingai.com/document-api/apiReference/model/OmniVideo" target="_blank" rel="noopener noreferrer">OmniVideo</a>。
             </p>
           </el-form-item>
         </template>
-        <!-- TTS 专属字段：声音 ID 和 MiniMax Group ID -->
+        <!-- TTS specific fields -->
         <template v-if="form.service_type === 'tts'">
           <el-form-item>
             <template #label>
-              <span class="form-label-tip">声音 ID
+              <span class="form-label-tip">{{ $t('aiConfig.voiceId') }}
                 <el-tooltip placement="top" popper-class="cfg-tip-popper">
                   <template #content>
-                    <div class="cfg-tip-content">
-                      TTS 合成使用的音色 ID。<br>
-                      <b>MiniMax 常用音色：</b><br>
-                      female-shaonv（少女）、female-chengshu（成熟）<br>
-                      male-qingxin（清新男）、male-zhicheng（知城男）<br>
-                      audiobook_female_2（有声书女）、audiobook_male_1（有声书男）
-                    </div>
+                    <div class="cfg-tip-content" v-html="$t('aiConfig.voiceIdTooltip')"></div>
                   </template>
                   <el-icon class="tip-icon"><QuestionFilled /></el-icon>
                 </el-tooltip>
@@ -697,115 +665,99 @@ input_reference = (图片文件，可选)</pre>
               filterable
               allow-create
               default-first-option
-              placeholder="选择或输入声音 ID"
+              :placeholder="$t('aiConfig.voiceIdPlaceholder')"
               style="width: 100%"
             >
-              <el-option-group label="MiniMax 女声">
-                <el-option label="female-shaonv（少女）" value="female-shaonv" />
-                <el-option label="female-chengshu（成熟）" value="female-chengshu" />
-                <el-option label="female-tianmei（甜美）" value="female-tianmei" />
-                <el-option label="audiobook_female_2（有声书）" value="audiobook_female_2" />
+              <el-option-group :label="$t('aiConfig.voiceOptions.minimaxFemale')">
+                <el-option :label="$t('aiConfig.voiceOptions.femaleShaonv')" value="female-shaonv" />
+                <el-option :label="$t('aiConfig.voiceOptions.femaleChengshu')" value="female-chengshu" />
+                <el-option :label="$t('aiConfig.voiceOptions.femaleTianmei')" value="female-tianmei" />
+                <el-option :label="$t('aiConfig.voiceOptions.audiobookFemale2')" value="audiobook_female_2" />
               </el-option-group>
-              <el-option-group label="MiniMax 男声">
-                <el-option label="male-qingxin（清新）" value="male-qingxin" />
-                <el-option label="male-zhicheng（知城）" value="male-zhicheng" />
-                <el-option label="audiobook_male_1（有声书）" value="audiobook_male_1" />
+              <el-option-group :label="$t('aiConfig.voiceOptions.minimaxMale')">
+                <el-option :label="$t('aiConfig.voiceOptions.maleQingxin')" value="male-qingxin" />
+                <el-option :label="$t('aiConfig.voiceOptions.maleZhicheng')" value="male-zhicheng" />
+                <el-option :label="$t('aiConfig.voiceOptions.audiobookMale1')" value="audiobook_male_1" />
               </el-option-group>
             </el-select>
-            <p class="field-tip">MiniMax 必填；不填默认 female-shaonv。</p>
+            <p class="field-tip">{{ $t('aiConfig.minimaxVoiceTip') }}</p>
           </el-form-item>
           <el-form-item>
             <template #label>
               <span class="form-label-tip">Group ID
                 <el-tooltip placement="top" popper-class="cfg-tip-popper">
                   <template #content>
-                    <div class="cfg-tip-content">
-                      MiniMax 账号的 GroupId，调用 T2A v2 接口时附在 URL 参数里。<br>
-                      登录 <b>platform.minimaxi.com</b> → 账户设置 → 即可查看 GroupId。
-                    </div>
+                    <div class="cfg-tip-content" v-html="$t('aiConfig.groupIdTooltip')"></div>
                   </template>
                   <el-icon class="tip-icon"><QuestionFilled /></el-icon>
                 </el-tooltip>
               </span>
             </template>
-            <el-input v-model="form.group_id" placeholder="MiniMax GroupId，如 1234567890" />
-            <p class="field-tip">仅 MiniMax T2A 需要此字段。</p>
+            <el-input v-model="form.group_id" :placeholder="$t('aiConfig.groupIdPlaceholder')" />
+            <p class="field-tip">{{ $t('aiConfig.minimaxGroupIdTip') }}</p>
           </el-form-item>
         </template>
 
-        <!-- 端点配置：视频必填（自定义厂商）；图片/分镜在使用代理或特殊厂商时填写 -->
+        <!-- Custom video endpoint config -->
         <template v-if="form.service_type !== 'text' && form.service_type !== 'tts' && form.service_type !== 'jimeng2_character_auth'">
           <el-form-item>
             <template #label>
-              <span class="form-label-tip">提交端点
+              <span class="form-label-tip">{{ $t('aiConfig.submitEndpoint') }}
                 <el-tooltip placement="top" popper-class="cfg-tip-popper">
                   <template #content>
-                    <div class="cfg-tip-content">
-                      接口路径，追加在 Base URL 之后。<br>
-                      <b>预设厂商</b>（火山 / 通义 / NanoBanana）留空，系统自动推断。<br>
-                      <b>视频自定义厂商</b>必须填写，如 /v1/videos/generations<br>
-                      <b>NanoBanana 代理</b>填写代理路径，如 /fal-ai/nano-banana
-                    </div>
+                    <div class="cfg-tip-content" v-html="$t('aiConfig.submitEndpointTooltip')"></div>
                   </template>
                   <el-icon class="tip-icon"><QuestionFilled /></el-icon>
                 </el-tooltip>
               </span>
             </template>
-            <el-input v-model="form.endpoint" :placeholder="form.service_type === 'video' ? '自定义视频厂商必填，如 /v1/videos/generations；预设厂商留空' : '代理或特殊厂商时填写，如 /fal-ai/nano-banana；预设厂商留空'" />
+            <el-input v-model="form.endpoint" :placeholder="form.service_type === 'video' ? $t('aiConfig.submitEndpointPlaceholderVideo') : $t('aiConfig.submitEndpointPlaceholderOther')" />
           </el-form-item>
           <el-form-item>
             <template #label>
-              <span class="form-label-tip">查询端点
+              <span class="form-label-tip">{{ $t('aiConfig.queryEndpoint') }}
                 <el-tooltip placement="top" popper-class="cfg-tip-popper">
                   <template #content>
-                    <div class="cfg-tip-content">
-                      查询任务状态的接口路径，{taskId} 会被替换为实际任务 ID。<br>
-                      <b>预设厂商</b>留空即可，由系统自动推断。<br>
-                      <b>视频自定义厂商</b>必须填写，如 /v1/video/tasks/{taskId}<br>
-                      <b>图片/NanoBanana</b> 代理若不支持轮询可留空
-                    </div>
+                    <div class="cfg-tip-content" v-html="$t('aiConfig.queryEndpointTooltip')"></div>
                   </template>
                   <el-icon class="tip-icon"><QuestionFilled /></el-icon>
                 </el-tooltip>
               </span>
             </template>
-            <el-input v-model="form.query_endpoint" placeholder="自定义视频厂商必填，如 /v1/video/tasks/{taskId}；预设厂商留空" />
+            <el-input v-model="form.query_endpoint" :placeholder="$t('aiConfig.queryEndpointPlaceholder')" />
           </el-form-item>
         </template>
 
-        <!-- 接口地址预览：选择厂商/协议后自动展示，帮助用户核对 -->
+        <!-- Endpoint preview -->
         <div v-if="endpointPreviewInfo" class="endpoint-preview-box" :class="{ 'ep-box-gemini': endpointPreviewInfo.isGemini }">
           <div class="ep-preview-header">
-            <span>📌 系统将使用以下接口地址</span>
-            <span v-if="endpointPreviewInfo.isGemini" class="ep-auto-badge ep-badge-gemini">Gemini 固定模式</span>
-            <span v-else-if="endpointPreviewInfo.isJimeng2Auth" class="ep-auto-badge">即梦2角色认证</span>
-            <span v-else-if="endpointPreviewInfo.isAuto && form.service_type !== 'text'" class="ep-auto-badge">自动推断</span>
+            <span>{{ $t('aiConfig.previewEndpointTitle') }}</span>
+            <span v-if="endpointPreviewInfo.isGemini" class="ep-auto-badge ep-badge-gemini">{{ $t('aiConfig.previewGeminiBadge') }}</span>
+            <span v-else-if="endpointPreviewInfo.isJimeng2Auth" class="ep-auto-badge">{{ $t('aiConfig.previewJimeng2AuthBadge') }}</span>
+            <span v-else-if="endpointPreviewInfo.isAuto && form.service_type !== 'text'" class="ep-auto-badge">{{ $t('aiConfig.previewAutoBadge') }}</span>
           </div>
           <div class="ep-row">
-            <span class="ep-label">提交地址：</span>
+            <span class="ep-label">{{ $t('aiConfig.submitUrlLabel') }}</span>
             <code class="ep-url">{{ endpointPreviewInfo.submit }}</code>
           </div>
           <div v-if="endpointPreviewInfo.query" class="ep-row">
-            <span class="ep-label">查询地址：</span>
+            <span class="ep-label">{{ $t('aiConfig.queryUrlLabel') }}</span>
             <code class="ep-url">{{ endpointPreviewInfo.query }}</code>
           </div>
           <p v-if="endpointPreviewInfo.isGemini" class="ep-tip ep-tip-warn">
-            ⚠️ Gemini 端点由系统根据模型名固定生成，上方「提交端点」和「查询端点」字段对 Gemini 无效，填了也不生效。
+            {{ $t('aiConfig.geminiEndpointWarn') }}
           </p>
-          <p v-else-if="endpointPreviewInfo.isJimeng2Auth" class="ep-tip">角色「SD2认证」将调用上述地址注册素材（POST 创建、GET 查询状态）。</p>
-          <p v-else class="ep-tip">以上为系统推断的实际调用地址（可手动填写上方端点字段来覆盖）</p>
+          <p v-else-if="endpointPreviewInfo.isJimeng2Auth" class="ep-tip">{{ $t('aiConfig.jimeng2EndpointTip') }}</p>
+          <p v-else class="ep-tip">{{ $t('aiConfig.autoEndpointTip') }}</p>
         </div>
 
         <template v-if="form.service_type !== 'jimeng2_character_auth'">
         <el-form-item>
           <template #label>
-            <span class="form-label-tip">模型列表
+            <span class="form-label-tip">{{ $t('aiConfig.modelList') }}
               <el-tooltip placement="top" popper-class="cfg-tip-popper">
                 <template #content>
-                  <div class="cfg-tip-content">
-                    该厂商下可用的模型，多个用逗号或换行分隔。<br>
-                    可从上方「追加预设模型」下拉快速添加，也可手动输入。
-                  </div>
+                  <div class="cfg-tip-content" v-html="$t('aiConfig.modelListTooltip')"></div>
                 </template>
                 <el-icon class="tip-icon"><QuestionFilled /></el-icon>
               </el-tooltip>
@@ -814,7 +766,7 @@ input_reference = (图片文件，可选)</pre>
           <div class="model-row">
             <el-select
               v-model="presetModelPick"
-              placeholder="追加预设模型"
+              :placeholder="$t('aiConfig.appendPresetModel')"
               clearable
               filterable
               style="width: 220px; margin-bottom: 8px"
@@ -823,35 +775,32 @@ input_reference = (图片文件，可选)</pre>
               <el-option v-for="m in availableModels" :key="m" :label="m" :value="m" />
             </el-select>
           </div>
-          <el-input v-model="form.modelText" type="textarea" :rows="2" placeholder="选择预设厂商后自动填入，可编辑；多个用逗号或换行分隔" />
+          <el-input v-model="form.modelText" type="textarea" :rows="2" :placeholder="$t('aiConfig.modelTextPlaceholder')" />
         </el-form-item>
         <el-form-item>
           <template #label>
-            <span class="form-label-tip">默认模型
-              <el-tooltip content="有多个模型时，实际调用哪个进行生成。建议选响应快、效果好的那个。" placement="top" popper-class="cfg-tip-popper">
+            <span class="form-label-tip">{{ $t('aiConfig.defaultModel') }}
+              <el-tooltip :content="$t('aiConfig.defaultModelTooltip')" placement="top" popper-class="cfg-tip-popper">
                 <el-icon class="tip-icon"><QuestionFilled /></el-icon>
               </el-tooltip>
             </span>
           </template>
           <el-select
             v-model="form.default_model"
-            :placeholder="formModelList.length ? '从上面模型列表中选一个作为生成时使用的默认' : '请先填写上方模型列表'"
+            :placeholder="formModelList.length ? $t('aiConfig.defaultModelPlaceholder') : $t('aiConfig.defaultModelEmptyPlaceholder')"
             clearable
             style="width: 100%"
           >
             <el-option v-for="m in formModelList" :key="m" :label="m" :value="m" />
           </el-select>
-          <p class="field-tip">该配置被选为「默认」时，生成故事/图片/视频将使用此处指定的模型。</p>
+          <p class="field-tip">{{ $t('aiConfig.defaultModelFieldTip') }}</p>
         </el-form-item>
         <el-form-item v-if="isDeepSeekOfficialForm">
           <template #label>
-            <span class="form-label-tip">思考模式
+            <span class="form-label-tip">{{ $t('aiConfig.thinkingMode') }}
               <el-tooltip placement="top" popper-class="cfg-tip-popper">
                 <template #content>
-                  <div class="cfg-tip-content">
-                    DeepSeek V4 官方模型用 thinking 参数控制思考模式。<br>
-                    关闭思考对应旧 deepseek-chat；开启思考对应旧 deepseek-reasoner。
-                  </div>
+                  <div class="cfg-tip-content" v-html="$t('aiConfig.thinkingModeTooltip')"></div>
                 </template>
                 <el-icon class="tip-icon"><QuestionFilled /></el-icon>
               </el-tooltip>
@@ -859,8 +808,8 @@ input_reference = (图片文件，可选)</pre>
           </template>
           <div class="deepseek-settings">
             <el-radio-group v-model="form.deepseek_thinking">
-              <el-radio-button label="disabled">关闭思考</el-radio-button>
-              <el-radio-button label="enabled">开启思考</el-radio-button>
+              <el-radio-button label="disabled">{{ $t('aiConfig.deepseekThinkingDisabled') }}</el-radio-button>
+              <el-radio-button label="enabled">{{ $t('aiConfig.deepseekThinkingEnabled') }}</el-radio-button>
             </el-radio-group>
             <el-select
               v-if="form.deepseek_thinking === 'enabled'"
@@ -871,13 +820,13 @@ input_reference = (图片文件，可选)</pre>
               <el-option label="max" value="max" />
             </el-select>
           </div>
-          <p class="field-tip">官方旧模型名将在 2026-07-24 废弃；新配置建议使用 deepseek-v4-flash 或 deepseek-v4-pro。</p>
+          <p class="field-tip">{{ $t('aiConfig.deepseekModelTip') }}</p>
         </el-form-item>
         </template>
         <el-form-item>
           <template #label>
-            <span class="form-label-tip">优先级
-              <el-tooltip content="同一服务类型有多个配置时，数字越大越优先被调用。默认 0，一般设为 10 即可。" placement="top" popper-class="cfg-tip-popper">
+            <span class="form-label-tip">{{ $t('aiConfig.priority') }}
+              <el-tooltip :content="$t('aiConfig.priorityTooltip')" placement="top" popper-class="cfg-tip-popper">
                 <el-icon class="tip-icon"><QuestionFilled /></el-icon>
               </el-tooltip>
             </span>
@@ -886,13 +835,10 @@ input_reference = (图片文件，可选)</pre>
         </el-form-item>
         <el-form-item>
           <template #label>
-            <span class="form-label-tip">设为默认
+            <span class="form-label-tip">{{ $t('aiConfig.setDefault') }}
               <el-tooltip placement="top" popper-class="cfg-tip-popper">
                 <template #content>
-                  <div class="cfg-tip-content">
-                    每种服务类型只有一个「默认」配置。<br>
-                    生成时系统会优先使用默认配置，建议每类至少设一个默认。
-                  </div>
+                  <div class="cfg-tip-content" v-html="$t('aiConfig.setDefaultTip')"></div>
                 </template>
                 <el-icon class="tip-icon"><QuestionFilled /></el-icon>
               </el-tooltip>
@@ -902,35 +848,35 @@ input_reference = (图片文件，可选)</pre>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="submit">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="submit">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
-    <!-- 一键配置低价 Seedance2 -->
+    <!-- Quick setup Cheap Seedance2 -->
     <el-dialog
       v-model="oneKeyCheapSeedance2Visible"
-      title="一键配置低价 Seedance2"
+      :title="$t('aiConfig.oneKeySeedanceTitle')"
       width="520px"
       :close-on-click-modal="false"
       @closed="oneKeyCheapSeedance2Key = ''"
     >
       <div class="one-key-help">
         <div class="one-key-section">
-          <div class="one-key-section-title">📋 将自动创建以下配置</div>
+          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyAutoCreateList') }}</div>
           <ul class="one-key-list">
-            <li><b>视频生成</b>：低价 Seedance2（wb-seedance-2-fast / yk-seedance-mini / yk-seedance2.0-fast / yk-seedance2.0 / minimax-h3-1080p-15s）</li>
+            <li>{{ $t('aiConfig.oneKeySeedanceDesc') }}</li>
           </ul>
-          <p class="one-key-note">会设为视频服务的默认配置；Base URL / 协议 / 端点自动填好。</p>
+          <p class="one-key-note">{{ $t('aiConfig.oneKeySeedanceNote') }}</p>
         </div>
         <div class="one-key-section">
-          <div class="one-key-section-title">🔑 如何申请 API Key</div>
+          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyHowToApply') }}</div>
           <ol class="one-key-list">
-            <li>打开官网：<a href="https://workbench.ohmybb.xyz/" target="_blank" rel="noopener noreferrer" class="one-key-link">workbench.ohmybb.xyz</a></li>
-            <li>登录后在左侧栏底部进入「API 密钥」，创建密钥（格式：<code>vw_xxxxxxxx</code>）</li>
-            <li>密钥只在创建时显示一次，请妥善保存后填入下方</li>
+            <li>{{ $t('aiConfig.oneKeySeedanceStep1') }}<a href="https://workbench.ohmybb.xyz/" target="_blank" rel="noopener noreferrer" class="one-key-link">workbench.ohmybb.xyz</a></li>
+            <li><span v-html="$t('aiConfig.oneKeySeedanceStep2')"></span></li>
+            <li>{{ $t('aiConfig.oneKeySeedanceStep3') }}</li>
           </ol>
-          <p class="one-key-note">💡 接口文档：<a href="https://workbench.ohmybb.xyz/docs/api" target="_blank" rel="noopener noreferrer" class="one-key-link">workbench.ohmybb.xyz/docs/api</a></p>
+          <p class="one-key-note">{{ $t('aiConfig.oneKeySeedanceDoc') }}<a href="https://workbench.ohmybb.xyz/docs/api" target="_blank" rel="noopener noreferrer" class="one-key-link">workbench.ohmybb.xyz/docs/api</a></p>
         </div>
       </div>
       <el-form label-width="0" style="margin-top: 8px">
@@ -938,48 +884,48 @@ input_reference = (图片文件，可选)</pre>
           <el-input
             v-model="oneKeyCheapSeedance2Key"
             type="password"
-            placeholder="请输入 API Key，格式：vw_xxxxxxxx"
+            :placeholder="$t('aiConfig.oneKeySeedancePlaceholder')"
             show-password-on="click"
             clearable
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="oneKeyCheapSeedance2Visible = false">取消</el-button>
+        <el-button @click="oneKeyCheapSeedance2Visible = false">{{ $t('common.cancel') }}</el-button>
         <el-button type="success" :loading="oneKeyCheapSeedance2Saving" :disabled="!oneKeyCheapSeedance2Key.trim()" @click="submitOneKeyCheapSeedance2">
-          确定，一键创建配置
+          {{ $t('aiConfig.oneKeyConfirmBtn') }}
         </el-button>
       </template>
     </el-dialog>
 
-    <!-- 一键配置通义 -->
+    <!-- Quick setup Tongyi -->
     <el-dialog
       v-model="oneKeyTongyiVisible"
-      title="一键配置通义千问 / 万象（不推荐）"
+      :title="$t('aiConfig.oneKeyTongyiTitle')"
       width="520px"
       :close-on-click-modal="false"
       @closed="oneKeyTongyiKey = ''"
     >
       <div class="one-key-help">
         <div class="one-key-section">
-          <div class="one-key-section-title">📋 将自动创建以下配置</div>
+          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyAutoCreateList') }}</div>
           <ul class="one-key-list">
-            <li><b>文本/对话</b>：通义千问（qwen-plus）— 生成故事剧本</li>
-            <li><b>文本生成图片</b>：通义万象（wan2.6-image）— 角色/场景/道具图</li>
-            <li><b>文本生成图片</b>：通义千问图像（qwen-image-3.0，备选，不设为默认）— 角色/场景图</li>
-            <li><b>分镜图片生成</b>：通义万象（wan2.6-image）— 支持角色参考图</li>
-            <li><b>视频生成</b>：通义万相（wan2.2-kf2v-flash）— 生成视频片段</li>
+            <li v-html="$t('aiConfig.oneKeyTongyiItem1')"></li>
+            <li v-html="$t('aiConfig.oneKeyTongyiItem2')"></li>
+            <li v-html="$t('aiConfig.oneKeyTongyiItem3')"></li>
+            <li v-html="$t('aiConfig.oneKeyTongyiItem4')"></li>
+            <li v-html="$t('aiConfig.oneKeyTongyiItem5')"></li>
           </ul>
         </div>
         <div class="one-key-section">
-          <div class="one-key-section-title">🔑 如何申请 API Key</div>
+          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyHowToApply') }}</div>
           <ol class="one-key-list">
-            <li>前往阿里云百炼控制台：<a href="https://bailian.console.aliyun.com/" target="_blank" class="one-key-link">bailian.console.aliyun.com</a></li>
-            <li>注册/登录阿里云账号，开通「百炼」服务（新用户有免费额度）</li>
-            <li>左侧菜单点击「API Key」→「创建 API Key」</li>
-            <li>复制生成的 Key（格式：<code>sk-xxxxxxxx</code>）填入下方</li>
+            <li>{{ $t('aiConfig.oneKeyTongyiStep1') }}<a href="https://bailian.console.aliyun.com/" target="_blank" class="one-key-link">bailian.console.aliyun.com</a></li>
+            <li>{{ $t('aiConfig.oneKeyTongyiStep2') }}</li>
+            <li>{{ $t('aiConfig.oneKeyTongyiStep3') }}</li>
+            <li><span v-html="$t('aiConfig.oneKeyTongyiStep4')"></span></li>
           </ol>
-          <p class="one-key-note">💡 通义一个 Key 同时支持文本、图片、视频等所有服务</p>
+          <p class="one-key-note">{{ $t('aiConfig.oneKeyTongyiNote') }}</p>
         </div>
       </div>
       <el-form label-width="0" style="margin-top: 8px">
@@ -987,48 +933,48 @@ input_reference = (图片文件，可选)</pre>
           <el-input
             v-model="oneKeyTongyiKey"
             type="password"
-            placeholder="请输入通义（DashScope）API Key，格式：sk-xxxxxxxx"
+            :placeholder="$t('aiConfig.oneKeyTongyiPlaceholder')"
             show-password-on="click"
             clearable
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="oneKeyTongyiVisible = false">取消</el-button>
+        <el-button @click="oneKeyTongyiVisible = false">{{ $t('common.cancel') }}</el-button>
         <el-button type="success" :loading="oneKeyTongyiSaving" :disabled="!oneKeyTongyiKey.trim()" @click="submitOneKeyTongyi">
-          确定，一键创建配置
+          {{ $t('aiConfig.oneKeyConfirmBtn') }}
         </el-button>
       </template>
     </el-dialog>
 
-    <!-- 一键配置火山 -->
+    <!-- Quick setup Volcengine -->
     <el-dialog
       v-model="oneKeyVolcVisible"
-      title="一键配置火山引擎（方舟）"
+      :title="$t('aiConfig.oneKeyVolcTitle')"
       width="520px"
       :close-on-click-modal="false"
       @closed="oneKeyVolcKey = ''"
     >
       <div class="one-key-help">
         <div class="one-key-section">
-          <div class="one-key-section-title">📋 将自动创建以下配置</div>
+          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyAutoCreateList') }}</div>
           <ul class="one-key-list">
-            <li><b>文本/对话</b>：DeepSeek V4 Flash（deepseek-v4-flash-ga-260731）— 生成故事剧本</li>
-            <li><b>文本生成图片</b>：即梦 5.0 Flash（doubao-seedream-5-0-flash-260915）— 角色/场景/道具图</li>
-            <li><b>分镜图片生成</b>：即梦 5.0 Flash（doubao-seedream-5-0-flash-260915）— 支持角色参考图</li>
-            <li><b>视频生成</b>：即梦 Seedance 2.0 Fast — 生成视频片段</li>
+            <li v-html="$t('aiConfig.oneKeyVolcItem1')"></li>
+            <li v-html="$t('aiConfig.oneKeyVolcItem2')"></li>
+            <li v-html="$t('aiConfig.oneKeyVolcItem3')"></li>
+            <li v-html="$t('aiConfig.oneKeyVolcItem4')"></li>
           </ul>
         </div>
         <div class="one-key-section">
-          <div class="one-key-section-title">🔑 如何申请 API Key</div>
+          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyHowToApply') }}</div>
           <ol class="one-key-list">
-            <li>前往火山引擎方舟控制台：<a href="https://console.volcengine.com/ark" target="_blank" class="one-key-link">console.volcengine.com/ark</a></li>
-            <li>注册/登录字节跳动火山引擎账号（新用户有免费 token 额度）</li>
-            <li>左侧菜单点击「API Key 管理」→「创建 API Key」</li>
-            <li>复制生成的 Key 填入下方</li>
+            <li>{{ $t('aiConfig.oneKeyVolcStep1') }}<a href="https://console.volcengine.com/ark" target="_blank" class="one-key-link">console.volcengine.com/ark</a></li>
+            <li>{{ $t('aiConfig.oneKeyVolcStep2') }}</li>
+            <li>{{ $t('aiConfig.oneKeyVolcStep3') }}</li>
+            <li>{{ $t('aiConfig.oneKeyVolcStep4') }}</li>
           </ol>
-          <p class="one-key-note">💡 方舟平台一个 Key 同时支持豆包文本、即梦图片与视频等所有服务</p>
-          <p class="one-key-note">⚠️ 图片、视频需在控制台开通对应模型（即梦 5.0、Seedance 2.0）后方可使用</p>
+          <p class="one-key-note">{{ $t('aiConfig.oneKeyVolcNote') }}</p>
+          <p class="one-key-note">{{ $t('aiConfig.oneKeyVolcWarning') }}</p>
         </div>
       </div>
       <el-form label-width="0" style="margin-top: 8px">
@@ -1036,47 +982,47 @@ input_reference = (图片文件，可选)</pre>
           <el-input
             v-model="oneKeyVolcKey"
             type="password"
-            placeholder="请输入火山引擎（方舟）API Key"
+            :placeholder="$t('aiConfig.oneKeyVolcPlaceholder')"
             show-password-on="click"
             clearable
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="oneKeyVolcVisible = false">取消</el-button>
+        <el-button @click="oneKeyVolcVisible = false">{{ $t('common.cancel') }}</el-button>
         <el-button type="success" :loading="oneKeyVolcSaving" :disabled="!oneKeyVolcKey.trim()" @click="submitOneKeyVolc">
-          确定，一键创建配置
+          {{ $t('aiConfig.oneKeyConfirmBtn') }}
         </el-button>
       </template>
     </el-dialog>
 
-    <!-- 一键配置 Agnes -->
+    <!-- Quick setup Agnes -->
     <el-dialog
       v-model="oneKeyAgnesVisible"
-      title="一键配置 Agnes AI"
+      :title="$t('aiConfig.oneKeyAgnesTitle')"
       width="520px"
       :close-on-click-modal="false"
       @closed="oneKeyAgnesKey = ''"
     >
       <div class="one-key-help">
         <div class="one-key-section">
-          <div class="one-key-section-title">📋 将自动创建以下配置</div>
+          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyAutoCreateList') }}</div>
           <ul class="one-key-list">
-            <li><b>文本/对话</b>：Agnes 3.0 Flash（agnes-3.0-flash）— 生成故事剧本</li>
-            <li><b>文本生成图片</b>：Agnes Image 2.5 Flash — 角色/场景/道具图</li>
-            <li><b>分镜图片生成</b>：Agnes Image 2.5 Flash — 支持参考图编辑</li>
-            <li><b>视频生成</b>：Agnes Video 2.5 Flash（agnes-video-2.5-flash）— 生成视频片段</li>
+            <li v-html="$t('aiConfig.oneKeyAgnesItem1')"></li>
+            <li v-html="$t('aiConfig.oneKeyAgnesItem2')"></li>
+            <li v-html="$t('aiConfig.oneKeyAgnesItem3')"></li>
+            <li v-html="$t('aiConfig.oneKeyAgnesItem4')"></li>
           </ul>
         </div>
         <div class="one-key-section">
-          <div class="one-key-section-title">🔑 如何申请 API Key</div>
+          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyHowToApply') }}</div>
           <ol class="one-key-list">
-            <li>前往 Agnes 平台：<a href="https://platform.agnes-ai.com/settings/apiKeys" target="_blank" class="one-key-link">platform.agnes-ai.com/settings/apiKeys</a></li>
-            <li>注册/登录账号，进入 Settings → API Keys</li>
-            <li>点击「Create new secret key」创建密钥</li>
-            <li>复制 Key 填入下方</li>
+            <li>{{ $t('aiConfig.oneKeyAgnesStep1') }}<a href="https://platform.agnes-ai.com/settings/apiKeys" target="_blank" class="one-key-link">platform.agnes-ai.com/settings/apiKeys</a></li>
+            <li>{{ $t('aiConfig.oneKeyAgnesStep2') }}</li>
+            <li>{{ $t('aiConfig.oneKeyAgnesStep3') }}</li>
+            <li>{{ $t('aiConfig.oneKeyAgnesStep4') }}</li>
           </ol>
-          <p class="one-key-note">💡 一个 Key 同时支持文本、图片、视频；接口文档见 <a href="https://wiki.agnes-ai.com/zh-hans/docs/overview" target="_blank" class="one-key-link">wiki.agnes-ai.com</a></p>
+          <p class="one-key-note"><span v-html="$t('aiConfig.oneKeyAgnesNote')"></span></p>
         </div>
       </div>
       <el-form label-width="0" style="margin-top: 8px">
@@ -1084,39 +1030,39 @@ input_reference = (图片文件，可选)</pre>
           <el-input
             v-model="oneKeyAgnesKey"
             type="password"
-            placeholder="请输入 Agnes API Key"
+            :placeholder="$t('aiConfig.oneKeyAgnesPlaceholder')"
             show-password-on="click"
             clearable
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="oneKeyAgnesVisible = false">取消</el-button>
+        <el-button @click="oneKeyAgnesVisible = false">{{ $t('common.cancel') }}</el-button>
         <el-button type="success" :loading="oneKeyAgnesSaving" :disabled="!oneKeyAgnesKey.trim()" @click="submitOneKeyAgnes">
-          确定，一键创建配置
+          {{ $t('aiConfig.oneKeyConfirmBtn') }}
         </el-button>
       </template>
     </el-dialog>
 
-    <!-- 即梦2角色认证：素材列表 -->
+    <!-- Jimeng 2 Auth: asset list -->
     <el-dialog
       v-model="jimeng2AssetsDialogVisible"
-      title="素材库列表（GET /api/business/v1/assets）"
+      :title="$t('aiConfig.jimeng2AssetsTitle')"
       width="720px"
       class="jimeng2-assets-dialog"
       destroy-on-close
       @closed="onJimeng2AssetsDialogClosed"
     >
       <p class="field-tip" style="margin-top: 0">
-        文档：
-        <a href="https://83zi.com/sd2realperson.html" target="_blank" rel="noopener noreferrer">SilvaMux 素材管理 API</a>
-        ；仅 <code>status=active</code> 的素材可用于 Seedance 2.0 视频引用。
+        {{ $t('aiConfig.docLabel') }}：
+        <a href="https://83zi.com/sd2realperson.html" target="_blank" rel="noopener noreferrer">SilvaMux {{ $t('aiConfig.assetManageApiDoc') }}</a>
+        {{ $t('aiConfig.jimeng2AssetsNote') }}
       </p>
-      <el-table v-loading="jimeng2AssetsLoading" :data="jimeng2AssetsRows" stripe max-height="420" empty-text="暂无数据或未加载">
-        <el-table-column prop="id" label="素材 ID" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="name" label="名称" width="100" show-overflow-tooltip />
-        <el-table-column prop="asset_type" label="类型" width="88" />
-        <el-table-column prop="status" label="状态" width="96">
+      <el-table v-loading="jimeng2AssetsLoading" :data="jimeng2AssetsRows" stripe max-height="420" :empty-text="$t('aiConfig.noDataOrNotLoaded')">
+        <el-table-column prop="id" :label="$t('aiConfig.assetId')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="name" :label="$t('common.name')" width="100" show-overflow-tooltip />
+        <el-table-column prop="asset_type" :label="$t('aiConfig.serviceType')" width="88" />
+        <el-table-column prop="status" :label="$t('common.status')" width="96">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : row.status === 'failed' ? 'danger' : 'info'" size="small">
               {{ row.status || '—' }}
@@ -1124,67 +1070,67 @@ input_reference = (图片文件，可选)</pre>
           </template>
         </el-table-column>
         <el-table-column prop="asset_url" label="asset_url" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="url" label="原始 URL" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="created_at" label="创建时间" width="160" show-overflow-tooltip />
+        <el-table-column prop="url" :label="$t('aiConfig.originUrl')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="created_at" :label="$t('common.createTime')" width="160" show-overflow-tooltip />
       </el-table>
       <div v-if="jimeng2AssetsHasMore" style="margin-top: 12px; text-align: center">
-        <el-button :loading="jimeng2AssetsLoading" @click="loadMoreJimeng2MaterialAssets">加载更多</el-button>
+        <el-button :loading="jimeng2AssetsLoading" @click="loadMoreJimeng2MaterialAssets">{{ $t('aiConfig.loadMore') }}</el-button>
       </div>
       <template #footer>
-        <el-button @click="jimeng2AssetsDialogVisible = false">关闭</el-button>
+        <el-button @click="jimeng2AssetsDialogVisible = false">{{ $t('common.close') }}</el-button>
       </template>
     </el-dialog>
 
-    <!-- 测试连接 -->
-    <el-dialog v-model="testVisible" title="测试连接" width="420px">
-      <p v-if="testResult === null">正在测试…</p>
+    <!-- Test connection dialog -->
+    <el-dialog v-model="testVisible" :title="$t('aiConfig.testConnection')" width="420px">
+      <p v-if="testResult === null">{{ $t('aiConfig.testing') }}</p>
       <template v-else-if="testResult">
         <el-alert
           v-if="testServiceType === 'image' || testServiceType === 'storyboard_image' || testServiceType === 'video'"
           type="success"
-          title="连接成功"
-          description="API Key 有效，网络已连通。提示：测试仅验证 Key 合法性，不实际生成图片/视频，模型名填错、账号未开通该功能或配额不足时实际生成仍可能报错。"
+          :title="$t('aiConfig.testSuccessTitle')"
+          :description="$t('aiConfig.testSuccessDescMedia')"
           show-icon
           :closable="false"
         />
         <el-alert
           v-else
           type="success"
-          title="连接成功"
-          description="文本生成接口已正常响应。"
+          :title="$t('aiConfig.testSuccessTitle')"
+          :description="$t('aiConfig.testSuccessDescText')"
           show-icon
           :closable="false"
         />
       </template>
-      <el-alert v-else type="error" :title="testError || '连接失败'" show-icon :closable="false" />
+      <el-alert v-else type="error" :title="testError || $t('aiConfig.testFailedTitle')" show-icon :closable="false" />
       <template #footer>
-        <el-button @click="testVisible = false">关闭</el-button>
+        <el-button @click="testVisible = false">{{ $t('common.close') }}</el-button>
       </template>
     </el-dialog>
 
-    <!-- 一键换Key（锁定模式） -->
-    <el-dialog v-model="bulkKeyVisible" title="一键换Key" width="440px" :close-on-click-modal="false">
+    <!-- Bulk key dialog -->
+    <el-dialog v-model="bulkKeyVisible" :title="$t('aiConfig.bulkKeyBtn')" width="440px" :close-on-click-modal="false">
       <el-alert
         type="warning"
         :closable="false"
         style="margin-bottom: 16px"
-        title="此操作将替换所有配置的 API Key，请确认新 Key 可用后再提交。"
+        :title="$t('aiConfig.bulkKeyAlert')"
         show-icon
       />
       <el-form label-width="80px">
-        <el-form-item label="新 API Key">
+        <el-form-item :label="$t('aiConfig.newApiKey')">
           <el-input
             v-model="bulkKeyInput"
             type="password"
             show-password
-            placeholder="粘贴新的 API Key"
+            :placeholder="$t('aiConfig.newApiKeyPlaceholder')"
             clearable
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="bulkKeyVisible = false">取消</el-button>
-        <el-button type="primary" :loading="bulkKeySaving" :disabled="!bulkKeyInput.trim()" @click="submitBulkKey">确认替换</el-button>
+        <el-button @click="bulkKeyVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="bulkKeySaving" :disabled="!bulkKeyInput.trim()" @click="submitBulkKey">{{ $t('aiConfig.confirmReplace') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -1192,6 +1138,7 @@ input_reference = (图片文件，可选)</pre>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from '@/i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, MagicStick, QuestionFilled, Download, Upload, Delete, ChatDotRound, Picture, Film, VideoCamera, Key, Microphone, Folder } from '@element-plus/icons-vue'
 import { aiAPI } from '@/api/ai'
@@ -1200,10 +1147,12 @@ import PromptEditor from '@/components/PromptEditor.vue'
 import SceneModelMap from '@/components/SceneModelMap.vue'
 import Sd2AssetManagement from '@/components/Sd2AssetManagement.vue'
 
+const { t, te } = useI18n()
+
 const activeTab = ref('configs')
 const importFileRef = ref(null)
 
-// ---- 生成设置 ----
+// ---- Generation settings ----
 const genConcurrencyInput = ref(3)
 const genVideoConcurrencyInput = ref(3)
 const genSettingSaving = ref(false)
@@ -1231,11 +1180,11 @@ async function saveGenerationSettings() {
   const n = Number(genConcurrencyInput.value)
   const nv = Number(genVideoConcurrencyInput.value)
   if (isNaN(n) || n < 1 || n > 20) {
-    ElMessage.warning('图片并发数请填写 1-20 之间的整数')
+    ElMessage.warning(t('aiConfig.msgImageConcurrencyLimit'))
     return
   }
   if (isNaN(nv) || nv < 1 || nv > 20) {
-    ElMessage.warning('视频并发数请填写 1-20 之间的整数')
+    ElMessage.warning(t('aiConfig.msgVideoConcurrencyLimit'))
     return
   }
   genSettingSaving.value = true
@@ -1245,7 +1194,7 @@ async function saveGenerationSettings() {
     genSettingSaved.value = true
     setTimeout(() => { genSettingSaved.value = false }, 2000)
   } catch (e) {
-    ElMessage.error('保存失败：' + (e?.message || ''))
+    ElMessage.error(t('aiConfig.msgSaveFailedPrefix') + (e?.message || ''))
   } finally {
     genSettingSaving.value = false
   }
@@ -1283,13 +1232,13 @@ const form = ref({
   deepseek_reasoning_effort: 'high',
   priority: 0,
   is_default: false,
-  // 确认该视频配置支持全能模式多图参考（存 settings.supports_universal_omni）
+  // Confirm video configuration supports omni multi-ref mode (stored in settings.supports_universal_omni)
   supports_universal_omni: false,
-  // 可灵 Omni 官方 AK/SK（存 settings，后端生成 JWT）
+  // Kling Omni official AK/SK (stored in settings, JWT generated on backend)
   kling_access_key: '',
   kling_secret_key: '',
   kling_secret_key_base64: false,
-  // TTS 专属字段
+  // TTS specific fields
   voice_id: '',
   group_id: '',
 })
@@ -1297,7 +1246,7 @@ const presetModelPick = ref('')
 
 const formModelList = computed(() => parseModelText(form.value.modelText))
 
-// 保证「生成时默认使用」下拉有可选且选中值在列表内，否则会不显示或修改无效
+// Ensure default model dropdown option is valid and in the list
 watch(
   () => [formModelList.value, form.value.default_model],
   () => {
@@ -1328,7 +1277,7 @@ function onServiceTypeChange() {
       form.value.api_protocol = ''
     }
     if (!editingId.value && !form.value.name?.trim()) {
-      form.value.name = '即梦2角色认证'
+      form.value.name = te('aiConfig.types.jimeng2_character_auth') ? t('aiConfig.types.jimeng2_character_auth') : 'Jimeng2 Auth'
     }
     return
   }
@@ -1354,24 +1303,24 @@ function onPresetModelSelect(value) {
   presetModelPick.value = ''
 }
 const rules = computed(() => ({
-  service_type: [{ required: true, message: '请选择服务类型', trigger: 'change' }],
-  name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
-  provider: [{ required: true, message: '请选择或输入厂商', trigger: 'change' }],
-  base_url: [{ required: true, message: '请输入 Base URL', trigger: 'blur' }],
+  service_type: [{ required: true, message: t('aiConfig.rules.serviceType'), trigger: 'change' }],
+  name: [{ required: true, message: t('aiConfig.rules.name'), trigger: 'blur' }],
+  provider: [{ required: true, message: t('aiConfig.rules.provider'), trigger: 'change' }],
+  base_url: [{ required: true, message: t('aiConfig.rules.baseUrl'), trigger: 'blur' }],
   api_key: [
     {
       validator: (_rule, v, cb) => {
         const st = form.value.service_type
         if (st === 'jimeng2_character_auth') {
           if (v != null && String(v).trim()) return cb()
-          return cb(new Error('请填写 Token'))
+          return cb(new Error(t('aiConfig.rules.tokenRequired')))
         }
         const proto = form.value.api_protocol
         const ak = (form.value.kling_access_key || '').trim()
         const sk = (form.value.kling_secret_key || '').trim()
         if (st === 'video' && proto === 'kling_omni' && ak && sk) return cb()
         if (v != null && String(v).trim()) return cb()
-        cb(new Error('请输入 API Key，或使用官方 AccessKey + SecretKey（可不填 API Key）'))
+        cb(new Error(t('aiConfig.rules.apiKeyRequired')))
       },
       trigger: 'blur',
     },
@@ -1394,32 +1343,32 @@ const oneKeyAgnesVisible = ref(false)
 const oneKeyAgnesKey = ref('')
 const oneKeyAgnesSaving = ref(false)
 
-/** 预设厂商与模型（与参考前端一致） */
+/** Preset providers and models */
 const providerConfigs = {
   text: [
     { id: 'openai', name: 'OpenAI', models: ['gpt-4o', 'gpt-4', 'gpt-3.5-turbo'] },
-    { id: 'volcengine', name: '火山引擎', models: ['deepseek-v4-flash-ga-260731', 'deepseek-v4-1-flash-260910', 'doubao-seed-2-1-lite-260915'] },
+    { id: 'volcengine', name: 'Volcengine', models: ['deepseek-v4-flash-ga-260731', 'deepseek-v4-1-flash-260910', 'doubao-seed-2-1-lite-260915'] },
     // { id: 'chatfire', name: 'Chatfire', models: ['gemini-3-flash-preview', 'claude-sonnet-4-5-20250929', 'doubao-seed-1-8-251228'] },
     { id: 'gemini', name: 'Google Gemini', models: ['gemini-2.5-pro', 'gemini-3-flash-preview'] },
     { id: 'deepseek', name: 'DeepSeek', models: ['deepseek-v4-flash', 'deepseek-v4-pro'] },
-    { id: 'qwen', name: '通义千问', models: ['qwen-plus', 'qwen3.6-plus', 'qwen-flash'] },
+    { id: 'qwen', name: 'Qwen', models: ['qwen-plus', 'qwen3.6-plus', 'qwen-flash'] },
     { id: 'agnes', name: 'Agnes AI', models: ['agnes-3.0-flash', 'agnes-2.5-flash', 'agnes-2.5-pro', 'agnes-2.0-flash'] }
   ],
   image: [
-    { id: 'volcengine', name: '火山引擎', models: ['doubao-seedream-5-0-flash-260915', 'doubao-seedream-5-0-pro-260628', 'doubao-seedream-4-5-251128'] },
-    { id: 'kling', name: '可灵 Kling', models: ['kling-image', 'kling-omni-image'] },
+    { id: 'volcengine', name: 'Volcengine', models: ['doubao-seedream-5-0-flash-260915', 'doubao-seedream-5-0-pro-260628', 'doubao-seedream-4-5-251128'] },
+    { id: 'kling', name: 'Kling', models: ['kling-image', 'kling-omni-image'] },
     { id: 'nano_banana', name: 'NanoBanana', models: ['nano-banana-2', 'nano-banana-pro', 'nano-banana'] },
     // { id: 'chatfire', name: 'Chatfire', models: ['nano-banana-pro', 'doubao-seedream-4-5-251128', 'qwen-image'] },
     { id: 'gemini', name: 'Google Gemini', models: ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview', 'gemini-3.1-flash-image-preview', 'gemini-3-pro-image-preview'] },
     { id: 'openai', name: 'OpenAI', models: ['dall-e-3', 'dall-e-2'] },
-    { id: 'dashscope', name: '通义万象', models: ['wan2.6-image', 'qwen-image-edit-plus-2026-01-09', 'qwen-image-edit-plus', 'qwen-image-edit-max'] },
-    { id: 'qwen_image', name: '通义千问', models: ['qwen-image-3.0', 'qwen-image-3.0-pro'] },
+    { id: 'dashscope', name: 'DashScope', models: ['wan2.6-image', 'qwen-image-edit-plus-2026-01-09', 'qwen-image-edit-plus', 'qwen-image-edit-max'] },
+    { id: 'qwen_image', name: 'Qwen', models: ['qwen-image-3.0', 'qwen-image-3.0-pro'] },
     { id: 'agnes', name: 'Agnes AI', models: ['agnes-image-2.5-flash', 'agnes-image-2.1-flash', 'agnes-image-2.0-flash'] }
   ],
   storyboard_image: [
-    { id: 'dashscope', name: '通义万象', models: ['wan2.6-image', 'qwen-image-edit-plus-2026-01-09', 'qwen-image-edit-plus', 'qwen-image-edit-max'] },
-    { id: 'volcengine', name: '火山引擎', models: ['doubao-seedream-5-0-flash-260915', 'doubao-seedream-5-0-pro-260628', 'doubao-seedream-4-5-251128'] },
-    { id: 'kling', name: '可灵 Kling', models: ['kling-image', 'kling-omni-image'] },
+    { id: 'dashscope', name: 'DashScope', models: ['wan2.6-image', 'qwen-image-edit-plus-2026-01-09', 'qwen-image-edit-plus', 'qwen-image-edit-max'] },
+    { id: 'volcengine', name: 'Volcengine', models: ['doubao-seedream-5-0-flash-260915', 'doubao-seedream-5-0-pro-260628', 'doubao-seedream-4-5-251128'] },
+    { id: 'kling', name: 'Kling', models: ['kling-image', 'kling-omni-image'] },
     { id: 'nano_banana', name: 'NanoBanana', models: ['nano-banana-2', 'nano-banana-pro', 'nano-banana'] },
     // { id: 'chatfire', name: 'Chatfire', models: ['nano-banana-pro', 'doubao-seedream-4-5-251128', 'qwen-image'] },
     { id: 'gemini', name: 'Google Gemini', models: ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview', 'gemini-3.1-flash-image-preview', 'gemini-3-pro-image-preview'] },
@@ -1429,22 +1378,22 @@ const providerConfigs = {
   video: [
     {
       id: 'cheap_seedance2',
-      name: '低价 Seedance2',
+      name: 'Cheap Seedance2',
       models: ['wb-seedance-2-fast', 'yk-seedance-mini', 'yk-seedance2.0-fast', 'yk-seedance2.0', 'minimax-h3-1080p-15s'],
     },
-    { id: 'klingai', name: '可灵官方 Omni (api-beijing.klingai.com)', models: ['kling-video-o1', 'kling-v3-omni'] },
-    { id: 'ffir', name: '飞儿API / 可灵 Omni-Video (ffir.cn)', models: ['kling-video-o1', 'kling-v3-omni'] },
-    { id: 'kling', name: '可灵 Kling', models: ['kling-omni-video', 'kling-video', 'kling-motion-control'] },
+    { id: 'klingai', name: 'Kling Official Omni (api-beijing.klingai.com)', models: ['kling-video-o1', 'kling-v3-omni'] },
+    { id: 'ffir', name: 'ffir API / Kling Omni-Video (ffir.cn)', models: ['kling-video-o1', 'kling-v3-omni'] },
+    { id: 'kling', name: 'Kling', models: ['kling-omni-video', 'kling-video', 'kling-motion-control'] },
     { id: 'vidu', name: 'Vidu', models: ['viduq2', 'viduq2-pro', 'viduq2-turbo', 'viduq3-pro'] },
-    { id: 'volces', name: '火山引擎', models: ['doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128', 'doubao-seedance-2-5-260628', 'doubao-seedance-1-0-pro-250528', 'doubao-seedance-1-0-pro-fast-251015'] },
+    { id: 'volces', name: 'Volcengine', models: ['doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128', 'doubao-seedance-2-5-260628', 'doubao-seedance-1-0-pro-250528', 'doubao-seedance-1-0-pro-fast-251015'] },
     // { id: 'chatfire', name: 'Chatfire', models: ['doubao-seedance-1-5-pro-251215', 'doubao-seedance-1-0-lite-i2v-250428', 'doubao-seedance-1-0-lite-t2v-250428', 'doubao-seedance-1-0-pro-250528', 'doubao-seedance-1-0-pro-fast-251015', 'sora-2', 'sora-2-pro'] },
     { id: 'minimax_h3', name: 'MiniMax H3', models: ['MiniMax-H3'] },
-    { id: 'minimax', name: 'MiniMax 海螺', models: ['MiniMax-Hailuo-2.3', 'MiniMax-Hailuo-2.3-Fast', 'MiniMax-Hailuo-02'] },
+    { id: 'minimax', name: 'MiniMax Hailuo', models: ['MiniMax-Hailuo-2.3', 'MiniMax-Hailuo-2.3-Fast', 'MiniMax-Hailuo-02'] },
     { id: 'gemini', name: 'Google Gemini (Veo)', models: ['veo-3.1-generate-preview', 'veo-3.0-generate-preview', 'veo-3.0-fast-generate-preview'] },
-    { id: 'dashscope', name: '通义万相', models: ['wan2.6-r2v-flash', 'wan2.6-t2v', 'wan2.2-kf2v-flash', 'wan2.6-i2v-flash', 'wanx2.1-vace-plus'] },
+    { id: 'dashscope', name: 'DashScope', models: ['wan2.6-r2v-flash', 'wan2.6-t2v', 'wan2.2-kf2v-flash', 'wan2.6-i2v-flash', 'wanx2.1-vace-plus'] },
     {
       id: 'jimeng_ai_api',
-      name: 'Jimeng AI API（自建即梦免费 API）',
+      name: 'Jimeng AI API',
       models: [
         'jimeng-video-seedance-2.0',
         'seedance-2.0',
@@ -1462,11 +1411,11 @@ const providerConfigs = {
     { id: 'minimax', name: 'MiniMax T2A', models: ['speech-02-hd', 'speech-02-turbo'] },
   ],
   jimeng2_character_auth: [
-    { id: 'jimeng_material_api', name: '即梦业务素材 API（/api/business/v1）', models: ['-'] },
+    { id: 'jimeng_material_api', name: 'Jimeng Material API (/api/business/v1)', models: ['-'] },
   ],
 }
 
-/** 厂商 id → 默认接口规范（api_protocol） */
+/** Provider id -> default api_protocol */
 const providerProtocolMap = {
   // image / storyboard_image
   volcengine: 'volcengine',
@@ -1496,7 +1445,7 @@ const providerProtocolMap = {
   jimeng_material_api: '',
 }
 
-/** 厂商 id → 默认 Base URL（与参考前端 AIConfigDialog 757-775 一致） */
+/** Provider id -> default Base URL */
 function getBaseUrlForProvider(provider) {
   if (!provider) return ''
   const p = String(provider).toLowerCase()
@@ -1560,20 +1509,23 @@ const isDeepSeekOfficialForm = computed(() => (
   && isDeepSeekOfficial(form.value.provider, form.value.base_url)
 ))
 
-/** 当前服务类型下的预设厂商列表（编辑时若当前 provider 不在列表则补一项；末尾始终附一项自定义入口） */
+/** Preset provider options */
 const availableProviderOptions = computed(() => {
   const st = form.value.service_type || 'text'
   const listByType = providerConfigs[st] || []
   const current = form.value.provider
-  let result = [...listByType]
+  let result = listByType.map((p) => ({
+    ...p,
+    name: te('aiConfig.providers.' + p.id) ? t('aiConfig.providers.' + p.id) : p.name
+  }))
   if (editingId.value && current && current !== CUSTOM_PROVIDER_SENTINEL && !listByType.some((p) => p.id === current)) {
-    result = [{ id: current, name: current + ' (当前)', models: [] }, ...result]
+    result = [{ id: current, name: `${current} ${t('aiConfig.currentTag')}`, models: [] }, ...result]
   }
-  result.push({ id: CUSTOM_PROVIDER_SENTINEL, name: '✏️ 自定义（直接输入厂商名）', models: [] })
+  result.push({ id: CUSTOM_PROVIDER_SENTINEL, name: t('aiConfig.customProviderOption'), models: [] })
   return result
 })
 
-/** 当前厂商的预设模型列表（用于追加预设模型） */
+/** Preset models for current provider */
 const availableModels = computed(() => {
   const st = form.value.service_type
   const provider = form.value.provider
@@ -1582,7 +1534,7 @@ const availableModels = computed(() => {
   return p?.models || []
 })
 
-/** 根据当前厂商/协议/base_url 推算实际将使用的接口地址，供用户核对 */
+/** Infer actual endpoints for preview */
 const endpointPreviewInfo = computed(() => {
   const { provider, api_protocol, base_url, service_type, endpoint, query_endpoint } = form.value
   const p = String(provider || '').toLowerCase()
@@ -1590,7 +1542,7 @@ const endpointPreviewInfo = computed(() => {
   const base = (base_url || '').replace(/\/$/, '')
 
   if (service_type === 'jimeng2_character_auth') {
-    const root = base || '(请填写网关 URL)'
+    const root = base || t('aiConfig.endpointPreview.fillGatewayUrl')
     const hasReal = !root.startsWith('(')
     return {
       submit: `${root}/api/business/v1/assets`,
@@ -1620,17 +1572,17 @@ const endpointPreviewInfo = computed(() => {
     } else if (proto === 'dashscope' || p === 'dashscope' || p === 'qwen_image') {
       submitPath = '/api/v1/services/aigc/multimodal-generation/generation'
     } else if (proto === 'gemini' || p === 'gemini') {
-      const m = form.value.default_model || '{模型名}'
+      const m = form.value.default_model || t('aiConfig.endpointPreview.modelName')
       submitPath = `/v1beta/models/${m}:generateContent?key=***`
       return { submit: base + submitPath, query: null, isAuto: true, isGemini: true }
     } else if (proto === 'nano_banana' || p === 'nano_banana') {
-      submitPath = '/v1/images/generations'  // nano_banana base_url 无 /v1
+      submitPath = '/v1/images/generations'
     } else if (proto === 'kling' || p === 'kling' || p === 'klingai') {
       submitPath = '/v1/images/generations'
     } else {
-      submitPath = '/images/generations'  // openai 兼容：base_url 已含 /v1
+      submitPath = '/images/generations'
     }
-    } else if (service_type === 'video') {
+  } else if (service_type === 'video') {
     if (endpoint) {
       submitPath = endpoint
     } else if (proto === 'volcengine_omni') {
@@ -1640,10 +1592,10 @@ const endpointPreviewInfo = computed(() => {
     } else if (proto === 'dashscope' || p === 'dashscope') {
       submitPath = '/api/v1/services/aigc/video-generation/video-synthesis'
     } else if (proto === 'gemini' || p === 'gemini') {
-      const m = form.value.default_model || '{模型名}'
+      const m = form.value.default_model || t('aiConfig.endpointPreview.modelName')
       return {
-        submit: `${base}/v1beta/models/${m}:predictLongRunning  （API Key 放 header: x-goog-api-key）`,
-        query: `${base}/v1beta/{operationName}  （operationName 由提交响应返回）`,
+        submit: `${base}/v1beta/models/${m}:predictLongRunning  ${t('aiConfig.endpointPreview.geminiSubmitTip')}`,
+        query: `${base}/v1beta/{operationName}  ${t('aiConfig.endpointPreview.geminiQueryTip')}`,
         isAuto: true,
         isGemini: true
       }
@@ -1662,7 +1614,7 @@ const endpointPreviewInfo = computed(() => {
     } else if (proto === 'jimeng_ai_api' || p === 'jimeng_ai_api') {
       submitPath = endpoint || '/v1/videos/generations'
       return {
-        submit: (base || '(请填 Base URL)') + submitPath + '  （Bearer 为即梦 Session，可多账号英文逗号分隔；同步返回 data[0].url）',
+        submit: (base || t('aiConfig.endpointPreview.fillBaseUrl')) + submitPath + `  ${t('aiConfig.endpointPreview.jimengSessionTip')}`,
         query: null,
         isAuto: true,
       }
@@ -1671,9 +1623,9 @@ const endpointPreviewInfo = computed(() => {
       const omniKlingOfficial = p === 'klingai' || /api(-beijing|-singapore)?\.klingai\.com/i.test(base)
       submitPath = omniFfir ? '/kling/v1/videos/omni-video' : omniKlingOfficial ? '/v1/videos/omni-video' : '/kling/v1/videos/omni-video'
     } else if (proto === 'kling' || p === 'kling' || p === 'klingai') {
-      submitPath = '/v1/videos/text2video (T2V) 或 /v1/videos/image2video (I2V)'
+      submitPath = '/v1/videos/text2video (T2V) / /v1/videos/image2video (I2V)'
     } else if (p === 'minimax') {
-      submitPath = '/video_generation'  // minimax base_url 已含 /v1
+      submitPath = '/video_generation'
     } else {
       submitPath = '/v1/video/create'
     }
@@ -1710,22 +1662,22 @@ const endpointPreviewInfo = computed(() => {
           ? '/v1/videos/omni-video/{taskId}'
           : '/kling/v1/images/omni-image/{taskId}'
     } else if (proto === 'kling' || p === 'kling' || p === 'klingai') {
-      queryPath = '/v1/videos/{videoType}/{taskId}（自动按任务类型选择）'
+      queryPath = `/v1/videos/{videoType}/{taskId}${t('aiConfig.endpointPreview.klingTaskTypeAuto')}`
     } else if (p === 'minimax') {
-      queryPath = '/query/video_generation?task_id={taskId}'  // minimax base_url 已含 /v1
+      queryPath = '/query/video_generation?task_id={taskId}'
     } else if (proto !== 'gemini' && p !== 'gemini') {
       queryPath = '/v1/video/query?id={taskId}'
     }
   }
 
-  const submitUrl = base ? (base + submitPath) : ('(未填 Base URL)' + submitPath)
-  const queryUrl = queryPath ? (base ? base + queryPath : '(未填 Base URL)' + queryPath) : null
+  const submitUrl = base ? (base + submitPath) : (`${t('aiConfig.endpointPreview.noBaseUrl')}${submitPath}`)
+  const queryUrl = queryPath ? (base ? base + queryPath : `${t('aiConfig.endpointPreview.noBaseUrl')}${queryPath}`) : null
 
   if (!submitPath) return null
   return {
     submit: submitUrl,
     query: queryUrl,
-    isAuto: !endpoint  // 端点是自动推断的（非用户手填）
+    isAuto: !endpoint
   }
 })
 
@@ -1753,7 +1705,7 @@ function onProviderChange(providerId) {
     form.value.deepseek_thinking = 'disabled'
     form.value.deepseek_reasoning_effort = 'high'
   }
-  // 自动填充接口规范
+  // Auto-fill API protocol
   form.value.api_protocol = providerProtocolMap[providerId] || (st === 'text' ? '' : 'openai')
   if (st === 'video' && providerId === 'jimeng_ai_api') {
     form.value.endpoint = ''
@@ -1790,67 +1742,67 @@ function onProviderChange(providerId) {
     form.value.query_endpoint = '/query/video_generation?task_id={taskId}'
   }
   if (!editingId.value) {
-    form.value.name = (p.name || providerId) + ' ' + serviceTypeLabel(st)
+    const provName = te('aiConfig.providers.' + providerId) ? t('aiConfig.providers.' + providerId) : (p.name || providerId)
+    form.value.name = provName + ' ' + serviceTypeLabel(st)
   }
 }
 
-/** 通义一键配置用 */
-const TONGYI_CONFIGS = [
-  { service_type: 'text', name: '通义千问', base_url: 'https://dashscope.aliyuncs.com/compatible-mode/v1', provider: 'qwen', model: ['qwen-plus'] },
-  { service_type: 'image', name: '通义万象 文本生图', base_url: 'https://dashscope.aliyuncs.com', provider: 'dashscope', model: ['wan2.6-image'] },
-  { service_type: 'image', name: '通义千问 文本生图', base_url: 'https://dashscope.aliyuncs.com', provider: 'qwen_image', model: ['qwen-image-3.0', 'qwen-image-3.0-pro'], is_default: false },
-  { service_type: 'storyboard_image', name: '通义万象 分镜图', base_url: 'https://dashscope.aliyuncs.com', provider: 'dashscope', model: ['wan2.6-image'] },
-  { service_type: 'video', name: '通义万相', base_url: 'https://dashscope.aliyuncs.com', provider: 'dashscope', model: ['wan2.2-kf2v-flash'] }
-]
+/** One-key configs */
+function getTongyiConfigs() {
+  return [
+    { service_type: 'text', name: `${t('aiConfig.providers.qwen')} ${t('aiConfig.types.text')}`, base_url: 'https://dashscope.aliyuncs.com/compatible-mode/v1', provider: 'qwen', model: ['qwen-plus'] },
+    { service_type: 'image', name: `${t('aiConfig.providers.dashscope')} ${t('aiConfig.types.image')}`, base_url: 'https://dashscope.aliyuncs.com', provider: 'dashscope', model: ['wan2.6-image'] },
+    { service_type: 'image', name: `${t('aiConfig.providers.qwen_image')} ${t('aiConfig.types.image')}`, base_url: 'https://dashscope.aliyuncs.com', provider: 'qwen_image', model: ['qwen-image-3.0', 'qwen-image-3.0-pro'], is_default: false },
+    { service_type: 'storyboard_image', name: `${t('aiConfig.providers.dashscope')} ${t('aiConfig.types.storyboard_image')}`, base_url: 'https://dashscope.aliyuncs.com', provider: 'dashscope', model: ['wan2.6-image'] },
+    { service_type: 'video', name: `${t('aiConfig.providers.dashscope')} ${t('aiConfig.types.video')}`, base_url: 'https://dashscope.aliyuncs.com', provider: 'dashscope', model: ['wan2.2-kf2v-flash'] }
+  ]
+}
 
-/** 低价 Seedance2 一键配置（仅视频） */
-const CHEAP_SEEDANCE2_CONFIGS = [
-  {
-    service_type: 'video',
-    name: '低价 Seedance2 视频',
-    provider: 'cheap_seedance2',
-    api_protocol: 'sora',
-    base_url: 'https://workbench.ohmybb.xyz/api/openai',
-    endpoint: '/v1/videos',
-    query_endpoint: '/v1/videos/{taskId}',
-    model: ['wb-seedance-2-fast', 'yk-seedance-mini', 'yk-seedance2.0-fast', 'yk-seedance2.0', 'minimax-h3-1080p-15s'],
-    settings: JSON.stringify({ supports_universal_omni: true }),
-  },
-]
+function getCheapSeedance2Configs() {
+  return [
+    {
+      service_type: 'video',
+      name: `${t('aiConfig.providers.cheap_seedance2')} ${t('aiConfig.types.video')}`,
+      provider: 'cheap_seedance2',
+      api_protocol: 'sora',
+      base_url: 'https://workbench.ohmybb.xyz/api/openai',
+      endpoint: '/v1/videos',
+      query_endpoint: '/v1/videos/{taskId}',
+      model: ['wb-seedance-2-fast', 'yk-seedance-mini', 'yk-seedance2.0-fast', 'yk-seedance2.0', 'minimax-h3-1080p-15s'],
+      settings: JSON.stringify({ supports_universal_omni: true }),
+    },
+  ]
+}
 
-/** 火山引擎一键配置用 */
-const VOLCENGINE_CONFIGS = [
-  { service_type: 'text', name: '火山引擎 文本', base_url: 'https://ark.cn-beijing.volces.com/api/v3', provider: 'volcengine', model: ['deepseek-v4-flash-ga-260731', 'doubao-seed-2-1-lite-260915'] },
-  { service_type: 'image', name: '火山引擎 即梦 文本生图', base_url: 'https://ark.cn-beijing.volces.com/api/v3', provider: 'volcengine', model: ['doubao-seedream-5-0-flash-260915', 'doubao-seedream-5-0-pro-260628'] },
-  { service_type: 'storyboard_image', name: '火山引擎 即梦 分镜图', base_url: 'https://ark.cn-beijing.volces.com/api/v3', provider: 'volcengine', model: ['doubao-seedream-5-0-flash-260915', 'doubao-seedream-5-0-pro-260628'] },
-  { service_type: 'video', name: '火山引擎 即梦 视频', base_url: 'https://ark.cn-beijing.volces.com/api/v3', provider: 'volces', model: ['doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'] }
-]
+function getVolcengineConfigs() {
+  return [
+    { service_type: 'text', name: `${t('aiConfig.providers.volcengine')} ${t('aiConfig.types.text')}`, base_url: 'https://ark.cn-beijing.volces.com/api/v3', provider: 'volcengine', model: ['deepseek-v4-flash-ga-260731', 'doubao-seed-2-1-lite-260915'] },
+    { service_type: 'image', name: `${t('aiConfig.providers.volcengine')} ${t('aiConfig.types.image')}`, base_url: 'https://ark.cn-beijing.volces.com/api/v3', provider: 'volcengine', model: ['doubao-seedream-5-0-flash-260915', 'doubao-seedream-5-0-pro-260628'] },
+    { service_type: 'storyboard_image', name: `${t('aiConfig.providers.volcengine')} ${t('aiConfig.types.storyboard_image')}`, base_url: 'https://ark.cn-beijing.volces.com/api/v3', provider: 'volcengine', model: ['doubao-seedream-5-0-flash-260915', 'doubao-seedream-5-0-pro-260628'] },
+    { service_type: 'video', name: `${t('aiConfig.providers.volcengine')} ${t('aiConfig.types.video')}`, base_url: 'https://ark.cn-beijing.volces.com/api/v3', provider: 'volces', model: ['doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'] }
+  ]
+}
 
-/** Agnes 一键配置用（默认最新模型） */
-const AGNES_CONFIGS = [
-  { service_type: 'text', name: 'Agnes 文本', base_url: 'https://apihub.agnes-ai.com/v1', provider: 'agnes', api_protocol: 'openai', model: ['agnes-3.0-flash', 'agnes-2.5-flash'] },
-  { service_type: 'image', name: 'Agnes 文本生图', base_url: 'https://apihub.agnes-ai.com/v1', provider: 'agnes', api_protocol: 'openai', model: ['agnes-image-2.5-flash', 'agnes-image-2.1-flash'] },
-  { service_type: 'storyboard_image', name: 'Agnes 分镜图', base_url: 'https://apihub.agnes-ai.com/v1', provider: 'agnes', api_protocol: 'openai', model: ['agnes-image-2.5-flash', 'agnes-image-2.1-flash'] },
-  { service_type: 'video', name: 'Agnes 视频', base_url: 'https://apihub.agnes-ai.com/v1', provider: 'agnes', api_protocol: 'agnes', endpoint: '/videos', query_endpoint: '/agnesapi', model: ['agnes-video-2.5-flash', 'agnes-video-2.5', 'agnes-video-v2.0'] },
-]
+function getAgnesConfigs() {
+  return [
+    { service_type: 'text', name: `${t('aiConfig.providers.agnes')} ${t('aiConfig.types.text')}`, base_url: 'https://apihub.agnes-ai.com/v1', provider: 'agnes', api_protocol: 'openai', model: ['agnes-3.0-flash', 'agnes-2.5-flash'] },
+    { service_type: 'image', name: `${t('aiConfig.providers.agnes')} ${t('aiConfig.types.image')}`, base_url: 'https://apihub.agnes-ai.com/v1', provider: 'agnes', api_protocol: 'openai', model: ['agnes-image-2.5-flash', 'agnes-image-2.1-flash'] },
+    { service_type: 'storyboard_image', name: `${t('aiConfig.providers.agnes')} ${t('aiConfig.types.storyboard_image')}`, base_url: 'https://apihub.agnes-ai.com/v1', provider: 'agnes', api_protocol: 'openai', model: ['agnes-image-2.5-flash', 'agnes-image-2.1-flash'] },
+    { service_type: 'video', name: `${t('aiConfig.providers.agnes')} ${t('aiConfig.types.video')}`, base_url: 'https://apihub.agnes-ai.com/v1', provider: 'agnes', api_protocol: 'agnes', endpoint: '/videos', query_endpoint: '/agnesapi', model: ['agnes-video-2.5-flash', 'agnes-video-2.5', 'agnes-video-v2.0'] },
+  ]
+}
 
-function serviceTypeLabel(t) {
-  const map = {
-    text: '文本',
-    image: '文本生成图片',
-    storyboard_image: '分镜图片生成',
-    video: '视频',
-    tts: '语音合成 TTS',
-    jimeng2_character_auth: '即梦2角色认证',
-    model_ark_asset: 'SD2 资产库',
+function serviceTypeLabel(val) {
+  if (val && te('aiConfig.types.' + val)) {
+    return t('aiConfig.types.' + val)
   }
-  return map[t] || t
+  return val
 }
 
 function onRowEdit(row) {
   if (row.service_type === 'model_ark_asset') {
     activeTab.value = 'sd2_assets'
-    ElMessage.info('请在「SD2 资产管理」标签页编辑此配置')
+    ElMessage.info(t('aiConfig.msgEditInSd2Tab'))
     return
   }
   openEdit(row)
@@ -1892,7 +1844,7 @@ function resetForm() {
     deepseek_thinking: 'disabled',
     deepseek_reasoning_effort: 'high',
     priority: 0,
-    is_default: true,  // 新增时默认勾选「设为默认」，便于理解当前会使用哪条配置
+    is_default: true,
     supports_universal_omni: false,
     voice_id: '',
     group_id: '',
@@ -1913,7 +1865,7 @@ function openEdit(row) {
   const model = Array.isArray(row.model) ? row.model : (row.model ? [row.model] : [])
   const modelList = model.map((m) => String(m).trim()).filter(Boolean)
   const defaultInList = row.default_model && modelList.includes(row.default_model)
-  // TTS / 可灵 Omni 等从 settings 解析
+  // TTS / Kling Omni resolved from settings
   let voice_id = row.voice_id || ''
   let group_id = row.group_id || ''
   let kling_access_key = ''
@@ -1979,7 +1931,7 @@ async function submit() {
     const defaultModel = form.value.default_model && modelList.includes(form.value.default_model)
       ? form.value.default_model
       : modelList[0] || null
-    // TTS / 可灵 Omni 官方 AKSK / DeepSeek V4 / 视频全能多图开关 → settings
+    // Settings mapping for TTS / Kling Omni / DeepSeek V4 / Video Omni multi-ref
     let settings = undefined
     if (form.value.service_type === 'tts') {
       const s = {}
@@ -2035,15 +1987,15 @@ async function submit() {
     }
     if (editingId.value) {
       await aiAPI.update(editingId.value, payload)
-      ElMessage.success('保存成功')
+      ElMessage.success(t('common.saved'))
     } else {
       await aiAPI.create(payload)
-      ElMessage.success('添加成功')
+      ElMessage.success(t('aiConfig.msgAddSuccess'))
     }
     dialogVisible.value = false
     await loadList()
   } catch (e) {
-    // request 已统一报错
+    // Errors handled by request interceptor
   } finally {
     saving.value = false
   }
@@ -2060,7 +2012,7 @@ async function submitBulkKey() {
   bulkKeySaving.value = true
   try {
     const res = await aiAPI.bulkUpdateKey(key)
-    ElMessage.success(res?.message || '所有配置的 API Key 已更新')
+    ElMessage.success(res?.message || t('aiConfig.msgAllKeysUpdated'))
     bulkKeyVisible.value = false
     await loadList()
   } catch (_) {
@@ -2077,7 +2029,7 @@ function onJimeng2AssetsDialogClosed() {
 
 async function fetchJimeng2MaterialAssets(firstPage) {
   if (!form.value.base_url?.trim() || !form.value.api_key?.trim()) {
-    ElMessage.warning('请先填写网关 URL 与 Token')
+    ElMessage.warning(t('aiConfig.msgFillGatewayAndTokenFirst'))
     return
   }
   if (firstPage) {
@@ -2103,7 +2055,7 @@ async function fetchJimeng2MaterialAssets(firstPage) {
     jimeng2AssetsNextCursor.value = data?.next_cursor ?? null
     jimeng2AssetsHasMore.value = !!data?.has_more
   } catch (_) {
-    /* request 拦截器已 ElMessage */
+    // Error notification handled by request interceptor
   } finally {
     jimeng2AssetsLoading.value = false
   }
@@ -2120,11 +2072,11 @@ function loadMoreJimeng2MaterialAssets() {
 
 async function openTest(row) {
   if (row.service_type === 'jimeng2_character_auth') {
-    ElMessage.info('即梦2角色认证无需在此联调；保存后请在创作页「角色生成」中点击「SD2认证」验证。')
+    ElMessage.info(t('aiConfig.msgJimeng2NoTestNeeded'))
     return
   }
   if (row.service_type === 'model_ark_asset') {
-    ElMessage.info('SD2 资产库请在「SD2 资产管理」标签页使用「刷新列表」验证连接。')
+    ElMessage.info(t('aiConfig.msgSd2AssetUseRefresh'))
     return
   }
   testVisible.value = true
@@ -2144,17 +2096,17 @@ async function openTest(row) {
     testResult.value = true
   } catch (e) {
     testResult.value = false
-    testError.value = e?.message || '请求失败'
+    testError.value = e?.message || t('aiConfig.msgRequestFailed')
   }
 }
 
 async function onDelete(row) {
-  await ElMessageBox.confirm(`确定删除配置「${row.name}」？`, '删除确认', {
+  await ElMessageBox.confirm(t('aiConfig.confirmDeleteConfig', { name: row.name }), t('aiConfig.deleteConfirmTitle'), {
     type: 'warning'
   })
   try {
     await aiAPI.delete(row.id)
-    ElMessage.success('已删除')
+    ElMessage.success(t('aiConfig.deleted'))
     await loadList()
   } catch (_) {}
 }
@@ -2166,9 +2118,9 @@ function onSelectionChange(rows) {
 async function onBatchDelete() {
   if (!selectedRows.value.length) return
   await ElMessageBox.confirm(
-    `确定删除选中的 ${selectedRows.value.length} 条配置？此操作不可恢复。`,
-    '批量删除确认',
-    { type: 'warning', confirmButtonText: '确定删除', confirmButtonClass: 'el-button--danger' }
+    t('aiConfig.confirmBatchDelete', { count: selectedRows.value.length }),
+    t('aiConfig.batchDeleteTitle'),
+    { type: 'warning', confirmButtonText: t('common.delete'), confirmButtonClass: 'el-button--danger' }
   )
   batchDeleting.value = true
   let success = 0, failed = 0
@@ -2180,7 +2132,8 @@ async function onBatchDelete() {
   }
   batchDeleting.value = false
   selectedRows.value = []
-  ElMessage.success(`已删除 ${success} 条${failed ? `，${failed} 条失败` : ''}`)
+  const failedPart = failed ? t('aiConfig.batchDeleteFailedPart', { count: failed }) : ''
+  ElMessage.success(t('aiConfig.batchDeleteSuccess', { success, failed: failedPart }))
   await loadList()
 }
 
@@ -2194,7 +2147,7 @@ async function submitOneKeyTongyi() {
   if (!apiKey) return
   oneKeyTongyiSaving.value = true
   try {
-    for (const cfg of TONGYI_CONFIGS) {
+    for (const cfg of getTongyiConfigs()) {
       const models = cfg.model || []
       await aiAPI.create({
         service_type: cfg.service_type,
@@ -2208,11 +2161,11 @@ async function submitOneKeyTongyi() {
         is_default: cfg.is_default !== false
       })
     }
-    ElMessage.success('已创建通义文本、文本生图、分镜图、视频配置')
+    ElMessage.success(t('aiConfig.oneKeyTongyiSuccess'))
     oneKeyTongyiVisible.value = false
     await loadList()
   } catch (_) {
-    // 错误已由 request 统一提示
+    // Error notification handled by request interceptor
   } finally {
     oneKeyTongyiSaving.value = false
   }
@@ -2228,7 +2181,7 @@ async function submitOneKeyCheapSeedance2() {
   if (!apiKey) return
   oneKeyCheapSeedance2Saving.value = true
   try {
-    for (const cfg of CHEAP_SEEDANCE2_CONFIGS) {
+    for (const cfg of getCheapSeedance2Configs()) {
       const models = cfg.model || []
       await aiAPI.create({
         service_type: cfg.service_type,
@@ -2246,11 +2199,11 @@ async function submitOneKeyCheapSeedance2() {
         settings: cfg.settings || undefined,
       })
     }
-    ElMessage.success('已创建低价 Seedance2 视频配置')
+    ElMessage.success(t('aiConfig.oneKeyCheapSeedance2Success'))
     oneKeyCheapSeedance2Visible.value = false
     await loadList()
   } catch (_) {
-    // 错误已由 request 统一提示
+    // Error notification handled by request interceptor
   } finally {
     oneKeyCheapSeedance2Saving.value = false
   }
@@ -2266,7 +2219,7 @@ async function submitOneKeyVolc() {
   if (!apiKey) return
   oneKeyVolcSaving.value = true
   try {
-    for (const cfg of VOLCENGINE_CONFIGS) {
+    for (const cfg of getVolcengineConfigs()) {
       const models = cfg.model || []
       await aiAPI.create({
         service_type: cfg.service_type,
@@ -2280,11 +2233,11 @@ async function submitOneKeyVolc() {
         is_default: true
       })
     }
-    ElMessage.success('已创建火山引擎文本、文本生图、分镜图、视频配置')
+    ElMessage.success(t('aiConfig.oneKeyVolcSuccess'))
     oneKeyVolcVisible.value = false
     await loadList()
   } catch (_) {
-    // 错误已由 request 统一提示
+    // Error notification handled by request interceptor
   } finally {
     oneKeyVolcSaving.value = false
   }
@@ -2300,7 +2253,7 @@ async function submitOneKeyAgnes() {
   if (!apiKey) return
   oneKeyAgnesSaving.value = true
   try {
-    for (const cfg of AGNES_CONFIGS) {
+    for (const cfg of getAgnesConfigs()) {
       const models = cfg.model || []
       await aiAPI.create({
         service_type: cfg.service_type,
@@ -2317,11 +2270,11 @@ async function submitOneKeyAgnes() {
         is_default: true
       })
     }
-    ElMessage.success('已创建 Agnes 文本、文本生图、分镜图、视频配置')
+    ElMessage.success(t('aiConfig.oneKeyAgnesSuccess'))
     oneKeyAgnesVisible.value = false
     await loadList()
   } catch (_) {
-    // 错误已由 request 统一提示
+    // Error notification handled by request interceptor
   } finally {
     oneKeyAgnesSaving.value = false
   }
@@ -2338,9 +2291,9 @@ async function exportConfigs() {
     a.download = `ai-configs-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
-    ElMessage.success(`已导出 ${exportData.length} 条配置`)
+    ElMessage.success(t('aiConfig.exportSuccess', { count: exportData.length }))
   } catch (e) {
-    ElMessage.error('导出失败')
+    ElMessage.error(t('aiConfig.exportFailed'))
   }
 }
 
@@ -2355,7 +2308,7 @@ async function importConfigs(event) {
     const text = await file.text()
     const configs = JSON.parse(text)
     if (!Array.isArray(configs)) {
-      ElMessage.error('文件格式不正确，需要 JSON 数组')
+      ElMessage.error(t('aiConfig.importInvalidFormat'))
       return
     }
     let success = 0
@@ -2383,10 +2336,11 @@ async function importConfigs(event) {
         failed++
       }
     }
-    ElMessage.success(`导入完成：${success} 条成功${failed ? `，${failed} 条失败` : ''}`)
+    const failedPart = failed ? t('aiConfig.importFailedPart', { count: failed }) : ''
+    ElMessage.success(t('aiConfig.importSuccess', { success, failed: failedPart }))
     await loadList()
   } catch (e) {
-    ElMessage.error('导入失败：' + (e.message || '文件解析错误'))
+    ElMessage.error(t('aiConfig.importFailed', { error: e.message || t('aiConfig.fileParseError') }))
   } finally {
     event.target.value = ''
   }
@@ -2449,7 +2403,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* 过渡动画 */
+/* Transition animation */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: all 0.2s ease;
@@ -2460,7 +2414,7 @@ onMounted(() => {
   transform: translateX(8px);
 }
 
-/* 类型徽章 */
+/* Type badge */
 .type-badge {
   display: inline-flex;
   align-items: center;
@@ -2477,25 +2431,25 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* 文本/对话 — 蓝色 */
+/* Text/chat - blue */
 .type-text {
   background: rgba(59, 130, 246, 0.12);
   color: #3b82f6;
   border-color: rgba(59, 130, 246, 0.25);
 }
-/* 文本生成图片 — 绿色 */
+/* Text-to-image - green */
 .type-image {
   background: rgba(16, 185, 129, 0.12);
   color: #10b981;
   border-color: rgba(16, 185, 129, 0.25);
 }
-/* 分镜图片生成 — 紫色 */
+/* Storyboard image - purple */
 .type-storyboard_image {
   background: rgba(139, 92, 246, 0.12);
   color: #8b5cf6;
   border-color: rgba(139, 92, 246, 0.25);
 }
-/* 视频 — 橙色 */
+/* Video - orange */
 .type-video {
   background: rgba(249, 115, 22, 0.12);
   color: #f97316;
