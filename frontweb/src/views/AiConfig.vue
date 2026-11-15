@@ -3,14 +3,17 @@
     <header class="header">
       <div class="header-inner">
         <h1 class="logo" @click="goList">
-          <span class="logo-main">本地短剧助手</span>
-          <span class="logo-sub">LocalMiniDrama</span>
+          <span class="logo-main">{{ $t('header.appTitle') }}</span>
+          <span class="logo-sub">{{ $t('header.appSubtitle') }}</span>
         </h1>
-        <span class="page-title">AI 配置</span>
-        <el-button class="btn-back" @click="goList">
-          <el-icon><ArrowLeft /></el-icon>
-          返回
-        </el-button>
+        <span class="page-title">{{ $t('aiConfig.title') }}</span>
+        <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+          <LanguageToggle />
+          <el-button class="btn-back" @click="goList">
+            <el-icon><ArrowLeft /></el-icon>
+            {{ $t('common.back') }}
+          </el-button>
+        </div>
       </div>
     </header>
 
@@ -24,6 +27,7 @@
 import { useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import AIConfigContent from '@/components/AIConfigContent.vue'
+import LanguageToggle from '@/components/LanguageToggle.vue'
 
 const router = useRouter()
 
@@ -48,23 +52,21 @@ html.light .ai-config {
 }
 .header {
   background: rgba(18, 18, 22, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(139, 92, 246, 0.18);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 50;
 }
 html.light .header {
   background: rgba(255, 255, 255, 0.85);
-  border-bottom-color: rgba(139, 92, 246, 0.2);
-  box-shadow: 0 2px 16px rgba(139, 92, 246, 0.08);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
 }
 .header-inner {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 12px 24px;
+  height: 60px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -73,59 +75,39 @@ html.light .header {
   margin: 0;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: 1px;
-  line-height: 1;
-  transition: filter 0.3s;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5));
+  align-items: baseline;
+  gap: 8px;
 }
 .logo-main {
-  font-size: 1.1rem;
+  font-size: 18px;
   font-weight: 700;
-  background: linear-gradient(135deg, #c4b5fd 0%, #818cf8 50%, #a78bfa 100%);
+  background: linear-gradient(135deg, #a78bfa, #818cf8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 .logo-sub {
-  font-size: 0.68rem;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  color: #6d6d7a;
-  -webkit-text-fill-color: #6d6d7a;
-}
-html.light .logo-main {
-  background: linear-gradient(135deg, #7c3aed, #6366f1);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-html.light .logo-sub {
-  color: #9ca3af;
-  -webkit-text-fill-color: #9ca3af;
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 .page-title {
-  flex: 1;
-  font-size: 16px;
-  color: #a1a1aa;
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding-left: 12px;
+  border-left: 1px solid var(--border-color);
 }
-html.light .page-title { color: #6b7280; }
+.btn-back {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #ccc;
+}
+html.light .btn-back {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #555;
+}
 .main {
-  max-width: 1200px;
-  margin: 24px auto;
-  background: rgba(24, 24, 27, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 16px;
-  padding: 20px 24px;
-  border: 1px solid rgba(63, 63, 70, 0.7);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
-}
-html.light .main {
-  background: rgba(255, 255, 255, 0.88);
-  border-color: rgba(139, 92, 246, 0.15);
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.08);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
 }
 </style>

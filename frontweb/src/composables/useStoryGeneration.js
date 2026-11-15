@@ -1,4 +1,5 @@
 import { ElMessage } from 'element-plus'
+import { t, currentLocale } from '@/i18n'
 import { dramaAPI } from '@/api/drama'
 import { generationAPI } from '@/api/generation'
 import { stylePromptMetadataForSave } from '@/constants/styleOptions'
@@ -35,7 +36,7 @@ export async function runGenerateStoryFromPremise({
 }) {
   const text = (premise || '').trim()
   if (!text) {
-    ElMessage.warning('请先输入故事梗概')
+    ElMessage.warning(t('filmCreate.msgEnterStoryPremiseFirst'))
     return { ok: false }
   }
 
@@ -44,7 +45,7 @@ export async function runGenerateStoryFromPremise({
     let dramaId = store.dramaId
     if (!dramaId) {
       const drama = await dramaAPI.create({
-        title: scriptTitle || '新故事',
+        title: scriptTitle || (currentLocale.value === 'en' ? 'New Story' : '新故事'),
         description: text,
         genre: storyType || undefined,
         style: generationStyle || undefined,
@@ -61,7 +62,7 @@ export async function runGenerateStoryFromPremise({
       }
     }
 
-    const dramaTitle = store.drama?.title || scriptTitle || '项目'
+    const dramaTitle = store.drama?.title || scriptTitle || (currentLocale.value === 'en' ? 'Project' : '项目')
     const meta = {
       dramaId,
       episodeId: store.currentEpisode?.id ?? selectedEpisodeId?.value ?? 0,
@@ -69,7 +70,7 @@ export async function runGenerateStoryFromPremise({
       episodeNumber: store.currentEpisode?.episode_number ?? 1,
       resourceType: GEN_RESOURCE.GENERATE_STORY,
       resourceId: Number(dramaId),
-      label: `${dramaTitle} 生成剧本`,
+      label: `${dramaTitle} ${currentLocale.value === 'en' ? 'Generate Script' : '生成剧本'}`,
     }
 
     scriptGenerating.value = true
@@ -93,13 +94,13 @@ export async function runGenerateStoryFromPremise({
 
       const taskId = res?.task_id
       if (!taskId) {
-        ElMessage.error('未能启动剧本生成任务')
+        ElMessage.error(currentLocale.value === 'en' ? 'Failed to start script generation task' : '未能启动剧本生成任务')
         return { ok: false }
       }
 
       const pollRes = await pollTask(taskId, () => loadDrama?.(), meta)
       if (pollRes?.status !== 'completed') {
-        return { ok: false, error: pollRes?.error || '剧本生成失败' }
+        return { ok: false, error: pollRes?.error || t('filmCreate.msgStoryGenFailed') }
       }
 
       savedCurrentEpisodeNumber.value = 1
@@ -119,22 +120,22 @@ export async function runGenerateStoryFromPremise({
         : (pollRes?.result || {})
       const n = (store.drama?.episodes || []).length || parsedResult.episode_count || 1
       if (!skipPostLoad) {
-        ElMessage.success(n > 1 ? `剧本已生成，共 ${n} 集，已默认选中第1集` : '剧本已生成并已保存')
+        ElMessage.success(n > 1 ? t('filmCreate.msgStoryGeneratedMulti', { count: n }) : t('filmCreate.msgStoryGenerated'))
       } else {
-        ElMessage.success(n > 1 ? `剧本已生成，共 ${n} 集` : '剧本已生成并已保存')
+        ElMessage.success(n > 1 ? (currentLocale.value === 'en' ? `Script generated, ${n} episodes total` : `剧本已生成，共 ${n} 集`) : t('filmCreate.msgStoryGenerated'))
       }
       if (typeof onComplete === 'function') {
         onComplete({ episodeCount: n, dramaId })
       }
       return { ok: true, dramaId, episodeCount: n }
     } catch (e) {
-      ElMessage.error(e.message || '剧本生成失败')
+      ElMessage.error(e.message || t('filmCreate.msgStoryGenFailed'))
       return { ok: false, error: e.message }
     } finally {
       scriptGenerating.value = false
     }
   } catch (e) {
-    ElMessage.error(e.message || '故事生成失败')
+    ElMessage.error(e.message || t('filmCreate.msgStoryGenFailed'))
     return { ok: false, error: e.message }
   } finally {
     storyGenerating.value = false

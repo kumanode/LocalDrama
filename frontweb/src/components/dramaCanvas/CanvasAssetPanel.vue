@@ -10,7 +10,7 @@
   >
     <div class="panel-head">
       <span>{{ kindLabel }}</span>
-      <el-button link size="small" @click.stop="closePanel">收起</el-button>
+      <el-button link size="small" @click.stop="closePanel">{{ locale === 'en' ? 'Collapse' : '收起' }}</el-button>
     </div>
 
     <div class="panel-body">
@@ -20,7 +20,7 @@
           <div v-else-if="!generating" class="preview-empty">{{ kindIcon }}</div>
           <div v-if="generating || nodeBusy" class="preview-loading">
             <span class="spinner" />
-            <span>{{ nodeBusy?.message || '生成参考图…' }}</span>
+            <span>{{ nodeBusy?.message || (locale === 'en' ? 'Generating ref image…' : '生成参考图…') }}</span>
           </div>
         </div>
         <div v-if="entityStatus" class="entity-status" :class="'st-' + entityStatus">{{ entityStatusLabel }}</div>
@@ -30,83 +30,83 @@
         <el-form label-position="left" label-width="44px" size="small" class="panel-form compact-form">
           <template v-if="kind === 'character'">
             <div class="form-row-2">
-              <el-form-item label="名称" class="flex-1">
-                <el-input v-model="form.name" placeholder="角色名" />
+              <el-form-item :label="locale === 'en' ? 'Name' : '名称'" class="flex-1">
+                <el-input v-model="form.name" :placeholder="locale === 'en' ? 'Character Name' : '角色名'" />
               </el-form-item>
-              <el-form-item label="类型" class="type-field">
+              <el-form-item :label="locale === 'en' ? 'Role' : '类型'" class="type-field">
                 <el-select
                   v-model="form.role"
                   clearable
-                  placeholder="类型"
+                  :placeholder="locale === 'en' ? 'Role' : '类型'"
                   teleported
                   popper-class="canvas-panel-popper"
                   @visible-change="onSelectVisibleChange"
                 >
-                  <el-option label="主角" value="main" />
-                  <el-option label="配角" value="supporting" />
+                  <el-option :label="$t('filmCreate.roleMain')" value="main" />
+                  <el-option :label="$t('filmCreate.roleSupporting')" value="supporting" />
                 </el-select>
               </el-form-item>
             </div>
-            <el-form-item label="外貌">
+            <el-form-item :label="locale === 'en' ? 'Appearance' : '外貌'">
               <el-input
                 v-model="form.appearance"
                 type="textarea"
                 :rows="2"
                 resize="vertical"
-                placeholder="外貌描述"
+                :placeholder="locale === 'en' ? 'Appearance description' : '外貌描述'"
               />
             </el-form-item>
-            <el-form-item label="简介">
+            <el-form-item :label="locale === 'en' ? 'Bio' : '简介'">
               <el-input
                 v-model="form.description"
                 type="textarea"
                 :rows="2"
                 resize="vertical"
-                placeholder="角色简介"
+                :placeholder="locale === 'en' ? 'Character bio' : '角色简介'"
               />
             </el-form-item>
           </template>
 
           <template v-else-if="kind === 'scene'">
             <div class="form-row-2">
-              <el-form-item label="地点" class="flex-1">
-                <el-input v-model="form.location" placeholder="场景地点" />
+              <el-form-item :label="locale === 'en' ? 'Location' : '地点'" class="flex-1">
+                <el-input v-model="form.location" :placeholder="locale === 'en' ? 'Scene location' : '场景地点'" />
               </el-form-item>
-              <el-form-item label="时间" class="time-field">
-                <el-input v-model="form.time" placeholder="白天/夜" />
+              <el-form-item :label="locale === 'en' ? 'Time' : '时间'" class="time-field">
+                <el-input v-model="form.time" :placeholder="locale === 'en' ? 'Day / Night' : '白天/夜'" />
               </el-form-item>
             </div>
-            <el-form-item label="描述">
+            <el-form-item :label="locale === 'en' ? 'Description' : '描述'">
               <el-input
                 v-model="form.prompt"
                 type="textarea"
                 :rows="2"
                 resize="vertical"
-                placeholder="场景描述"
+                :placeholder="locale === 'en' ? 'Scene description' : '场景描述'"
               />
             </el-form-item>
           </template>
 
           <template v-else>
-            <el-form-item label="名称">
-              <el-input v-model="form.name" placeholder="道具名称" />
+            <el-form-item :label="locale === 'en' ? 'Name' : '名称'">
+              <el-input v-model="form.name" :placeholder="locale === 'en' ? 'Prop name' : '道具名称'" />
             </el-form-item>
-            <el-form-item label="描述">
+            <el-form-item :label="locale === 'en' ? 'Description' : '描述'">
               <el-input
                 v-model="form.description"
                 type="textarea"
                 :rows="2"
                 resize="vertical"
-                placeholder="道具描述"
+                :placeholder="locale === 'en' ? 'Prop description' : '道具描述'"
               />
             </el-form-item>
-            <el-form-item label="提示">
+            <el-form-item :label="locale === 'en' ? 'Prompt' : '提示'">
               <el-input
                 v-model="form.prompt"
                 type="textarea"
                 :rows="2"
                 resize="vertical"
-                placeholder="生图提示词"
+                :placeholder="locale === 'en' ? 'Image generation prompt' : '生图提示词'"
               />
             </el-form-item>
           </template>
@@ -115,7 +115,7 @@
     </div>
 
     <div class="panel-actions">
-      <el-button size="small" :loading="saving" @click.stop="saveAsset">保存</el-button>
+      <el-button size="small" :loading="saving" @click.stop="saveAsset">{{ $t('common.save') }}</el-button>
       <el-button
         v-if="canGenerate || generating"
         size="small"
@@ -123,10 +123,10 @@
         :loading="generating"
         @click.stop="generateImage"
       >
-        生成参考图
+        {{ locale === 'en' ? 'Generate Ref' : '生成参考图' }}
       </el-button>
-      <el-button size="small" plain @click.stop="highlightRelated">关联分镜</el-button>
-      <el-button size="small" type="danger" plain @click.stop="deleteAsset">删除</el-button>
+      <el-button size="small" plain @click.stop="highlightRelated">{{ locale === 'en' ? 'Related Shots' : '关联分镜' }}</el-button>
+      <el-button size="small" type="danger" plain @click.stop="deleteAsset">{{ $t('common.delete') }}</el-button>
     </div>
   </div>
 </template>
@@ -138,6 +138,7 @@ import { characterAPI } from '@/api/characters'
 import { sceneAPI } from '@/api/scenes'
 import { propAPI } from '@/api/props'
 import { useCanvasContext } from '@/composables/useCanvasContext'
+import { useI18n } from '@/i18n'
 import { generateAssetReferenceImage } from '@/composables/useCanvasAssetGenerate'
 import { assetImageUrl } from '@/utils/mediaUrl'
 
@@ -148,6 +149,7 @@ const props = defineProps({
 })
 
 const ctx = useCanvasContext()
+const { t, locale } = useI18n()
 const saving = ref(false)
 const generating = ref(false)
 const form = reactive({
@@ -161,8 +163,9 @@ const form = reactive({
 })
 
 const kindLabel = computed(() => {
-  const map = { character: '角色', scene: '场景', prop: '道具' }
-  return map[props.kind] || '素材'
+  const isEn = locale.value === 'en'
+  const map = { character: isEn ? 'Character' : '角色', scene: isEn ? 'Scene' : '场景', prop: isEn ? 'Prop' : '道具' }
+  return map[props.kind] || (isEn ? 'Asset' : '素材')
 })
 
 const kindIcon = computed(() => {
@@ -174,9 +177,15 @@ const previewUrl = computed(() => assetImageUrl(props.entity))
 const canGenerate = computed(() => !previewUrl.value)
 const entityStatus = computed(() => props.entity?.status || '')
 const entityStatusLabel = computed(() => {
+  const isEn = locale.value === 'en'
   const s = entityStatus.value
-  const map = { pending: '待生成', processing: '生成中', completed: '已完成', failed: '失败' }
-  return map[s] || (previewUrl.value ? '已有参考图' : '无参考图')
+  const map = {
+    pending: isEn ? 'Pending' : '待生成',
+    processing: isEn ? 'Generating' : '生成中',
+    completed: isEn ? 'Completed' : '已完成',
+    failed: isEn ? 'Failed' : '失败',
+  }
+  return map[s] || (previewUrl.value ? (isEn ? 'Has reference' : '已有参考图') : (isEn ? 'No reference' : '无参考图'))
 })
 
 const nodeBusy = computed(() => {
@@ -207,11 +216,11 @@ function closePanel() {
 
 async function saveAsset() {
   saving.value = true
-  ctx?.nodeStatus?.set(props.nodeId, { step: 'save', message: '保存中…' })
+  ctx?.nodeStatus?.set(props.nodeId, { step: 'save', message: locale.value === 'en' ? 'Saving…' : '保存中…' })
   try {
     if (props.kind === 'character') {
       if (!form.name.trim()) {
-        ElMessage.warning('请填写角色名称')
+        ElMessage.warning(locale.value === 'en' ? 'Please enter character name' : '请填写角色名称')
         return
       }
       await characterAPI.update(props.entity.id, {
@@ -222,7 +231,7 @@ async function saveAsset() {
       })
     } else if (props.kind === 'scene') {
       if (!form.location.trim()) {
-        ElMessage.warning('请填写场景地点')
+        ElMessage.warning(locale.value === 'en' ? 'Please enter scene location' : '请填写场景地点')
         return
       }
       await sceneAPI.update(props.entity.id, {
@@ -232,7 +241,7 @@ async function saveAsset() {
       })
     } else {
       if (!form.name.trim()) {
-        ElMessage.warning('请填写道具名称')
+        ElMessage.warning(locale.value === 'en' ? 'Please enter prop name' : '请填写道具名称')
         return
       }
       await propAPI.update(props.entity.id, {
@@ -241,10 +250,10 @@ async function saveAsset() {
         prompt: form.prompt.trim() || undefined,
       })
     }
-    ElMessage.success('已保存')
+    ElMessage.success(t('common.saved'))
     await ctx?.refreshDrama?.(true)
   } catch (e) {
-    ElMessage.error(e?.message || '保存失败')
+    ElMessage.error(e?.message || (locale.value === 'en' ? 'Save failed' : '保存失败'))
   } finally {
     saving.value = false
     if (!generating.value) ctx?.nodeStatus?.clear(props.nodeId)
@@ -253,14 +262,18 @@ async function saveAsset() {
 
 async function deleteAsset() {
   const label = props.kind === 'scene'
-    ? (props.entity.location || '未命名')
-    : (props.entity.name || '未命名')
+    ? (props.entity.location || (locale.value === 'en' ? 'Untitled' : '未命名'))
+    : (props.entity.name || (locale.value === 'en' ? 'Untitled' : '未命名'))
   try {
-    await ElMessageBox.confirm(`确定删除「${label.slice(0, 20)}」？`, '删除确认', {
-      type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-    })
+    await ElMessageBox.confirm(
+      locale.value === 'en' ? `Are you sure you want to delete "${label.slice(0, 20)}"?` : `确定删除「${label.slice(0, 20)}」？`,
+      locale.value === 'en' ? 'Confirm Deletion' : '删除确认',
+      {
+        type: 'warning',
+        confirmButtonText: t('common.delete'),
+        cancelButtonText: t('common.cancel'),
+      }
+    )
     if (props.kind === 'character') {
       await characterAPI.delete(props.entity.id)
     } else if (props.kind === 'scene') {
@@ -269,11 +282,11 @@ async function deleteAsset() {
       await propAPI.delete(props.entity.id)
     }
     ctx?.clearFocusedNode?.()
-    ElMessage.success('已删除')
+    ElMessage.success(t('common.deleted'))
     await ctx?.refresh?.()
   } catch (e) {
     if (e === 'cancel') return
-    ElMessage.error(e?.message || '删除失败')
+    ElMessage.error(e?.message || (locale.value === 'en' ? 'Delete failed' : '删除失败'))
   }
 }
 
@@ -285,9 +298,9 @@ async function generateImage() {
       entity: props.entity,
       nodeId: props.nodeId,
     })
-    ElMessage.success('参考图已生成')
+    ElMessage.success(locale.value === 'en' ? 'Reference image generated' : '参考图已生成')
   } catch (e) {
-    ElMessage.error(e?.message || '生成失败')
+    ElMessage.error(e?.message || (locale.value === 'en' ? 'Generation failed' : '生成失败'))
   } finally {
     generating.value = false
   }

@@ -12,16 +12,24 @@
 <script setup>
 import { computed } from 'vue'
 import { useCanvasContext } from '@/composables/useCanvasContext'
+import { useI18n } from '@/i18n'
 
 const props = defineProps({
   data: { type: Object, required: true },
 })
 
 const ctx = useCanvasContext()
+const { locale } = useI18n()
 
 const defaultLabel = computed(() => {
-  const map = { character: '新建角色', scene: '新建场景', prop: '新建道具', storyboard: '新建分镜' }
-  return map[props.data.assetType] || '新建'
+  const isEn = locale.value === 'en'
+  const map = {
+    character: isEn ? 'New Character' : '新建角色',
+    scene: isEn ? 'New Scene' : '新建场景',
+    prop: isEn ? 'New Prop' : '新建道具',
+    storyboard: isEn ? 'New Shot' : '新建分镜',
+  }
+  return map[props.data.assetType] || (isEn ? 'New' : '新建')
 })
 
 function onClick() {

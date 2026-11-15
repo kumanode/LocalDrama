@@ -1,14 +1,17 @@
 <template>
   <div class="canvas-episode-node">
     <Handle type="target" :position="Position.Left" />
-    <span class="badge">第 {{ data.episode?.episode_number ?? '?' }} 集</span>
-    <span class="title">{{ data.episode?.title || '未命名集' }}</span>
-    <span class="count">{{ (data.episode?.storyboards || []).length }} 镜</span>
+    <span class="badge">{{ locale === 'en' ? 'Ep ' + (data.episode?.episode_number ?? '?') : '第 ' + (data.episode?.episode_number ?? '?') + ' 集' }}</span>
+    <span class="title">{{ data.episode?.title || (locale === 'en' ? 'Untitled Episode' : '未命名集') }}</span>
+    <span class="count">{{ (data.episode?.storyboards || []).length }} {{ locale === 'en' ? 'shots' : '镜' }}</span>
   </div>
 </template>
 
 <script setup>
 import { Handle, Position } from '@vue-flow/core'
+import { useI18n } from '@/i18n'
+
+const { locale } = useI18n()
 
 defineProps({
   data: { type: Object, required: true },

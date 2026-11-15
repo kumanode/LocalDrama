@@ -1,5 +1,6 @@
 import { ref, reactive, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { t, currentLocale } from '@/i18n'
 import { characterAPI } from '@/api/characters'
 import { characterLibraryAPI } from '@/api/characterLibrary'
 import { dramaAPI } from '@/api/drama'
@@ -99,18 +100,24 @@ export function useCharacters(deps) {
 
 
   // ── 常量 ──────────────────────────────────────────────
-  const CHAR_ROLE_LABEL = { main: '主角', supporting: '配角', minor: '次要角色' }
-  function charRoleLabel(role) { return CHAR_ROLE_LABEL[role] || role || '' }
+  const CHAR_ROLE_LABEL = {
+    zh: { main: '主角', supporting: '配角', minor: '次要角色' },
+    en: { main: 'Lead', supporting: 'Supporting', minor: 'Minor' },
+  }
+  function charRoleLabel(role) {
+    const lang = currentLocale.value === 'en' ? 'en' : 'zh'
+    return CHAR_ROLE_LABEL[lang]?.[role] || role || ''
+  }
 
   // ── 核心函数 ──────────────────────────────────────────
   async function onGenerateCharacters() {
     if (!store.dramaId) return
     const epId = currentEpisodeId.value
     if (!epId) {
-      ElMessage.warning('请先选择集次')
+      ElMessage.warning(t('filmCreate.msgSelectEpisodeFirst'))
       return
     }
-    const meta = buildExtractTaskMeta(store, dramaId.value, epId, GEN_RESOURCE.EXTRACT_CHARACTERS, '提取角色')
+    const meta = buildExtractTaskMeta(store, dramaId.value, epId, GEN_RESOURCE.EXTRACT_CHARACTERS, currentLocale.value === 'en' ? 'Extract Characters' : '提取角色')
     genStore.markRunning(meta)
     try {
       const outline =
@@ -122,12 +129,12 @@ export function useCharacters(deps) {
       const taskId = res?.task_id
       if (taskId) {
         await pollTask(taskId, () => loadDrama(), meta)
-        ElMessage.success('角色生成完成')
+        ElMessage.success(t('filmCreate.msgCharsGenerated'))
       } else {
         await loadDrama()
       }
     } catch (e) {
-      ElMessage.error(e.message || '生成失败')
+      ElMessage.error(e.message || t('filmCreate.msgGenFailed'))
     } finally {
       genStore.markDone(meta)
     }
@@ -224,7 +231,7 @@ export function useCharacters(deps) {
           stages: form.stages ? form.stages.trim() || undefined : undefined
         })
         await saveCharRefImageIfAny(form.id)
-        ElMessage.success('角色已保存')
+        ElMessage.success(t('filmCreate.msgCharSaved'))
       } else {
         const existing = (store.drama?.characters || []).map((c) => ({
           id: c.id,
@@ -251,12 +258,12 @@ export function useCharacters(deps) {
           const newChar = (store.drama?.characters || []).find(c => c.name === form.name.trim())
           if (newChar?.id) await saveCharRefImageIfAny(newChar.id)
         }
-        ElMessage.success('角色已添加')
+        ElMessage.success(t('filmCreate.msgCharAdded'))
       }
       await loadDrama()
       showEditCharacter.value = false
     } catch (e) {
-      ElMessage.error(e.message || (form.id ? '保存失败' : '添加失败'))
+      ElMessage.error(e.message || (form.id ? t('filmCreate.msgSaveFailed') : t('filmCreate.msgAddFailed')))
     } finally {
       editCharacterSaving.value = false
     }
@@ -270,11 +277,11 @@ export function useCharacters(deps) {
       const res = await characterAPI.generatePrompt(form.id)
       if (res?.polished_prompt) {
         form.polished_prompt = res.polished_prompt
-        ElMessage.success('提示词已生成')
+        ElMessage.success(t('filmCreate.msgPromptGenerated'))
         await loadDrama()
       }
     } catch (e) {
-      ElMessage.error(e.message || '生成提示词失败')
+      ElMessage.error(e.message || t('filmCreate.msgPromptGenFailed'))
     } finally {
       editCharacterPromptGenerating.value = false
     }
@@ -288,10 +295,10 @@ export function useCharacters(deps) {
       const res = await characterAPI.extractFromImage(form.id)
       if (res?.appearance) {
         form.appearance = res.appearance
-        ElMessage.success('已从图片提取外貌描述')
+        ElMessage.success(t('filmCreate.msgAppearanceExtracted'))
       }
     } catch (e) {
-      ElMessage.error(e.message || '提取失败，请检查角色是否已上传参考图片')
+      ElMessage.error(e.message || t('filmCreate.msgExtractFailedCheckImage'))
     } finally {
       extractingCharAppearance.value = false
     }
@@ -303,9 +310,9 @@ export function useCharacters(deps) {
     try {
       await characterAPI.putRefImage(form.id, null)
       form.ref_image = ''
-      ElMessage.success('参考图已移除')
+      ElMessage.success(t('filmCreate.msgRefImageRemoved'))
     } catch (e) {
-      ElMessage.error('移除失败')
+      ElMessage.error(t('filmCreate.msgRemoveFailed'))
     }
   }
 
@@ -319,16 +326,18 @@ export function useCharacters(deps) {
   async function onDeleteCharacter(char) {
     try {
       await ElMessageBox.confirm(
-        `确定要删除角色「${(char.name || '未命名').slice(0, 20)}」吗？此操作不可恢复。`,
-        '删除确认',
-        { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+        currentLocale.value === 'en'
+          ? `Are you sure you want to delete character "${(char.name || 'Untitled').slice(0, 20)}"? This action cannot be undone.`
+          : `确定要删除角色「${(char.name || '未命名').slice(0, 20)}」吗？此操作不可恢复。`,
+        currentLocale.value === 'en' ? 'Confirm Deletion' : '删除确认',
+        { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
       )
       await characterAPI.delete(char.id)
       await loadDrama()
-      ElMessage.success('角色已删除')
+      ElMessage.success(t('filmCreate.msgCharDeleted'))
     } catch (e) {
       if (e === 'cancel') return
-      ElMessage.error(e.message || '删除失败')
+      ElMessage.error(e.message || t('filmCreate.msgDeleteFailed'))
     }
   }
 
@@ -344,9 +353,9 @@ export function useCharacters(deps) {
       if (taskId) {
         const pollRes = await pollTask(taskId, () => loadDrama(), meta)
         if (pollRes?.status === 'failed') {
-          char.errorMsg = pollRes.error || '生成失败'
+          char.errorMsg = pollRes.error || t('filmCreate.msgGenFailed')
         } else {
-          ElMessage.success('角色图片已生成')
+          ElMessage.success(t('filmCreate.msgCharImageGenerated'))
         }
       } else {
         await loadDrama()
@@ -355,12 +364,12 @@ export function useCharacters(deps) {
           const c = list.find((x) => Number(x.id) === Number(char.id))
           return !!(c && (c.image_url || c.local_path))
         })
-        ElMessage.success('角色图片已生成')
+        ElMessage.success(t('filmCreate.msgCharImageGenerated'))
       }
     } catch (e) {
       console.error(e)
-      char.errorMsg = e.message || '生成失败'
-      ElMessage.error(e.message || '提交失败')
+      char.errorMsg = e.message || t('filmCreate.msgGenFailed')
+      ElMessage.error(e.message || t('filmCreate.msgSubmitFailed'))
     } finally {
       generatingCharIds.delete(char.id)
       genStore.markDone(meta)
@@ -479,11 +488,11 @@ export function useCharacters(deps) {
         description: editCharLibraryForm.value.description || null,
         tags: editCharLibraryForm.value.tags || null
       })
-      ElMessage.success('已保存')
+      ElMessage.success(t('filmCreate.msgSaved'))
       showEditCharLibrary.value = false
       loadCharLibraryList()
     } catch (e) {
-      ElMessage.error(e.message || '保存失败')
+      ElMessage.error(e.message || t('filmCreate.msgSaveFailed'))
     } finally {
       editCharLibrarySaving.value = false
     }
@@ -492,41 +501,43 @@ export function useCharacters(deps) {
   async function onDeleteCharLibrary(item) {
     try {
       await ElMessageBox.confirm(
-        `确定删除公共角色「${(item.name || '未命名').slice(0, 20)}」吗？`,
-        '删除确认',
-        { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+        currentLocale.value === 'en'
+          ? `Are you sure you want to delete public character "${(item.name || 'Untitled').slice(0, 20)}"?`
+          : `确定删除公共角色「${(item.name || '未命名').slice(0, 20)}」吗？`,
+        currentLocale.value === 'en' ? 'Confirm Deletion' : '删除确认',
+        { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
       )
       await characterLibraryAPI.delete(item.id)
-      ElMessage.success('已删除')
+      ElMessage.success(t('filmCreate.msgDeleted'))
       loadCharLibraryList()
     } catch (e) {
       if (e === 'cancel') return
-      ElMessage.error(e.message || '删除失败')
+      ElMessage.error(e.message || t('filmCreate.msgDeleteFailed'))
     }
   }
 
   async function onAddCharacterToLibrary(char) {
-    if (!hasAssetImage(char)) { ElMessage.warning('请先为该角色生成或上传图片'); return }
+    if (!hasAssetImage(char)) { ElMessage.warning(t('filmCreate.msgUploadOrGenImageFirst')); return }
     addingCharToLibraryId.value = char.id
     try {
       await characterAPI.addToLibrary(char.id, {})
-      ElMessage.success('已加入本剧角色库')
+      ElMessage.success(t('filmCreate.msgAddedToDramaLib'))
       if (showCharLibrary.value) loadCharLibraryList()
     } catch (e) {
-      ElMessage.error(e.message || '加入失败')
+      ElMessage.error(e.message || t('filmCreate.msgJoinFailed'))
     } finally {
       addingCharToLibraryId.value = null
     }
   }
 
   async function onAddCharacterToMaterialLibrary(char) {
-    if (!hasAssetImage(char)) { ElMessage.warning('请先为该角色生成或上传图片'); return }
+    if (!hasAssetImage(char)) { ElMessage.warning(t('filmCreate.msgUploadOrGenImageFirst')); return }
     addingCharToMaterialId.value = char.id
     try {
       await characterAPI.addToMaterialLibrary(char.id)
-      ElMessage.success('已加入全局素材库')
+      ElMessage.success(t('filmCreate.msgAddedToGlobalLib'))
     } catch (e) {
-      ElMessage.error(e.message || '加入失败')
+      ElMessage.error(e.message || t('filmCreate.msgJoinFailed'))
     } finally {
       addingCharToMaterialId.value = null
     }
@@ -535,7 +546,7 @@ export function useCharacters(deps) {
   async function addCharToEpisode(item, scope) {
     if (!store.dramaId) return
     if (!currentEpisodeId.value) {
-      ElMessage.warning('请先选择本集')
+      ElMessage.warning(t('filmCreate.msgSelectEpisodeFirst'))
       return
     }
     const loadingKey = charAddToEpisodeLoadingKey(scope, item.id)
@@ -552,7 +563,7 @@ export function useCharacters(deps) {
         local_path: c.local_path || undefined,
       }))
       const newCharacters = [...existing]
-      const existingChar = newCharacters.find((c) => c.name === (item.name || '未命名'))
+      const existingChar = newCharacters.find((c) => c.name === (item.name || (currentLocale.value === 'en' ? 'Untitled' : '未命名')))
       if (existingChar) {
         existingChar.description = item.description || existingChar.description
         existingChar.appearance = item.appearance || existingChar.appearance
@@ -561,7 +572,7 @@ export function useCharacters(deps) {
         if (item.role && !existingChar.role) existingChar.role = item.role
       } else {
         newCharacters.push({
-          name: item.name || '未命名',
+          name: item.name || (currentLocale.value === 'en' ? 'Untitled' : '未命名'),
           role: item.role || undefined,
           description: item.description || undefined,
           appearance: item.appearance || undefined,
@@ -575,9 +586,9 @@ export function useCharacters(deps) {
         episode_id: currentEpisodeId.value ?? undefined,
       })
       await loadDrama()
-      ElMessage.success(`「${item.name || '角色'}」已加入本集`)
+      ElMessage.success(t('filmCreate.msgAddedToEpisode', { name: item.name || (currentLocale.value === 'en' ? 'Character' : '角色') }))
     } catch (e) {
-      ElMessage.error(e.message || '加入失败')
+      ElMessage.error(e.message || t('filmCreate.msgJoinFailed'))
     } finally {
       addingCharFromLibraryId.value = null
     }
@@ -595,13 +606,13 @@ export function useCharacters(deps) {
     const form = editCharacterForm.value
     if (!form?.id) return
     if (!form.appearance) {
-      ElMessage.warning('请先填写角色外貌描述')
+      ElMessage.warning(t('filmCreate.msgFillAppearanceFirst'))
       return
     }
     extractingAnchors.value = true
     try {
       await characterAPI.extractAnchors(form.id)
-      ElMessage.success('视觉锚点提炼已启动，请稍后查看')
+      ElMessage.success(t('filmCreate.msgVisualAnchorsStarted'))
       // 轮询等待锚点写入
       let elapsed = 0
       const timer = setInterval(async () => {
@@ -623,7 +634,7 @@ export function useCharacters(deps) {
         }
       }, 3000)
     } catch (e) {
-      ElMessage.error(e.message || '提炼失败')
+      ElMessage.error(e.message || t('filmCreate.msgRefineFailed'))
       extractingAnchors.value = false
     }
   }
@@ -631,27 +642,27 @@ export function useCharacters(deps) {
   async function onSd2CertifyCharacter(char) {
     if (!char?.id) return
     if (!hasAssetImage(char)) {
-      ElMessage.warning('请先为该角色生成或上传图片')
+      ElMessage.warning(t('filmCreate.msgUploadOrGenImageFirst'))
       return
     }
     sd2CertifyingId.value = char.id
     try {
       await characterAPI.sd2Certify(char.id)
       await loadDrama()
-      ElMessage.success('SD2 认证请求已提交')
+      ElMessage.success(currentLocale.value === 'en' ? 'SD2 certification request submitted' : 'SD2 认证请求已提交')
     } catch (e) {
       const msg = e?.message || ''
       if (/已存在|已认证|already/i.test(msg)) {
         try {
           await characterAPI.sd2CertifyRefresh(char.id)
           await loadDrama()
-          ElMessage.success('SD2 认证状态已刷新')
+          ElMessage.success(currentLocale.value === 'en' ? 'SD2 certification status refreshed' : 'SD2 认证状态已刷新')
           return
         } catch (_) {
           // fall through
         }
       }
-      ElMessage.error(msg || 'SD2 认证失败')
+      ElMessage.error(msg || (currentLocale.value === 'en' ? 'SD2 certification failed' : 'SD2 认证失败'))
     } finally {
       sd2CertifyingId.value = null
     }
@@ -663,20 +674,21 @@ export function useCharacters(deps) {
     try {
       await characterAPI.sd2CertifyRefresh(char.id)
       await loadDrama()
-      ElMessage.success('SD2 认证状态已刷新')
+      ElMessage.success(currentLocale.value === 'en' ? 'SD2 certification status refreshed' : 'SD2 认证状态已刷新')
     } catch (e) {
-      ElMessage.error(e?.message || '刷新失败')
+      ElMessage.error(e?.message || (currentLocale.value === 'en' ? 'Refresh failed' : '刷新失败'))
     } finally {
       sd2CertifyingId.value = null
     }
   }
 
   function sd2ActionLabel(char) {
+    const isEn = currentLocale.value === 'en'
     const status = String(char?.seedance2_asset?.status || '').toLowerCase()
-    if (status === 'active') return '查看认证'
-    if (status === 'processing') return '刷新认证'
-    if (status === 'failed') return '重新认证'
-    return 'sd2认证'
+    if (status === 'active') return isEn ? 'View SD2 Cert' : '查看认证'
+    if (status === 'processing') return isEn ? 'Refresh SD2 Cert' : '刷新认证'
+    if (status === 'failed') return isEn ? 'Re-certify SD2' : '重新认证'
+    return isEn ? 'SD2 Certify' : 'sd2认证'
   }
 
   async function onSd2PrimaryAction(char) {
@@ -698,17 +710,18 @@ export function useCharacters(deps) {
   }
 
   function sd2VoiceActionLabel(char) {
+    const isEn = currentLocale.value === 'en'
     const status = String(char?.seedance2_voice_asset?.status || '').toLowerCase()
-    if (status === 'active') return '音色参考'
-    if (status === 'processing') return '刷新音色'
-    if (status === 'failed') return '重新上传'
-    return '上传音色'
+    if (status === 'active') return isEn ? 'Voice Ref' : '音色参考'
+    if (status === 'processing') return isEn ? 'Refresh Voice' : '刷新音色'
+    if (status === 'failed') return isEn ? 'Re-upload Voice' : '重新上传'
+    return isEn ? 'Upload Voice' : '上传音色'
   }
 
   async function onSd2VoicePrimaryAction(char) {
     const status = String(char?.seedance2_voice_asset?.status || '').toLowerCase()
     if (status === 'active') {
-      ElMessage.info('音色参考已设置，将在 Seedance 2.0 模型中使用')
+      ElMessage.info(currentLocale.value === 'en' ? 'Voice reference is set and will be used in Seedance 2.0' : '音色参考已设置，将在 Seedance 2.0 模型中使用')
       return
     }
     if (status === 'processing' || status === 'stale') {
@@ -730,9 +743,9 @@ export function useCharacters(deps) {
     try {
       const res = await characterAPI.sd2VoiceRefresh(char.id)
       await loadDrama()
-      ElMessage.success(res?.data?.message || '音色状态已刷新')
+      ElMessage.success(res?.data?.message || (currentLocale.value === 'en' ? 'Voice status refreshed' : '音色状态已刷新'))
     } catch (e) {
-      ElMessage.error(e?.message || '刷新失败')
+      ElMessage.error(e?.message || (currentLocale.value === 'en' ? 'Refresh failed' : '刷新失败'))
     } finally {
       sd2VoiceUploadingId.value = null
     }
@@ -750,11 +763,11 @@ export function useCharacters(deps) {
       sd2VoiceUploadingId.value = char.id
       try {
         const res = await characterAPI.sd2VoiceUpload(char.id, file)
-        ElMessage.success('Seedance 2.0 音色参考已上传')
+        ElMessage.success(currentLocale.value === 'en' ? 'Seedance 2.0 voice reference uploaded' : 'Seedance 2.0 音色参考已上传')
         // 强制重新加载整个剧本数据，确保 seedance2_voice_asset 被正确解析并更新到 store
         await loadDrama()
       } catch (e) {
-        ElMessage.error(e?.message || '音色上传失败')
+        ElMessage.error(e?.message || (currentLocale.value === 'en' ? 'Voice upload failed' : '音色上传失败'))
       } finally {
         sd2VoiceUploadingId.value = null
       }
@@ -766,7 +779,7 @@ export function useCharacters(deps) {
   function playSd2Voice(char) {
     const url = char?.seedance2_voice_asset?.url
     if (!url) {
-      ElMessage.warning('该角色暂无音色参考音频')
+      ElMessage.warning(currentLocale.value === 'en' ? 'No voice reference audio for this character' : '该角色暂无音色参考音频')
       return
     }
     try {
@@ -774,13 +787,13 @@ export function useCharacters(deps) {
       const audio = new Audio(url)
       audio.onerror = () => {
         // 常见原因：文件不在 static 根目录下（后端写盘路径与 express.static(storageRoot) 不一致）、404、格式不支持
-        ElMessage.error('音频播放失败：文件可能不存在或路径不匹配，请尝试重新上传该音色参考')
+        ElMessage.error(currentLocale.value === 'en' ? 'Audio playback failed: file not found or path mismatch, please re-upload' : '音频播放失败：文件可能不存在或路径不匹配，请尝试重新上传该音色参考')
       }
       audio.play().catch((err) => {
-        ElMessage.error('音频播放失败，请检查文件或稍后重试')
+        ElMessage.error(currentLocale.value === 'en' ? 'Audio playback failed, please check file or try again later' : '音频播放失败，请检查文件或稍后重试')
       })
     } catch (e) {
-      ElMessage.error('无法播放音频')
+      ElMessage.error(currentLocale.value === 'en' ? 'Unable to play audio' : '无法播放音频')
     }
   }
 

@@ -3,19 +3,19 @@
     <header class="header">
       <div class="header-inner">
         <h1 class="logo">
-          <span class="logo-main">本地短剧助手</span>
-          <span class="logo-sub">LocalMiniDrama</span>
+          <span class="logo-main">{{ $t('header.appTitle') }}</span>
+          <span class="logo-sub">{{ $t('header.appSubtitle') }}</span>
         </h1>
         <!-- 公共资源库（左侧，靛紫调） -->
         <div class="header-library">
           <el-button class="btn-library" @click="showCharLibrary = true">
-            <el-icon><User /></el-icon>素材角色
+            <el-icon><User /></el-icon>{{ $t('header.characterLib') }}
           </el-button>
           <el-button class="btn-library" @click="showSceneLibrary = true">
-            <el-icon><PictureFilled /></el-icon>素材场景
+            <el-icon><PictureFilled /></el-icon>{{ $t('header.sceneLib') }}
           </el-button>
           <el-button class="btn-library" @click="showPropLibrary = true">
-            <el-icon><Box /></el-icon>素材道具
+            <el-icon><Box /></el-icon>{{ $t('header.propLib') }}
           </el-button>
         </div>
         <!-- 右侧操作区 -->
@@ -27,22 +27,23 @@
           <el-button class="btn-library" title="媒体素材库" @click="$router.push('/media-library')">
             <el-icon><Files /></el-icon>素材库
           </el-button> -->
-          <el-button v-if="!vendorLockEnabled" class="btn-wechat" title="扫码联系作者" @click="showWechat = true">
-            <el-icon><ChatDotSquare /></el-icon>微信我
+          <LanguageToggle />
+          <el-button v-if="!vendorLockEnabled" class="btn-wechat" :title="$t('header.wechatTitle')" @click="showWechat = true">
+            <el-icon><ChatDotSquare /></el-icon>{{ $t('header.wechat') }}
           </el-button>
-          <el-button class="btn-theme" :title="isDark ? '切换到浅色模式' : '切换到暗色模式'" @click="toggleTheme">
+          <el-button class="btn-theme" :title="isDark ? $t('header.switchToLight') : $t('header.switchToDark')" @click="toggleTheme">
             <el-icon><Sunny v-if="isDark" /><Moon v-else /></el-icon>
-            {{ isDark ? '浅色' : '暗色' }}
+            {{ isDark ? $t('header.lightMode') : $t('header.darkMode') }}
           </el-button>
           <el-button class="btn-settings" @click="showAiConfigDialog = true">
-            <el-icon><Setting /></el-icon>AI配置
+            <el-icon><Setting /></el-icon>{{ $t('header.aiConfig') }}
           </el-button>
           <el-button class="btn-import" :loading="importing" @click="triggerImport">
-            <el-icon><Upload /></el-icon>导入项目
+            <el-icon><Upload /></el-icon>{{ $t('header.importProject') }}
           </el-button>
           <input ref="importFileInput" type="file" accept=".zip" style="display:none" @change="onImportFile" />
           <el-button type="primary" class="btn-new" @click="goNewProject">
-            <el-icon><Plus /></el-icon>新建项目
+            <el-icon><Plus /></el-icon>{{ $t('header.newProject') }}
           </el-button>
         </div>
       </div>
@@ -54,19 +55,19 @@
           <!-- 操作卡片：始终作为第一个格子 -->
           <div class="project-card action-card">
             <div class="action-card-inner">
-              <h3 class="action-card-title">快速开始</h3>
+              <h3 class="action-card-title">{{ $t('filmList.quickStart') }}</h3>
               <div class="action-card-buttons">
                 <el-button type="primary" size="large" class="action-btn action-btn-new" @click="goNewProject">
-                  <el-icon><Plus /></el-icon>新建短剧项目
+                  <el-icon><Plus /></el-icon>{{ $t('filmList.newDramaProject') }}
                 </el-button>
                 <el-button size="large" class="action-btn action-btn-import" :loading="importing" @click="triggerImport">
-                  <el-icon><Upload /></el-icon>导入短剧项目
+                  <el-icon><Upload /></el-icon>{{ $t('filmList.importDramaProject') }}
                 </el-button>
               </div>
               <div v-if="exampleList.length > 0" class="action-card-example">
                 <div class="example-hint">
                   <el-icon class="example-hint-icon"><QuestionFilled /></el-icon>
-                  <span class="example-hint-text">新手？试试导入示例项目快速体验</span>
+                  <span class="example-hint-text">{{ $t('filmList.beginnerHint') }}</span>
                 </div>
                 <div class="example-list">
                   <el-button
@@ -90,17 +91,17 @@
             @click="openProject(d.id)"
           >
             <div class="project-card-actions" @click.stop>
-              <el-button size="small" circle :icon="Download" title="导出项目" :loading="exportingId === d.id" @click="onExport(d)" />
-              <el-button size="small" circle :icon="Edit" title="编辑" @click="openEditDialog(d)" />
-              <el-button size="small" type="danger" plain circle :icon="Delete" title="删除" @click="onDelete(d)" />
+              <el-button size="small" circle :icon="Download" :title="$t('filmList.exportTooltip')" :loading="exportingId === d.id" @click="onExport(d)" />
+              <el-button size="small" circle :icon="Edit" :title="$t('filmList.editTooltip')" @click="openEditDialog(d)" />
+              <el-button size="small" type="danger" plain circle :icon="Delete" :title="$t('filmList.deleteTooltip')" @click="onDelete(d)" />
             </div>
             <div class="project-card-body">
-              <h3 class="project-title">{{ d.title || '未命名项目' }}</h3>
-              <p class="project-desc">{{ d.description || '暂无描述' }}</p>
+              <h3 class="project-title">{{ d.title || $t('filmList.unnamedProject') }}</h3>
+              <p class="project-desc">{{ d.description || $t('filmList.noDescription') }}</p>
               <div class="project-badges">
                 <span class="badge badge-status" :class="'badge-status--' + (d.status || 'draft')">{{ formatStatus(d.status) }}</span>
-                <span v-if="d.episodes?.length" class="badge badge-episodes">{{ d.episodes.length }} 集</span>
-                <span v-if="totalStoryboards(d) > 0" class="badge badge-storyboards">{{ totalStoryboards(d) }} 分镜</span>
+                <span v-if="d.episodes?.length" class="badge badge-episodes">{{ d.episodes.length }} {{ locale === 'en' ? 'Ep' : '集' }}</span>
+                <span v-if="totalStoryboards(d) > 0" class="badge badge-storyboards">{{ totalStoryboards(d) }} {{ locale === 'en' ? 'Shots' : '分镜' }}</span>
                 <span v-if="d.metadata?.aspect_ratio" class="badge badge-ratio">{{ d.metadata.aspect_ratio }}</span>
                 <span v-if="d.style" class="badge badge-style">{{ formatStyle(d.style) }}</span>
                 <span v-if="d.genre" class="badge badge-genre">{{ formatGenre(d.genre) }}</span>
@@ -115,33 +116,33 @@
     <!-- 新建项目：先填标题和描述 -->
     <el-dialog
       v-model="showNewDialog"
-      title="新建项目"
+      :title="$t('filmList.createDialogTitle')"
       width="480px"
       :close-on-click-modal="false"
       @closed="resetNewForm"
     >
       <el-form :model="newForm" label-width="80px" label-position="top">
-        <el-form-item label="标题" required>
-          <el-input v-model="newForm.title" placeholder="输入项目标题" maxlength="100" show-word-limit />
+        <el-form-item :label="$t('filmList.projectName')" required>
+          <el-input v-model="newForm.title" :placeholder="$t('filmList.projectNamePlaceholder')" maxlength="100" show-word-limit />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="newForm.description" type="textarea" :rows="3" placeholder="输入项目描述（选填）" />
+        <el-form-item :label="$t('filmList.projectDesc')">
+          <el-input v-model="newForm.description" type="textarea" :rows="3" :placeholder="$t('filmList.projectDescPlaceholder')" />
         </el-form-item>
-        <el-form-item label="画面比例">
+        <el-form-item :label="$t('filmList.aspectRatio')">
           <el-select v-model="newForm.aspect_ratio" style="width: 100%">
-            <el-option label="16:9 横屏（默认）" value="16:9" />
-            <el-option label="9:16 竖屏（短视频）" value="9:16" />
-            <el-option label="3:4 竖版" value="3:4" />
-            <el-option label="1:1 方形" value="1:1" />
-            <el-option label="4:3 传统横屏" value="4:3" />
-            <el-option label="21:9 宽银幕" value="21:9" />
+            <el-option :label="locale === 'en' ? '16:9 Landscape (Default)' : '16:9 横屏（默认）'" value="16:9" />
+            <el-option :label="locale === 'en' ? '9:16 Portrait (Short Video)' : '9:16 竖屏（短视频）'" value="9:16" />
+            <el-option :label="locale === 'en' ? '3:4 Portrait' : '3:4 竖版'" value="3:4" />
+            <el-option :label="locale === 'en' ? '1:1 Square' : '1:1 方形'" value="1:1" />
+            <el-option :label="locale === 'en' ? '4:3 Traditional' : '4:3 传统横屏'" value="4:3" />
+            <el-option :label="locale === 'en' ? '21:9 Widescreen' : '21:9 宽银幕'" value="21:9" />
           </el-select>
-          <p style="margin: 4px 0 0; font-size: 12px; color: #71717a;">影响分镜图和视频的生成比例，短视频选 9:16</p>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #71717a;">{{ locale === 'en' ? 'Affects shot images and video aspect ratio (use 9:16 for short dramas)' : '影响分镜图和视频的生成比例，短视频选 9:16' }}</p>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showNewDialog = false">取消</el-button>
-        <el-button type="primary" :loading="newSaving" :disabled="!newForm.title?.trim()" @click="submitNew">确定</el-button>
+        <el-button @click="showNewDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="newSaving" :disabled="!newForm.title?.trim()" @click="submitNew">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
@@ -151,173 +152,173 @@
     </el-dialog>
 
     <!-- 公共角色库 -->
-    <el-dialog v-model="showCharLibrary" title="素材库 · 角色" width="720px" destroy-on-close class="library-dialog" @open="loadCharLibraryList">
+    <el-dialog v-model="showCharLibrary" :title="$t('library.charTitle')" width="720px" destroy-on-close class="library-dialog" @open="loadCharLibraryList">
       <div class="library-toolbar">
-        <el-input v-model="charLibraryKeyword" placeholder="搜索名称或描述" clearable style="width: 200px" @input="debouncedLoadCharLibrary()" />
+        <el-input v-model="charLibraryKeyword" :placeholder="$t('library.searchCharPlaceholder')" clearable style="width: 200px" @input="debouncedLoadCharLibrary()" />
       </div>
       <div v-loading="charLibraryLoading" class="library-list">
         <div v-for="item in charLibraryList" :key="item.id" class="library-item">
           <div class="library-item-cover" @click="openImagePreview(assetImageUrl(item))">
             <img v-if="item.image_url || item.local_path" :src="assetImageUrl(item)" alt="" />
-            <span v-else class="library-item-placeholder">暂无图</span>
+            <span v-else class="library-item-placeholder">{{ $t('library.noImage') }}</span>
           </div>
           <div class="library-item-info">
-            <div class="library-item-name">{{ item.name || '未命名' }}</div>
+            <div class="library-item-name">{{ item.name || $t('library.unnamed') }}</div>
             <div class="library-item-desc">{{ (item.description || '').slice(0, 60) }}{{ (item.description || '').length > 60 ? '…' : '' }}</div>
             <div class="library-item-actions">
-              <el-button size="small" @click="openEditCharLibrary(item)">编辑</el-button>
-              <el-button size="small" type="danger" plain @click="onDeleteCharLibrary(item)">删除</el-button>
+              <el-button size="small" @click="openEditCharLibrary(item)">{{ $t('common.edit') }}</el-button>
+              <el-button size="small" type="danger" plain @click="onDeleteCharLibrary(item)">{{ $t('common.delete') }}</el-button>
             </div>
           </div>
         </div>
-        <div v-if="!charLibraryLoading && charLibraryList.length === 0" class="library-empty">素材库暂无角色，可在项目中将角色「加入素材库」后在此查看</div>
+        <div v-if="!charLibraryLoading && charLibraryList.length === 0" class="library-empty">{{ $t('library.emptyChar') }}</div>
       </div>
       <div class="library-pagination">
         <el-pagination v-model:current-page="charLibraryPage" v-model:page-size="charLibraryPageSize" :total="charLibraryTotal" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next" @current-change="loadCharLibraryList" @size-change="loadCharLibraryList" />
       </div>
-      <template #footer><el-button @click="showCharLibrary = false">关闭</el-button></template>
+      <template #footer><el-button @click="showCharLibrary = false">{{ $t('common.close') }}</el-button></template>
     </el-dialog>
     <!-- 编辑公共角色 -->
-    <el-dialog v-model="showEditCharLibrary" title="编辑素材角色" width="480px" @close="editCharLibraryForm = null">
+    <el-dialog v-model="showEditCharLibrary" :title="$t('library.editChar')" width="480px" @close="editCharLibraryForm = null">
       <el-form v-if="editCharLibraryForm" label-width="80px">
-        <el-form-item label="图片">
+        <el-form-item :label="$t('filmCreate.avatarImage')">
           <div class="lib-img-editor">
             <div class="lib-img-thumb" @click="openImagePreview(assetImageUrl(editCharLibraryForm))">
               <img v-if="editCharLibraryForm.image_url || editCharLibraryForm.local_path" :src="assetImageUrl(editCharLibraryForm)" />
               <div v-else class="lib-img-empty"><el-icon><PictureFilled /></el-icon></div>
             </div>
             <div class="lib-img-btns">
-              <el-button size="small" :loading="editCharLibraryForm.imgUploading" @click="charLibFileRef.click()">上传图片</el-button>
-              <el-button size="small" type="primary" :loading="editCharLibraryForm.imgGenerating" @click="doGenerateLibImg(editCharLibraryForm, (editCharLibraryForm.name + (editCharLibraryForm.description ? ', ' + editCharLibraryForm.description : '')), characterLibraryAPI, loadCharLibraryList)">AI 生成</el-button>
+              <el-button size="small" :loading="editCharLibraryForm.imgUploading" @click="charLibFileRef.click()">{{ $t('library.uploadImage') }}</el-button>
+              <el-button size="small" type="primary" :loading="editCharLibraryForm.imgGenerating" @click="doGenerateLibImg(editCharLibraryForm, (editCharLibraryForm.name + (editCharLibraryForm.description ? ', ' + editCharLibraryForm.description : '')), characterLibraryAPI, loadCharLibraryList)">{{ $t('library.aiGenerate') }}</el-button>
             </div>
           </div>
           <input ref="charLibFileRef" type="file" accept="image/*" style="display:none" @change="e => doUploadLibImg(e, editCharLibraryForm, characterLibraryAPI, loadCharLibraryList)" />
         </el-form-item>
-        <el-form-item label="名称"><el-input v-model="editCharLibraryForm.name" placeholder="角色名称" /></el-form-item>
-        <el-form-item label="分类"><el-input v-model="editCharLibraryForm.category" placeholder="可选" /></el-form-item>
-        <el-form-item label="描述"><el-input v-model="editCharLibraryForm.description" type="textarea" :rows="3" placeholder="可选" /></el-form-item>
-        <el-form-item label="标签"><el-input v-model="editCharLibraryForm.tags" placeholder="可选，逗号分隔" /></el-form-item>
+        <el-form-item :label="$t('common.name')"><el-input v-model="editCharLibraryForm.name" :placeholder="$t('filmCreate.charName')" /></el-form-item>
+        <el-form-item :label="$t('library.category')"><el-input v-model="editCharLibraryForm.category" :placeholder="$t('library.optional')" /></el-form-item>
+        <el-form-item :label="$t('common.description')"><el-input v-model="editCharLibraryForm.description" type="textarea" :rows="3" :placeholder="$t('library.descPlaceholder')" /></el-form-item>
+        <el-form-item :label="$t('library.tags')"><el-input v-model="editCharLibraryForm.tags" :placeholder="$t('library.tagPlaceholder')" /></el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditCharLibrary = false">取消</el-button>
-        <el-button type="primary" :loading="editCharLibrarySaving" @click="submitEditCharLibrary">保存</el-button>
+        <el-button @click="showEditCharLibrary = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="editCharLibrarySaving" @click="submitEditCharLibrary">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 公共场景库 -->
-    <el-dialog v-model="showSceneLibrary" title="素材库 · 场景" width="720px" destroy-on-close class="library-dialog" @open="loadSceneLibraryList">
+    <el-dialog v-model="showSceneLibrary" :title="$t('library.sceneTitle')" width="720px" destroy-on-close class="library-dialog" @open="loadSceneLibraryList">
       <div class="library-toolbar">
-        <el-input v-model="sceneLibraryKeyword" placeholder="搜索地点或描述" clearable style="width: 200px" @input="debouncedLoadSceneLibrary()" />
+        <el-input v-model="sceneLibraryKeyword" :placeholder="$t('library.searchScenePlaceholder')" clearable style="width: 200px" @input="debouncedLoadSceneLibrary()" />
       </div>
       <div v-loading="sceneLibraryLoading" class="library-list">
         <div v-for="item in sceneLibraryList" :key="item.id" class="library-item">
           <div class="library-item-cover" @click="openImagePreview(assetImageUrl(item))">
             <img v-if="item.image_url || item.local_path" :src="assetImageUrl(item)" alt="" />
-            <span v-else class="library-item-placeholder">暂无图</span>
+            <span v-else class="library-item-placeholder">{{ $t('library.noImage') }}</span>
           </div>
           <div class="library-item-info">
-            <div class="library-item-name">{{ item.location || item.time || '未命名' }}</div>
+            <div class="library-item-name">{{ item.location || item.time || $t('library.unnamed') }}</div>
             <div class="library-item-desc">{{ (item.description || item.prompt || '').slice(0, 60) }}{{ (item.description || item.prompt || '').length > 60 ? '…' : '' }}</div>
             <div class="library-item-actions">
-              <el-button size="small" @click="openEditSceneLibrary(item)">编辑</el-button>
-              <el-button size="small" type="danger" plain @click="onDeleteSceneLibrary(item)">删除</el-button>
+              <el-button size="small" @click="openEditSceneLibrary(item)">{{ $t('common.edit') }}</el-button>
+              <el-button size="small" type="danger" plain @click="onDeleteSceneLibrary(item)">{{ $t('common.delete') }}</el-button>
             </div>
           </div>
         </div>
-        <div v-if="!sceneLibraryLoading && sceneLibraryList.length === 0" class="library-empty">素材库暂无场景，可在项目中将场景「加入素材库」后在此查看</div>
+        <div v-if="!sceneLibraryLoading && sceneLibraryList.length === 0" class="library-empty">{{ $t('library.emptyScene') }}</div>
       </div>
       <div class="library-pagination">
         <el-pagination v-model:current-page="sceneLibraryPage" v-model:page-size="sceneLibraryPageSize" :total="sceneLibraryTotal" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next" @current-change="loadSceneLibraryList" @size-change="loadSceneLibraryList" />
       </div>
-      <template #footer><el-button @click="showSceneLibrary = false">关闭</el-button></template>
+      <template #footer><el-button @click="showSceneLibrary = false">{{ $t('common.close') }}</el-button></template>
     </el-dialog>
     <!-- 编辑公共场景 -->
-    <el-dialog v-model="showEditSceneLibrary" title="编辑素材场景" width="480px" @close="editSceneLibraryForm = null">
+    <el-dialog v-model="showEditSceneLibrary" :title="$t('library.editScene')" width="480px" @close="editSceneLibraryForm = null">
       <el-form v-if="editSceneLibraryForm" label-width="80px">
-        <el-form-item label="图片">
+        <el-form-item :label="$t('filmCreate.avatarImage')">
           <div class="lib-img-editor">
             <div class="lib-img-thumb" @click="openImagePreview(assetImageUrl(editSceneLibraryForm))">
               <img v-if="editSceneLibraryForm.image_url || editSceneLibraryForm.local_path" :src="assetImageUrl(editSceneLibraryForm)" />
               <div v-else class="lib-img-empty"><el-icon><PictureFilled /></el-icon></div>
             </div>
             <div class="lib-img-btns">
-              <el-button size="small" :loading="editSceneLibraryForm.imgUploading" @click="sceneLibFileRef.click()">上传图片</el-button>
-              <el-button size="small" type="primary" :loading="editSceneLibraryForm.imgGenerating" @click="doGenerateLibImg(editSceneLibraryForm, ([editSceneLibraryForm.location, editSceneLibraryForm.time, editSceneLibraryForm.description].filter(Boolean).join(', ')), sceneLibraryAPI, loadSceneLibraryList)">AI 生成</el-button>
+              <el-button size="small" :loading="editSceneLibraryForm.imgUploading" @click="sceneLibFileRef.click()">{{ $t('library.uploadImage') }}</el-button>
+              <el-button size="small" type="primary" :loading="editSceneLibraryForm.imgGenerating" @click="doGenerateLibImg(editSceneLibraryForm, ([editSceneLibraryForm.location, editSceneLibraryForm.time, editSceneLibraryForm.description].filter(Boolean).join(', ')), sceneLibraryAPI, loadSceneLibraryList)">{{ $t('library.aiGenerate') }}</el-button>
             </div>
           </div>
           <input ref="sceneLibFileRef" type="file" accept="image/*" style="display:none" @change="e => doUploadLibImg(e, editSceneLibraryForm, sceneLibraryAPI, loadSceneLibraryList)" />
         </el-form-item>
-        <el-form-item label="地点"><el-input v-model="editSceneLibraryForm.location" placeholder="场景地点" /></el-form-item>
-        <el-form-item label="时间"><el-input v-model="editSceneLibraryForm.time" placeholder="如：浅色/夜晚" /></el-form-item>
-        <el-form-item label="分类"><el-input v-model="editSceneLibraryForm.category" placeholder="可选" /></el-form-item>
-        <el-form-item label="描述"><el-input v-model="editSceneLibraryForm.description" type="textarea" :rows="3" placeholder="可选" /></el-form-item>
-        <el-form-item label="标签"><el-input v-model="editSceneLibraryForm.tags" placeholder="可选，逗号分隔" /></el-form-item>
+        <el-form-item :label="$t('library.location')"><el-input v-model="editSceneLibraryForm.location" :placeholder="$t('filmCreate.sceneLocation')" /></el-form-item>
+        <el-form-item :label="$t('library.time')"><el-input v-model="editSceneLibraryForm.time" :placeholder="$t('filmCreate.sceneTime')" /></el-form-item>
+        <el-form-item :label="$t('library.category')"><el-input v-model="editSceneLibraryForm.category" :placeholder="$t('library.optional')" /></el-form-item>
+        <el-form-item :label="$t('common.description')"><el-input v-model="editSceneLibraryForm.description" type="textarea" :rows="3" :placeholder="$t('library.descPlaceholder')" /></el-form-item>
+        <el-form-item :label="$t('library.tags')"><el-input v-model="editSceneLibraryForm.tags" :placeholder="$t('library.tagPlaceholder')" /></el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditSceneLibrary = false">取消</el-button>
-        <el-button type="primary" :loading="editSceneLibrarySaving" @click="submitEditSceneLibrary">保存</el-button>
+        <el-button @click="showEditSceneLibrary = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="editSceneLibrarySaving" @click="submitEditSceneLibrary">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 公共道具库 -->
-    <el-dialog v-model="showPropLibrary" title="素材库 · 道具" width="720px" destroy-on-close class="library-dialog" @open="loadPropLibraryList">
+    <el-dialog v-model="showPropLibrary" :title="$t('library.propTitle')" width="720px" destroy-on-close class="library-dialog" @open="loadPropLibraryList">
       <div class="library-toolbar">
-        <el-input v-model="propLibraryKeyword" placeholder="搜索名称或描述" clearable style="width: 200px" @input="debouncedLoadPropLibrary()" />
+        <el-input v-model="propLibraryKeyword" :placeholder="$t('library.searchPropPlaceholder')" clearable style="width: 200px" @input="debouncedLoadPropLibrary()" />
       </div>
       <div v-loading="propLibraryLoading" class="library-list">
         <div v-for="item in propLibraryList" :key="item.id" class="library-item">
           <div class="library-item-cover" @click="openImagePreview(assetImageUrl(item))">
             <img v-if="item.image_url || item.local_path" :src="assetImageUrl(item)" alt="" />
-            <span v-else class="library-item-placeholder">暂无图</span>
+            <span v-else class="library-item-placeholder">{{ $t('library.noImage') }}</span>
           </div>
           <div class="library-item-info">
-            <div class="library-item-name">{{ item.name || '未命名' }}</div>
+            <div class="library-item-name">{{ item.name || $t('library.unnamed') }}</div>
             <div class="library-item-desc">{{ (item.description || item.prompt || '').slice(0, 60) }}{{ (item.description || item.prompt || '').length > 60 ? '…' : '' }}</div>
             <div class="library-item-actions">
-              <el-button size="small" @click="openEditPropLibrary(item)">编辑</el-button>
-              <el-button size="small" type="danger" plain @click="onDeletePropLibrary(item)">删除</el-button>
+              <el-button size="small" @click="openEditPropLibrary(item)">{{ $t('common.edit') }}</el-button>
+              <el-button size="small" type="danger" plain @click="onDeletePropLibrary(item)">{{ $t('common.delete') }}</el-button>
             </div>
           </div>
         </div>
-        <div v-if="!propLibraryLoading && propLibraryList.length === 0" class="library-empty">素材库暂无道具，可在项目中将道具「加入素材库」后在此查看</div>
+        <div v-if="!propLibraryLoading && propLibraryList.length === 0" class="library-empty">{{ $t('library.emptyProp') }}</div>
       </div>
       <div class="library-pagination">
         <el-pagination v-model:current-page="propLibraryPage" v-model:page-size="propLibraryPageSize" :total="propLibraryTotal" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next" @current-change="loadPropLibraryList" @size-change="loadPropLibraryList" />
       </div>
-      <template #footer><el-button @click="showPropLibrary = false">关闭</el-button></template>
+      <template #footer><el-button @click="showPropLibrary = false">{{ $t('common.close') }}</el-button></template>
     </el-dialog>
     <!-- 编辑公共道具 -->
-    <el-dialog v-model="showEditPropLibrary" title="编辑素材道具" width="480px" @close="editPropLibraryForm = null">
+    <el-dialog v-model="showEditPropLibrary" :title="$t('library.editProp')" width="480px" @close="editPropLibraryForm = null">
       <el-form v-if="editPropLibraryForm" label-width="80px">
-        <el-form-item label="图片">
+        <el-form-item :label="$t('filmCreate.avatarImage')">
           <div class="lib-img-editor">
             <div class="lib-img-thumb" @click="openImagePreview(assetImageUrl(editPropLibraryForm))">
               <img v-if="editPropLibraryForm.image_url || editPropLibraryForm.local_path" :src="assetImageUrl(editPropLibraryForm)" />
               <div v-else class="lib-img-empty"><el-icon><PictureFilled /></el-icon></div>
             </div>
             <div class="lib-img-btns">
-              <el-button size="small" :loading="editPropLibraryForm.imgUploading" @click="propLibFileRef.click()">上传图片</el-button>
-              <el-button size="small" type="primary" :loading="editPropLibraryForm.imgGenerating" @click="doGenerateLibImg(editPropLibraryForm, (editPropLibraryForm.name + (editPropLibraryForm.description ? ', ' + editPropLibraryForm.description : '')), propLibraryAPI, loadPropLibraryList)">AI 生成</el-button>
+              <el-button size="small" :loading="editPropLibraryForm.imgUploading" @click="propLibFileRef.click()">{{ $t('library.uploadImage') }}</el-button>
+              <el-button size="small" type="primary" :loading="editPropLibraryForm.imgGenerating" @click="doGenerateLibImg(editPropLibraryForm, (editPropLibraryForm.name + (editPropLibraryForm.description ? ', ' + editPropLibraryForm.description : '')), propLibraryAPI, loadPropLibraryList)">{{ $t('library.aiGenerate') }}</el-button>
             </div>
           </div>
           <input ref="propLibFileRef" type="file" accept="image/*" style="display:none" @change="e => doUploadLibImg(e, editPropLibraryForm, propLibraryAPI, loadPropLibraryList)" />
         </el-form-item>
-        <el-form-item label="名称"><el-input v-model="editPropLibraryForm.name" placeholder="道具名称" /></el-form-item>
-        <el-form-item label="分类"><el-input v-model="editPropLibraryForm.category" placeholder="可选" /></el-form-item>
-        <el-form-item label="描述"><el-input v-model="editPropLibraryForm.description" type="textarea" :rows="3" placeholder="可选" /></el-form-item>
-        <el-form-item label="标签"><el-input v-model="editPropLibraryForm.tags" placeholder="可选，逗号分隔" /></el-form-item>
+        <el-form-item :label="$t('common.name')"><el-input v-model="editPropLibraryForm.name" :placeholder="$t('filmCreate.propName')" /></el-form-item>
+        <el-form-item :label="$t('library.category')"><el-input v-model="editPropLibraryForm.category" :placeholder="$t('library.optional')" /></el-form-item>
+        <el-form-item :label="$t('common.description')"><el-input v-model="editPropLibraryForm.description" type="textarea" :rows="3" :placeholder="$t('library.descPlaceholder')" /></el-form-item>
+        <el-form-item :label="$t('library.tags')"><el-input v-model="editPropLibraryForm.tags" :placeholder="$t('library.tagPlaceholder')" /></el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditPropLibrary = false">取消</el-button>
-        <el-button type="primary" :loading="editPropLibrarySaving" @click="submitEditPropLibrary">保存</el-button>
+        <el-button @click="showEditPropLibrary = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="editPropLibrarySaving" @click="submitEditPropLibrary">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 微信二维码 -->
-    <el-dialog v-if="!vendorLockEnabled" v-model="showWechat" title="微信联系作者" width="320px" align-center>
+    <el-dialog v-if="!vendorLockEnabled" v-model="showWechat" :title="$t('header.wechatTitle')" width="320px" align-center>
       <div style="text-align:center;padding:8px 0 4px">
         <img src="/wx.jpg" alt="微信二维码" style="width:240px;height:240px;object-fit:contain;border-radius:8px;" />
-        <p style="margin:12px 0 0;font-size:13px;color:var(--text-secondary,#a1a1aa);">扫码添加微信，欢迎交流</p>
+        <p style="margin:12px 0 0;font-size:13px;color:var(--text-secondary,#a1a1aa);">{{ locale === 'en' ? 'Scan QR code to add WeChat for communication' : '扫码添加微信，欢迎交流' }}</p>
       </div>
     </el-dialog>
 
@@ -331,22 +332,22 @@
     <!-- 编辑项目：修改标题和故事 -->
     <el-dialog
       v-model="showEditDialog"
-      title="编辑项目"
+      :title="$t('filmList.editDialogTitle')"
       width="480px"
       :close-on-click-modal="false"
       @closed="resetEditForm"
     >
       <el-form :model="editForm" label-width="80px" label-position="top">
-        <el-form-item label="标题" required>
-          <el-input v-model="editForm.title" placeholder="输入项目标题" maxlength="100" show-word-limit />
+        <el-form-item :label="$t('filmList.projectName')" required>
+          <el-input v-model="editForm.title" :placeholder="$t('filmList.projectNamePlaceholder')" maxlength="100" show-word-limit />
         </el-form-item>
-        <el-form-item label="故事">
-          <el-input v-model="editForm.description" type="textarea" :rows="3" placeholder="输入故事梗概（选填）" />
+        <el-form-item :label="$t('filmList.projectDesc')">
+          <el-input v-model="editForm.description" type="textarea" :rows="3" :placeholder="$t('filmList.projectDescPlaceholder')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditDialog = false">取消</el-button>
-        <el-button type="primary" :loading="editSaving" :disabled="!editForm.title?.trim()" @click="submitEdit">保存</el-button>
+        <el-button @click="showEditDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="editSaving" :disabled="!editForm.title?.trim()" @click="submitEdit">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -363,6 +364,8 @@ import { characterLibraryAPI } from '@/api/characterLibrary'
 import { sceneLibraryAPI } from '@/api/sceneLibrary'
 import { propLibraryAPI } from '@/api/propLibrary'
 import AIConfigContent from '@/components/AIConfigContent.vue'
+import LanguageToggle from '@/components/LanguageToggle.vue'
+import { useI18n } from '@/i18n'
 import { uploadAPI } from '@/api/upload'
 import { aiAPI } from '@/api/ai'
 import { imagesAPI } from '@/api/images'
@@ -371,6 +374,7 @@ import { getStyleLabel } from '@/constants/styleOptions'
 
 const router = useRouter()
 const { isDark, toggle: toggleTheme } = useTheme()
+const { locale, t } = useI18n()
 
 // 库编辑图片 – 文件输入 refs
 const charLibFileRef  = ref(null)
@@ -644,22 +648,27 @@ function loadList() {
 function formatDate(val) {
   if (!val) return ''
   const d = new Date(val)
-  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  const loc = locale.value === 'en' ? 'en-US' : 'zh-CN'
+  return d.toLocaleDateString(loc, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 function formatStatus(status) {
-  const map = { draft: '草稿', published: '已发布', archived: '已归档', generating: '生成中' }
-  return map[status] || status || '草稿'
+  const mapZh = { draft: '草稿', published: '已发布', archived: '已归档', generating: '生成中' }
+  const mapEn = { draft: 'Draft', published: 'Published', archived: 'Archived', generating: 'Generating' }
+  const map = locale.value === 'en' ? mapEn : mapZh
+  return map[status] || status || (locale.value === 'en' ? 'Draft' : '草稿')
 }
 
 function formatStyle(style) {
   const aliases = { anime: 'anime style', sci_fi: 'sci-fi' }
   const key = aliases[style] || style
-  return getStyleLabel(key)
+  return getStyleLabel(key, locale.value)
 }
 
 function formatGenre(genre) {
-  const map = { drama: '剧情', comedy: '喜剧', adventure: '冒险', romance: '爱情', thriller: '悬疑', action: '动作', horror: '恐怖' }
+  const mapZh = { drama: '剧情', comedy: '喜剧', adventure: '冒险', romance: '爱情', thriller: '悬疑', action: '动作', horror: '恐怖' }
+  const mapEn = { drama: 'Drama', comedy: 'Comedy', adventure: 'Adventure', romance: 'Romance', thriller: 'Suspense', action: 'Action', horror: 'Horror' }
+  const map = locale.value === 'en' ? mapEn : mapZh
   return map[genre] || genre
 }
 
@@ -682,11 +691,11 @@ async function submitNew() {
   try {
     const drama = await dramaAPI.create({ title, description: newForm.value.description?.trim() || undefined, metadata: { aspect_ratio: newForm.value.aspect_ratio || '16:9' } })
     showNewDialog.value = false
-    ElMessage.success('项目已创建')
+    ElMessage.success(t('filmList.createSuccess'))
     loadList()
     router.push('/film/' + drama.id)
   } catch (e) {
-    ElMessage.error(e.message || '创建失败')
+    ElMessage.error(e.message || t('common.failed'))
   } finally {
     newSaving.value = false
   }
@@ -708,10 +717,10 @@ async function submitEdit() {
   try {
     await dramaAPI.update(editForm.value.id, { title, description: editForm.value.description?.trim() || undefined })
     showEditDialog.value = false
-    ElMessage.success('已保存')
+    ElMessage.success(t('filmList.updateSuccess'))
     loadList()
   } catch (e) {
-    ElMessage.error(e.message || '保存失败')
+    ElMessage.error(e.message || t('common.failed'))
   } finally {
     editSaving.value = false
   }
@@ -733,9 +742,9 @@ function onExport(d) {
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-    ElMessage.success('开始下载')
+    ElMessage.success(t('common.exporting'))
   } catch (e) {
-    ElMessage.error(e.message || '导出失败')
+    ElMessage.error(e.message || t('filmList.exportFailed', { error: e.message }))
   } finally {
     exportingId.value = null
   }
@@ -750,16 +759,16 @@ async function onImportFile(e) {
   if (!file) return
   e.target.value = ''
   if (!file.name.endsWith('.zip')) {
-    ElMessage.error('请选择 .zip 格式的文件')
+    ElMessage.error(locale.value === 'en' ? 'Please select a .zip file' : '请选择 .zip 格式的文件')
     return
   }
   importing.value = true
   try {
     const data = await dramaAPI.importDrama(file)
-    ElMessage.success(`导入成功：${data?.title || '项目'}`) 
+    ElMessage.success(t('filmList.importSuccess')) 
     loadList()
   } catch (e) {
-    const msg = e.response?.data?.message || e.message || '导入失败'
+    const msg = e.response?.data?.message || e.message || t('filmList.importFailed', { error: e.message })
     ElMessage.error(msg)
   } finally {
     importing.value = false
@@ -769,19 +778,19 @@ async function onImportFile(e) {
 async function onDelete(d) {
   try {
     await ElMessageBox.confirm(
-      `确定要删除项目「${(d.title || '未命名').slice(0, 20)}${(d.title && d.title.length > 20) ? '…' : ''}」吗？此操作不可恢复。`,
-      '删除确认',
-      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+      t('filmList.deleteConfirmMsg', { name: d.title || t('filmList.unnamedProject') }),
+      t('filmList.deleteConfirmTitle'),
+      { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
     )
   } catch {
     return
   }
   try {
     await dramaAPI.delete(d.id)
-    ElMessage.success('已删除')
+    ElMessage.success(t('filmList.deleteSuccess'))
     loadList()
   } catch (e) {
-    ElMessage.error(e.message || '删除失败')
+    ElMessage.error(e.message || t('common.failed'))
   }
 }
 

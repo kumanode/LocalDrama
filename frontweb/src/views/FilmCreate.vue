@@ -4,16 +4,16 @@
     <header class="header">
       <div class="header-inner">
         <h1 class="logo" @click="goList">
-          <span class="logo-main">本地短剧助手</span>
-          <span class="logo-sub">LocalMiniDrama</span>
+          <span class="logo-main">{{ $t('header.appTitle') }}</span>
+          <span class="logo-sub">{{ $t('header.appSubtitle') }}</span>
         </h1>
         <span class="breadcrumb-sep">›</span>
-        <span class="page-title">{{ dramaId ? (store.drama?.title || '项目') : '新建故事' }}</span>
+        <span class="page-title">{{ dramaId ? (store.drama?.title || (locale === 'en' ? 'Project' : '项目')) : (locale === 'en' ? 'New Story' : '新建故事') }}</span>
         <el-select
           v-if="dramaId"
           v-model="selectedEpisodeId"
           class="header-episode-select"
-          placeholder="选择集数"
+          :placeholder="locale === 'en' ? 'Select Episode' : '选择集数'"
           clearable
           size="small"
           style="width: 130px"
@@ -22,35 +22,37 @@
           <el-option
             v-for="ep in (store.drama?.episodes || [])"
             :key="ep.id"
-            :label="ep.title || '第' + (ep.episode_number || 0) + '集'"
+            :label="ep.title || (locale === 'en' ? 'Episode ' + (ep.episode_number || 0) : '第' + (ep.episode_number || 0) + '集')"
             :value="ep.id"
           />
         </el-select>
         <el-button v-if="dramaId" class="btn-back-drama" @click="router.push('/drama/' + dramaId)">
           <el-icon><ArrowLeft /></el-icon>
-          返回剧集
+          {{ locale === 'en' ? 'Episodes' : '返回剧集' }}
         </el-button>
         <el-button v-if="dramaId" type="primary" plain class="btn-canvas-mode" @click="goCanvasMode">
           <el-icon><Grid /></el-icon>
-          画布模式
+          {{ $t('filmCreate.canvasMode') }}
         </el-button>
         <div class="header-actions">
-          <el-button class="btn-theme" :title="isDark ? '切换到浅色模式' : '切换到暗色模式'" @click="toggleTheme">
+          <LanguageToggle />
+          <el-button class="btn-theme" :title="isDark ? $t('header.switchToLight') : $t('header.switchToDark')" @click="toggleTheme">
             <el-icon><Sunny v-if="isDark" /><Moon v-else /></el-icon>
-            {{ isDark ? '浅色' : '暗色' }}
-          </el-button><el-button class="btn-ai-config" @click="showAiConfigDialog = true">
+            {{ isDark ? $t('header.lightMode') : $t('header.darkMode') }}
+          </el-button>
+          <el-button class="btn-ai-config" @click="showAiConfigDialog = true">
             <el-icon><Setting /></el-icon>
-            AI配置
+            {{ $t('header.aiConfig') }}
           </el-button>
         </div>
       </div>
     </header>
 
     <!-- 左侧固定侧边栏 -->
-    <nav class="quick-nav" :class="{ collapsed: navCollapsed }" aria-label="快捷导航">
+    <nav class="quick-nav" :class="{ collapsed: navCollapsed }" :aria-label="$t('filmCreate.quickNav')">
       <div class="nav-sidebar-header">
-        <span v-if="!navCollapsed" class="nav-sidebar-title">导航</span>
-        <div class="nav-toggle" :title="navCollapsed ? '展开导航' : '收起导航'" @click="toggleNav()">
+        <span v-if="!navCollapsed" class="nav-sidebar-title">{{ $t('filmCreate.quickNav') }}</span>
+        <div class="nav-toggle" :title="navCollapsed ? (locale === 'en' ? 'Expand Navigation' : '展开导航') : (locale === 'en' ? 'Collapse Navigation' : '收起导航')" @click="toggleNav()">
           <el-icon><Expand v-if="navCollapsed" /><Fold v-else /></el-icon>
         </div>
       </div>
@@ -82,10 +84,10 @@
           <div class="step-body">
             <span class="step-label">{{ step.label }}</span>
             <span v-if="step.count > 0 && step.status !== 'done'" class="step-count">{{ step.count }}</span>
-            <span v-if="step.status === 'partial'" class="step-badge partial-badge" title="部分完成">
+            <span v-if="step.status === 'partial'" class="step-badge partial-badge" :title="locale === 'en' ? 'Partially Done' : '部分完成'">
               <el-icon><WarningFilled /></el-icon>
             </span>
-            <span v-else-if="step.status === 'generating'" class="step-badge gen-badge" title="生成中">
+            <span v-else-if="step.status === 'generating'" class="step-badge gen-badge" :title="$t('common.generating')">
               <el-icon class="spin"><Loading /></el-icon>
             </span>
           </div>
@@ -96,7 +98,7 @@
       <div v-if="!navCollapsed && storyboards.length > 0" class="nav-group">
         <div class="nav-sub-toggle" @click="storyboardMenuExpanded = !storyboardMenuExpanded">
           <el-icon><Minus v-if="storyboardMenuExpanded" /><Plus v-else /></el-icon>
-          <span>分镜列表</span>
+          <span>{{ $t('filmCreate.storyboardList') }}</span>
         </div>
         <div v-show="storyboardMenuExpanded" class="nav-sub-list">
           <template v-for="(sb, i) in storyboards" :key="sb.id">
@@ -110,10 +112,10 @@
             </div>
             <div
               class="nav-sub-item"
-              :title="sb.title || '分镜 ' + (i + 1)"
+              :title="sb.title || (locale === 'en' ? 'Shot ' + (i + 1) : '分镜 ' + (i + 1))"
               @click="scrollToAnchor('sb-' + sb.id)"
             >
-              {{ i + 1 }}. {{ sb.title || '分镜' }}
+              {{ i + 1 }}. {{ sb.title || (locale === 'en' ? 'Shot' : '分镜') }}
             </div>
           </template>
         </div>
@@ -130,7 +132,7 @@
         <template v-else>
           <div class="atp-header">
             <span class="atp-spin-dot" />
-            <span class="atp-title">进行中</span>
+            <span class="atp-title">{{ $t('filmCreate.inProgress') }}</span>
             <span class="atp-count-badge">{{ allActiveTaskItems.length }}</span>
           </div>
           <div class="atp-list">
@@ -146,8 +148,8 @@
               <button
                 type="button"
                 class="atp-item-close"
-                title="取消任务"
-                aria-label="取消任务"
+                :title="$t('filmCreate.cancelTask')"
+                :aria-label="$t('filmCreate.cancelTask')"
                 @click.stop="cancelActiveTask(item)"
               >
                 <el-icon :size="12"><Close /></el-icon>
@@ -160,7 +162,7 @@
               :show-after="200"
             >
               <div class="atp-more">
-                还有 {{ allActiveTaskItems.length - 8 }} 个任务...
+                {{ $t('filmCreate.remainingTasks', { count: allActiveTaskItems.length - 8 }) }}
               </div>
             </el-tooltip>
           </div>
@@ -188,32 +190,32 @@
       <!-- 剧本工作台：单卡片 + 选项卡（创作 / 选择） -->
       <section class="section card script-workbench-unified">
         <el-tabs v-model="scriptWorkbenchMode" class="script-workbench-tabs">
-          <el-tab-pane label="创作剧本" name="create">
+          <el-tab-pane :label="$t('filmCreate.createScriptTab')" name="create">
             <div class="script-pane-inner">
               <div class="script-sub-block">
-                <h2 class="section-title">故事生成</h2>
-                <p class="section-desc">输入一段故事梗概，AI 帮你扩写成完整剧本，或直接导入小说章节</p>
+                <h2 class="section-title">{{ $t('filmCreate.storyGenTitle') }}</h2>
+                <p class="section-desc">{{ $t('filmCreate.storyGenDesc') }}</p>
                 <el-input
                   v-model="storyInput"
                   type="textarea"
                   :rows="4"
-                  placeholder="例如：一个少女在森林里遇见会说话的狐狸，一起寻找失落的宝石..."
+                  :placeholder="$t('filmCreate.storyGenPlaceholder')"
                   class="story-textarea"
                 />
                 <div class="row gap" style="margin-top: 10px; flex-wrap: wrap;">
-                  <el-select v-model="storyStyle" placeholder="故事风格" clearable style="width: 120px" @change="() => saveProjectSettings(false)">
-                    <el-option label="现代" value="modern" />
-                    <el-option label="古风" value="ancient" />
-                    <el-option label="奇幻" value="fantasy" />
-                    <el-option label="日常" value="daily" />
+                  <el-select v-model="storyStyle" :placeholder="$t('filmCreate.storyStyle')" clearable style="width: 120px" @change="() => saveProjectSettings(false)">
+                    <el-option :label="$t('filmCreate.styleModern')" value="modern" />
+                    <el-option :label="$t('filmCreate.styleAncient')" value="ancient" />
+                    <el-option :label="$t('filmCreate.styleFantasy')" value="fantasy" />
+                    <el-option :label="$t('filmCreate.styleDaily')" value="daily" />
                   </el-select>
-                  <el-select v-model="storyType" placeholder="剧本类型" clearable style="width: 120px" @change="() => saveProjectSettings(false)">
-                    <el-option label="剧情" value="drama" />
-                    <el-option label="喜剧" value="comedy" />
-                    <el-option label="冒险" value="adventure" />
+                  <el-select v-model="storyType" :placeholder="$t('filmCreate.storyType')" clearable style="width: 120px" @change="() => saveProjectSettings(false)">
+                    <el-option :label="$t('filmCreate.typeDrama')" value="drama" />
+                    <el-option :label="$t('filmCreate.typeComedy')" value="comedy" />
+                    <el-option :label="$t('filmCreate.typeAdventure')" value="adventure" />
                   </el-select>
                   <div style="display:flex;align-items:center;gap:6px;font-size:13px">
-                    <span>集数</span>
+                    <span>{{ $t('filmCreate.episodes') }}</span>
                     <el-input-number
                       v-model="storyEpisodeCount"
                       :min="1"
@@ -224,21 +226,21 @@
                     />
                   </div>
                   <el-button type="primary" :loading="isStoryGenRunning" @click="onGenerateStory">
-                    生成剧本
+                    {{ $t('filmCreate.generateScript') }}
                   </el-button>
                   <el-button plain @click="showNovelImport = true">
                     <el-icon><DocumentAdd /></el-icon>
-                    导入小说
+                    {{ $t('filmCreate.importNovel') }}
                   </el-button>
                 </div>
               </div>
               <div class="script-sub-divider" />
               <div id="anchor-script" class="script-sub-block">
-                <h2 class="section-title">剧本</h2>
+                <h2 class="section-title">{{ $t('filmCreate.scriptSection') }}</h2>
                 <div class="row gap" style="margin-bottom: 10px; flex-wrap: wrap;">
                   <el-select
                     v-model="selectedEpisodeId"
-                    placeholder="选择集数"
+                    :placeholder="$t('filmCreate.selectEpisode')"
                     clearable
                     style="width: 130px"
                     :disabled="!dramaId"
@@ -247,20 +249,20 @@
                     <el-option
                       v-for="ep in (store.drama?.episodes || [])"
                       :key="ep.id"
-                      :label="ep.title || '第' + (ep.episode_number || 0) + '集'"
+                      :label="ep.title || (locale === 'en' ? 'Episode ' + (ep.episode_number || 0) : '第' + (ep.episode_number || 0) + '集')"
                       :value="ep.id"
                     />
                   </el-select>
-                  <el-input v-model="scriptTitle" placeholder="集标题" style="width: 150px" />
+                  <el-input v-model="scriptTitle" :placeholder="$t('filmCreate.episodeTitlePlaceholder')" style="width: 150px" />
                   <el-button v-if="dramaId" style="margin-left: auto" @click="onAddEpisode">
-                    <el-icon><Plus /></el-icon>添加一集
+                    <el-icon><Plus /></el-icon>{{ $t('filmCreate.addEpisode') }}
                   </el-button>
                 </div>
                 <el-input
                   v-model="scriptContent"
                   type="textarea"
                   :rows="8"
-                  placeholder="剧本内容将显示在这里，可直接编辑..."
+                  :placeholder="$t('filmCreate.scriptContentPlaceholder')"
                   class="story-textarea"
                 />
                 <div class="row gap" style="margin-top: 8px; flex-wrap: wrap;">
@@ -269,22 +271,22 @@
                     :disabled="!!dramaId && (store.drama?.episodes?.length > 0) && !currentEpisodeId"
                     @click="onGenerateScript"
                   >
-                    保存当前集
+                    {{ $t('filmCreate.saveCurrentEpisode') }}
                   </el-button>
                 </div>
               </div>
             </div>
           </el-tab-pane>
-          <el-tab-pane label="选择剧本" name="select">
+          <el-tab-pane :label="$t('filmCreate.selectScriptTab')" name="select">
             <p class="section-desc script-mode-hint">
-              从剧本库选择后，仅把「故事梗概」与「各集剧本正文」写入当前工程，不会导入角色、分镜、图片或视频。
+              {{ $t('filmCreate.selectScriptHint') }}
             </p>
             <el-button type="primary" @click="openSelectScriptDialog">
               <el-icon><Document /></el-icon>
-              从已有剧本中选择…
+              {{ $t('filmCreate.selectExistingScript') }}
             </el-button>
             <div v-if="dramaId && (store.drama?.episodes?.length || storyInput)" class="script-preview-wrap">
-              <h3 class="preview-block-title">故事梗概</h3>
+              <h3 class="preview-block-title">{{ $t('filmCreate.storyPremise') }}</h3>
               <el-input
                 :model-value="storyInput"
                 type="textarea"
@@ -293,12 +295,12 @@
                 class="story-textarea"
               />
               <template v-if="(store.drama?.episodes || []).length > 1">
-                <h3 class="preview-block-title">分集剧本</h3>
+                <h3 class="preview-block-title">{{ $t('filmCreate.episodeScripts') }}</h3>
                 <el-tabs v-model="selectPreviewEpisodeId" class="preview-ep-tabs">
                   <el-tab-pane
                     v-for="ep in (store.drama?.episodes || [])"
                     :key="ep.id"
-                    :label="ep.title || ('第' + (ep.episode_number || 0) + '集')"
+                    :label="ep.title || (locale === 'en' ? 'Episode ' + (ep.episode_number || 0) : ('第' + (ep.episode_number || 0) + '集'))"
                     :name="String(ep.id)"
                   >
                     <el-input
@@ -312,7 +314,7 @@
                 </el-tabs>
               </template>
               <template v-else>
-                <h3 class="preview-block-title">剧本正文</h3>
+                <h3 class="preview-block-title">{{ $t('filmCreate.scriptBody') }}</h3>
                 <el-input
                   :model-value="scriptContent"
                   type="textarea"
@@ -322,17 +324,17 @@
                 />
               </template>
               <div class="preview-actions">
-                <el-button type="primary" plain @click="scriptWorkbenchMode = 'create'">切换到创作剧本以编辑</el-button>
+                <el-button type="primary" plain @click="scriptWorkbenchMode = 'create'">{{ $t('filmCreate.switchToCreateToEdit') }}</el-button>
               </div>
             </div>
-            <p v-else class="script-select-empty">尚未选择剧本，请点击上方按钮</p>
+            <p v-else class="script-select-empty">{{ $t('filmCreate.noScriptSelected') }}</p>
           </el-tab-pane>
         </el-tabs>
       </section>
 
       <el-dialog
         v-model="showSelectScriptDialog"
-        title="从剧本库导入"
+        :title="$t('filmCreate.importFromScriptLib')"
         width="640px"
         destroy-on-close
         @open="loadSelectScriptList"
@@ -345,37 +347,37 @@
             :class="{ disabled: selectScriptImporting }"
             @click="!selectScriptImporting && onPickScriptFromDialog(d.id)"
           >
-            <div class="select-script-title">{{ d.title || '未命名' }}</div>
-            <div class="select-script-desc">{{ (d.description || '暂无简介').slice(0, 200) }}{{ (d.description && d.description.length > 200) ? '…' : '' }}</div>
+            <div class="select-script-title">{{ d.title || $t('filmCreate.unnamed') }}</div>
+            <div class="select-script-desc">{{ (d.description || $t('filmCreate.noIntro')).slice(0, 200) }}{{ (d.description && d.description.length > 200) ? '…' : '' }}</div>
           </div>
-          <div v-if="!selectScriptLoading && selectScriptDramas.length === 0" class="select-script-empty">剧本库为空，请先在「剧本管理」创建剧本</div>
-          <div v-else-if="!selectScriptLoading && selectableScriptDramas.length === 0" class="select-script-empty">没有可导入的其他剧本</div>
+          <div v-if="!selectScriptLoading && selectScriptDramas.length === 0" class="select-script-empty">{{ $t('filmCreate.scriptLibEmpty') }}</div>
+          <div v-else-if="!selectScriptLoading && selectableScriptDramas.length === 0" class="select-script-empty">{{ $t('filmCreate.noOtherScripts') }}</div>
         </div>
       </el-dialog>
 
       <!-- 一键全流程生成 -->
       <section class="section card pipeline-section">
         <div class="one-click-actions">
-          <span class="one-click-label">🚀 一键全流程</span>
+          <span class="one-click-label">🚀 {{ $t('filmCreate.oneClickFull') }}</span>
           <el-select v-model="projectAspectRatio" style="width: 130px" @change="() => saveProjectSettings(false)">
-            <el-option label="16:9 横屏" value="16:9" />
-            <el-option label="9:16 竖屏" value="9:16" />
-            <el-option label="3:4 竖版" value="3:4" />
-            <el-option label="1:1 方形" value="1:1" />
-            <el-option label="4:3" value="4:3" />
-            <el-option label="21:9 宽银幕" value="21:9" />
+            <el-option :label="$t('filmCreate.aspectRatio16_9')" value="16:9" />
+            <el-option :label="$t('filmCreate.aspectRatio9_16')" value="9:16" />
+            <el-option :label="$t('filmCreate.aspectRatio3_4')" value="3:4" />
+            <el-option :label="$t('filmCreate.aspectRatio1_1')" value="1:1" />
+            <el-option :label="$t('filmCreate.aspectRatio4_3')" value="4:3" />
+            <el-option :label="$t('filmCreate.aspectRatio21_9')" value="21:9" />
           </el-select>
           <el-select v-model="videoClipDuration" style="width: 105px" @change="() => saveProjectSettings(false)">
-            <el-option label="4秒/段" :value="4" />
-            <el-option label="5秒/段" :value="5" />
-            <el-option label="8秒/段" :value="8" />
-            <el-option label="10秒/段" :value="10" />
-            <el-option label="12秒/段" :value="12" />
-            <el-option label="15秒/段" :value="15" />
+            <el-option :label="$t('filmCreate.duration4s')" :value="4" />
+            <el-option :label="$t('filmCreate.duration5s')" :value="5" />
+            <el-option :label="$t('filmCreate.duration8s')" :value="8" />
+            <el-option :label="$t('filmCreate.duration10s')" :value="10" />
+            <el-option :label="$t('filmCreate.duration12s')" :value="12" />
+            <el-option :label="$t('filmCreate.duration15s')" :value="15" />
           </el-select>
-          <el-select v-model="scriptLanguage" placeholder="分镜语言" clearable style="width: 105px">
-            <el-option label="中文" value="zh" />
-            <el-option label="英文" value="en" />
+          <el-select v-model="scriptLanguage" :placeholder="$t('filmCreate.storyboardLanguage')" clearable style="width: 105px">
+            <el-option :label="$t('filmCreate.langZh')" value="zh" />
+            <el-option :label="$t('filmCreate.langEn')" value="en" />
           </el-select>
           <StylePickerButton
             v-model="generationStyle"
@@ -389,19 +391,19 @@
             :disabled="!currentEpisodeId || pipelineRunning"
             @click="startOneClickPipeline"
           >
-            一键成片带图片视频
+            {{ $t('filmCreate.oneClickWithMedia') }}
           </el-button>
           <el-button
             :loading="pipelineRunning && !pipelinePaused"
             :disabled="!currentEpisodeId || pipelineRunning"
-            title="仅提取角色、场景、道具与生成分镜文本，不生成图片与视频"
+            :title="locale === 'en' ? 'Only extract characters, scenes, props and generate storyboards without images and videos' : '仅提取角色、场景、道具与生成分镜文本，不生成图片与视频'"
             @click="startTextFrameworkPipeline"
           >
-            生成文本框架
+            {{ $t('filmCreate.generateTextFramework') }}
           </el-button>
           <template v-if="pipelineRunning">
-            <el-button v-if="!pipelinePaused" type="warning" @click="pipelinePaused = true">⏸ 暂停</el-button>
-            <el-button v-else type="success" @click="onPipelineResume">▶ 继续</el-button>
+            <el-button v-if="!pipelinePaused" type="warning" @click="pipelinePaused = true">⏸ {{ $t('filmCreate.pause') }}</el-button>
+            <el-button v-else type="success" @click="onPipelineResume">▶ {{ $t('filmCreate.resume') }}</el-button>
           </template>
         </div>
         <div v-if="pipelineRunning || pipelineErrorLog.length > 0" class="pipeline-status">
@@ -413,14 +415,14 @@
           <div v-if="pipelineCountdown > 0" class="pipeline-countdown">
             <div class="pipeline-countdown-ring">
               <span class="pipeline-countdown-num">{{ pipelineCountdown }}</span>
-              <span class="pipeline-countdown-unit">秒</span>
+              <span class="pipeline-countdown-unit">{{ $t('filmCreate.secondsUnit') }}</span>
             </div>
             <div class="pipeline-countdown-body">
               <p class="pipeline-countdown-msg">{{ pipelineCountdownMsg }}</p>
               <div class="pipeline-countdown-actions">
-                <el-button size="small" type="success" @click="skipPipelineCountdown">⚡ 立即开始下一阶段</el-button>
-                <el-button v-if="!pipelinePaused" size="small" type="warning" @click="pipelinePaused = true">⏸ 暂停倒计时</el-button>
-                <span v-else class="pipeline-countdown-paused">已暂停 — 点击右上角"继续"恢复</span>
+                <el-button size="small" type="success" @click="skipPipelineCountdown">{{ $t('filmCreate.skipCountdown') }}</el-button>
+                <el-button v-if="!pipelinePaused" size="small" type="warning" @click="pipelinePaused = true">{{ $t('filmCreate.pauseCountdown') }}</el-button>
+                <span v-else class="pipeline-countdown-paused">{{ $t('filmCreate.pausedMsg') }}</span>
               </div>
             </div>
           </div>
@@ -434,7 +436,7 @@
             </span>
           </div>
           <div v-if="pipelineErrorLog.length > 0" class="pipeline-error-log">
-            <div class="pipeline-error-title">执行过程中的错误：</div>
+            <div class="pipeline-error-title">{{ $t('filmCreate.pipelineErrors') }}</div>
             <div v-for="(entry, idx) in pipelineErrorLog" :key="idx" class="pipeline-error-line">
               [{{ entry.step }}] {{ entry.message }}
             </div>
@@ -2660,6 +2662,8 @@ import { exportStoryboardSheet } from '@/utils/exportStoryboardSheet'
 import StylePickerButton from '@/components/StylePickerButton.vue'
 import AIConfigContent from '@/components/AIConfigContent.vue'
 import UniversalSegmentOmniAtEditor from '@/components/UniversalSegmentOmniAtEditor.vue'
+import LanguageToggle from '@/components/LanguageToggle.vue'
+import { useI18n } from '@/i18n'
 import {
   generationStyleOptions,
   getStylePromptEn,
@@ -2676,6 +2680,7 @@ import { useScenes } from '@/composables/filmCreate/useScenes'
 
 const route = useRoute()
 const router = useRouter()
+const { t, locale } = useI18n()
 const store = useFilmStore()
 const genStore = useGenerationTaskStore()
 const { isDark, toggle: toggleTheme } = useTheme()
@@ -3077,13 +3082,13 @@ const navSteps = computed(() => {
   const videoStatus = sbVideoGen ? 'generating' : sbVideoAllDone ? 'done' : sbVideoSome ? 'partial' : 'pending'
 
   return [
-    { key: 'script',   label: '故事剧本',   anchor: 'anchor-script',     status: scriptStatus,    count: hasScript ? 1 : 0 },
-    { key: 'chars',    label: '角色',        anchor: 'anchor-characters', status: charStatus,      count: charList.length },
-    { key: 'props',    label: '道具',        anchor: 'anchor-props',      status: propStatus,      count: propList.length },
-    { key: 'scenes',   label: '场景',        anchor: 'anchor-scenes',     status: sceneStatus,     count: sceneList.length },
-    { key: 'sb',       label: '分镜脚本',   anchor: 'anchor-storyboard', status: sbScriptStatus,  count: sbList.length },
-    { key: 'sbimg',    label: '分镜图',      anchor: 'anchor-storyboard', status: sbImgStatus,     count: sbList.length },
-    { key: 'video',    label: '分镜视频',   anchor: 'anchor-video',      status: videoStatus,     count: 0 },
+    { key: 'script',   label: t('filmCreate.stepScript'),   anchor: 'anchor-script',     status: scriptStatus,    count: hasScript ? 1 : 0 },
+    { key: 'chars',    label: t('filmCreate.stepCharacters'), anchor: 'anchor-characters', status: charStatus,      count: charList.length },
+    { key: 'props',    label: t('filmCreate.stepProps'),      anchor: 'anchor-props',      status: propStatus,      count: propList.length },
+    { key: 'scenes',   label: t('filmCreate.stepScenes'),     anchor: 'anchor-scenes',     status: sceneStatus,     count: sceneList.length },
+    { key: 'sb',       label: t('filmCreate.stepStoryboard'), anchor: 'anchor-storyboard', status: sbScriptStatus,  count: sbList.length },
+    { key: 'sbimg',    label: t('filmCreate.stepStoryboardImages'), anchor: 'anchor-storyboard', status: sbImgStatus, count: sbList.length },
+    { key: 'video',    label: t('filmCreate.stepVideos'),     anchor: 'anchor-video',      status: videoStatus,     count: 0 },
   ]
 })
 

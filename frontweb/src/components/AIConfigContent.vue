@@ -1,40 +1,40 @@
 <template>
   <div class="ai-config-content">
     <el-tabs v-model="activeTab" class="config-tabs">
-      <el-tab-pane label="AI 配置" name="configs">
+      <el-tab-pane :label="$t('aiConfig.tabConfigs')" name="configs">
         <div class="tab-content">
           <!-- 普通模式操作栏 -->
           <div v-if="!vendorLock.enabled" class="content-actions">
             <div class="actions-left">
               <el-button type="primary" @click="openAdd">
                 <el-icon><Plus /></el-icon>
-                添加配置
+                {{ $t('aiConfig.addConfig') }}
               </el-button>
               <el-button plain @click="exportConfigs">
                 <el-icon><Download /></el-icon>
-                导出配置
+                {{ $t('aiConfig.exportConfig') }}
               </el-button>
               <el-button plain @click="triggerImport">
                 <el-icon><Upload /></el-icon>
-                导入配置
+                {{ $t('aiConfig.importConfig') }}
               </el-button>
               <input ref="importFileRef" type="file" accept=".json" style="display:none" @change="importConfigs" />
               <el-button type="success" plain @click="openOneKeyVolc">
                 <el-icon><MagicStick /></el-icon>
-                一键配置火山
+                {{ $t('aiConfig.oneKeyVolc') }}
               </el-button>
               <el-button type="success" plain @click="openOneKeyAgnes">
                 <el-icon><MagicStick /></el-icon>
-                一键配置 Agnes
+                {{ $t('aiConfig.oneKeyAgnes') }}
               </el-button>
               <el-button type="info" plain @click="openOneKeyTongyi">
                 <el-icon><MagicStick /></el-icon>
-                一键配置通义
-                <span class="one-key-not-recommended">不推荐</span>
+                {{ $t('aiConfig.oneKeyTongyi') }}
+                <span class="one-key-not-recommended">{{ $t('aiConfig.notRecommended') }}</span>
               </el-button>
               <el-button type="warning" plain @click="openOneKeyCheapSeedance2">
                 <el-icon><MagicStick /></el-icon>
-                一键配置低价 Seedance2
+                {{ $t('aiConfig.oneKeyCheapSeedance2') }}
               </el-button>
             </div>
             <div class="actions-right">
@@ -46,7 +46,7 @@
                   @click="onBatchDelete"
                 >
                   <el-icon><Delete /></el-icon>
-                  删除选中 ({{ selectedRows.length }})
+                  {{ $t('aiConfig.deleteSelected', { count: selectedRows.length }) }}
                 </el-button>
               </transition>
             </div>
@@ -76,15 +76,15 @@
             @selection-change="onSelectionChange"
           >
             <el-table-column v-if="!vendorLock.enabled" type="selection" width="46" />
-            <el-table-column prop="name" label="名称" min-width="130" />
-            <el-table-column prop="provider" label="提供商" width="96" />
+            <el-table-column prop="name" :label="$t('common.name')" min-width="130" />
+            <el-table-column prop="provider" :label="$t('aiConfig.provider')" width="96" />
             <el-table-column prop="base_url" label="Base URL" min-width="170" show-overflow-tooltip />
-            <el-table-column prop="default_model" label="默认模型" min-width="130" show-overflow-tooltip>
+            <el-table-column prop="default_model" :label="$t('aiConfig.defaultModel')" min-width="130" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ row.default_model || (Array.isArray(row.model) && row.model[0]) || '—' }}
               </template>
             </el-table-column>
-            <el-table-column prop="service_type" label="类型" width="148">
+            <el-table-column prop="service_type" :label="$t('aiConfig.serviceType')" width="148">
               <template #default="{ row }">
                 <span :class="['type-badge', 'type-' + row.service_type]">
                   <el-icon class="type-icon">
@@ -100,33 +100,33 @@
                 </span>
               </template>
             </el-table-column>
-            <el-table-column prop="is_default" label="默认" width="60">
+            <el-table-column prop="is_default" :label="$t('aiConfig.isDefault')" width="60">
               <template #default="{ row }">
                 <el-tag v-if="row.is_default" type="success" size="small">✓</el-tag>
                 <span v-else class="no-default">—</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="180" fixed="right">
+            <el-table-column :label="$t('aiConfig.actions')" width="180" fixed="right">
               <template #default="{ row }">
-                <el-button link type="primary" size="small" @click="openTest(row)">测试</el-button>
-                <el-button link type="primary" size="small" @click="onRowEdit(row)">{{ vendorLock.enabled ? '修改Key' : '编辑' }}</el-button>
-                <el-button v-if="!vendorLock.enabled" link type="danger" size="small" @click="onDelete(row)">删除</el-button>
+                <el-button link type="primary" size="small" @click="openTest(row)">{{ $t('aiConfig.testConnection') }}</el-button>
+                <el-button link type="primary" size="small" @click="onRowEdit(row)">{{ vendorLock.enabled ? '修改Key' : $t('common.edit') }}</el-button>
+                <el-button v-if="!vendorLock.enabled" link type="danger" size="small" @click="onDelete(row)">{{ $t('common.delete') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
         </div>
       </el-tab-pane>
-      <el-tab-pane label="高级设置（提示词）" name="prompts">
+      <el-tab-pane :label="$t('aiConfig.tabPrompts')" name="prompts">
         <div class="tab-content">
           <PromptEditor />
         </div>
       </el-tab-pane>
-      <el-tab-pane label="高级设置（业务场景）" name="sceneModelMap">
+      <el-tab-pane :label="$t('aiConfig.tabSceneModelMap')" name="sceneModelMap">
         <div class="tab-content">
           <SceneModelMap />
         </div>
       </el-tab-pane>
-      <el-tab-pane label="生成设置" name="generation">
+      <el-tab-pane :label="$t('aiConfig.tabGeneration')" name="generation">
         <div class="tab-content generation-settings">
           <div class="gs-section-title">⚡ 一键生成并发设置</div>
           <p class="gs-desc">控制「一键生成视频」和「补全并生成」流水线中，各类任务同时并行生成的数量。并发数越高速度越快，但过高可能触发 API 限流（429 错误）。建议根据你的 API 额度选择。</p>
@@ -198,7 +198,7 @@
           </div>
         </div>
       </el-tab-pane>
-      <el-tab-pane label="SD2 资产管理" name="sd2_assets">
+      <el-tab-pane :label="$t('aiConfig.tabSd2Assets')" name="sd2_assets">
         <div class="tab-content">
           <Sd2AssetManagement :configs="list" @saved="loadList" />
         </div>

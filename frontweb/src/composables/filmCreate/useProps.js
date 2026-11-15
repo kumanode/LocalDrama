@@ -1,5 +1,6 @@
 import { ref, reactive, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { t, currentLocale } from '@/i18n'
 import { propAPI } from '@/api/props'
 import { propLibraryAPI } from '@/api/propLibrary'
 import { uploadAPI } from '@/api/upload'
@@ -101,11 +102,11 @@ export function useProps(deps) {
   // ── 函数 ──────────────────────────────────────────────
   async function onExtractProps() {
     if (!currentEpisodeId.value) {
-      ElMessage.warning('请先完成剧本并保存')
+      ElMessage.warning(currentLocale.value === 'en' ? 'Please complete the script and save first' : '请先完成剧本并保存')
       return
     }
     const epId = currentEpisodeId.value
-    const meta = buildExtractTaskMeta(store, dramaId.value, epId, GEN_RESOURCE.EXTRACT_PROPS, '提取道具')
+    const meta = buildExtractTaskMeta(store, dramaId.value, epId, GEN_RESOURCE.EXTRACT_PROPS, currentLocale.value === 'en' ? 'Extract Props' : '提取道具')
     genStore.markRunning(meta)
     try {
       const res = await propAPI.extractFromScript(epId)
@@ -113,14 +114,14 @@ export function useProps(deps) {
       if (taskId) {
         const pollRes = await pollTask(taskId, () => loadDrama(), meta)
         if (pollRes?.status !== 'failed') {
-          ElMessage.success('道具提取完成')
+          ElMessage.success(t('filmCreate.msgPropsExtracted'))
         }
       } else {
         await loadDrama()
-        ElMessage.success('道具提取任务已提交')
+        ElMessage.success(currentLocale.value === 'en' ? 'Prop extraction task submitted' : '道具提取任务已提交')
       }
     } catch (e) {
-      ElMessage.error(e.message || '提取失败')
+      ElMessage.error(e.message || t('filmCreate.msgGenFailed'))
     } finally {
       genStore.markDone(meta)
     }
@@ -175,11 +176,11 @@ export function useProps(deps) {
       const res = await propAPI.generatePrompt(form.id)
       if (res?.prompt) {
         form.prompt = res.prompt
-        ElMessage.success('提示词已生成')
+        ElMessage.success(t('filmCreate.msgPromptGenerated'))
         await loadDrama()
       }
     } catch (e) {
-      ElMessage.error(e.message || '生成提示词失败')
+      ElMessage.error(e.message || t('filmCreate.msgPromptGenFailed'))
     } finally {
       editPropPromptGenerating.value = false
     }
@@ -204,9 +205,9 @@ export function useProps(deps) {
     try {
       await propAPI.putRefImage(form.id, null)
       form.ref_image = ''
-      ElMessage.success('参考图已移除')
+      ElMessage.success(t('filmCreate.msgRefImageRemoved'))
     } catch (e) {
-      ElMessage.error('移除失败')
+      ElMessage.error(t('filmCreate.msgRemoveFailed'))
     }
   }
 
@@ -218,10 +219,10 @@ export function useProps(deps) {
       const res = await propAPI.extractFromImage(form.id)
       if (res?.description) {
         form.description = res.description
-        ElMessage.success('已从图片提取道具描述')
+        ElMessage.success(currentLocale.value === 'en' ? 'Prop description extracted from image' : '已从图片提取道具描述')
       }
     } catch (e) {
-      ElMessage.error(e.message || '提取失败，请检查道具是否已上传参考图片')
+      ElMessage.error(e.message || t('filmCreate.msgExtractFailedCheckImage'))
     } finally {
       extractingPropDesc.value = false
     }
@@ -240,9 +241,9 @@ export function useProps(deps) {
       await savePropRefImageIfAny(editPropForm.value.id)
       await loadDrama()
       showEditProp.value = false
-      ElMessage.success('道具已保存')
+      ElMessage.success(t('filmCreate.msgPropSaved'))
     } catch (e) {
-      ElMessage.error(e.message || '保存失败')
+      ElMessage.error(e.message || t('filmCreate.msgSaveFailed'))
     } finally {
       editPropSaving.value = false
     }
@@ -263,9 +264,9 @@ export function useProps(deps) {
       })
       showAddProp.value = false
       await loadDrama()
-      ElMessage.success('道具已添加')
+      ElMessage.success(t('filmCreate.msgPropAdded'))
     } catch (e) {
-      ElMessage.error(e.message || '添加失败')
+      ElMessage.error(e.message || t('filmCreate.msgAddFailed'))
     } finally {
       addPropSaving.value = false
     }
@@ -281,16 +282,18 @@ export function useProps(deps) {
   async function onDeleteProp(prop) {
     try {
       await ElMessageBox.confirm(
-        `确定要删除道具「${(prop.name || '未命名').slice(0, 20)}」吗？此操作不可恢复。`,
-        '删除确认',
-        { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+        currentLocale.value === 'en'
+          ? `Are you sure you want to delete prop "${(prop.name || 'Untitled').slice(0, 20)}"? This action cannot be undone.`
+          : `确定要删除道具「${(prop.name || '未命名').slice(0, 20)}」吗？此操作不可恢复。`,
+        currentLocale.value === 'en' ? 'Confirm Deletion' : '删除确认',
+        { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
       )
       await propAPI.delete(prop.id)
       await loadDrama()
-      ElMessage.success('道具已删除')
+      ElMessage.success(t('filmCreate.msgPropDeleted'))
     } catch (e) {
       if (e === 'cancel') return
-      ElMessage.error(e.message || '删除失败')
+      ElMessage.error(e.message || t('filmCreate.msgDeleteFailed'))
     }
   }
 
@@ -306,9 +309,9 @@ export function useProps(deps) {
       if (taskId) {
         const pollRes = await pollTask(taskId, () => loadDrama(), meta)
         if (pollRes?.status === 'failed') {
-          prop.errorMsg = pollRes.error || '生成失败'
+          prop.errorMsg = pollRes.error || t('filmCreate.msgGenFailed')
         } else {
-          ElMessage.success('道具图片已生成')
+          ElMessage.success(t('filmCreate.msgPropImageGenerated'))
         }
       } else {
         await loadDrama()
@@ -317,12 +320,12 @@ export function useProps(deps) {
           const p = list.find((x) => Number(x.id) === Number(prop.id))
           return !!(p && (p.image_url || p.local_path))
         })
-        ElMessage.success('道具图片已生成')
+        ElMessage.success(t('filmCreate.msgPropImageGenerated'))
       }
     } catch (e) {
       console.error(e)
-      prop.errorMsg = e.message || '生成失败'
-      ElMessage.error(e.message || '提交失败')
+      prop.errorMsg = e.message || t('filmCreate.msgGenFailed')
+      ElMessage.error(e.message || t('filmCreate.msgSubmitFailed'))
     } finally {
       generatingPropIds.delete(prop.id)
       genStore.markDone(meta)
@@ -442,11 +445,11 @@ export function useProps(deps) {
         description: editPropLibraryForm.value.description || null,
         tags: editPropLibraryForm.value.tags || null
       })
-      ElMessage.success('已保存')
+      ElMessage.success(t('filmCreate.msgSaved'))
       showEditPropLibrary.value = false
       loadPropLibraryList()
     } catch (e) {
-      ElMessage.error(e.message || '保存失败')
+      ElMessage.error(e.message || t('filmCreate.msgSaveFailed'))
     } finally {
       editPropLibrarySaving.value = false
     }
@@ -455,41 +458,43 @@ export function useProps(deps) {
   async function onDeletePropLibrary(item) {
     try {
       await ElMessageBox.confirm(
-        `确定删除公共道具「${(item.name || '未命名').slice(0, 20)}」吗？`,
-        '删除确认',
-        { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+        currentLocale.value === 'en'
+          ? `Are you sure you want to delete public prop "${(item.name || 'Untitled').slice(0, 20)}"?`
+          : `确定删除公共道具「${(item.name || '未命名').slice(0, 20)}」吗？`,
+        currentLocale.value === 'en' ? 'Confirm Deletion' : '删除确认',
+        { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
       )
       await propLibraryAPI.delete(item.id)
-      ElMessage.success('已删除')
+      ElMessage.success(t('filmCreate.msgDeleted'))
       loadPropLibraryList()
     } catch (e) {
       if (e === 'cancel') return
-      ElMessage.error(e.message || '删除失败')
+      ElMessage.error(e.message || t('filmCreate.msgDeleteFailed'))
     }
   }
 
   async function onAddPropToLibrary(prop) {
-    if (!hasAssetImage(prop)) { ElMessage.warning('请先为该道具生成或上传图片'); return }
+    if (!hasAssetImage(prop)) { ElMessage.warning(t('filmCreate.msgUploadOrGenImageFirst')); return }
     addingPropToLibraryId.value = prop.id
     try {
       await propAPI.addToLibrary(prop.id, {})
-      ElMessage.success('已加入本剧道具库')
+      ElMessage.success(t('filmCreate.msgAddedToDramaLib'))
       if (showPropLibrary.value) loadPropLibraryList()
     } catch (e) {
-      ElMessage.error(e.message || '加入失败')
+      ElMessage.error(e.message || t('filmCreate.msgJoinFailed'))
     } finally {
       addingPropToLibraryId.value = null
     }
   }
 
   async function onAddPropToMaterialLibrary(prop) {
-    if (!hasAssetImage(prop)) { ElMessage.warning('请先为该道具生成或上传图片'); return }
+    if (!hasAssetImage(prop)) { ElMessage.warning(t('filmCreate.msgUploadOrGenImageFirst')); return }
     addingPropToMaterialId.value = prop.id
     try {
       await propAPI.addToMaterialLibrary(prop.id)
-      ElMessage.success('已加入全局素材库')
+      ElMessage.success(t('filmCreate.msgAddedToGlobalLib'))
     } catch (e) {
-      ElMessage.error(e.message || '加入失败')
+      ElMessage.error(e.message || t('filmCreate.msgJoinFailed'))
     } finally {
       addingPropToMaterialId.value = null
     }
@@ -497,7 +502,7 @@ export function useProps(deps) {
 
   async function addPropToEpisode(item, scope) {
     if (!store.dramaId || !currentEpisodeId.value) {
-      ElMessage.warning('请先选择本集')
+      ElMessage.warning(t('filmCreate.msgSelectEpisodeFirst'))
       return
     }
     const loadingKey = propAddToEpisodeLoadingKey(scope, item.id)
@@ -513,7 +518,7 @@ export function useProps(deps) {
           image_url: item.image_url || existingProp.image_url || undefined,
           local_path: item.local_path || existingProp.local_path || undefined,
         })
-        ElMessage.success(`「${item.name || '道具'}」已更新到本集`)
+        ElMessage.success(t('filmCreate.msgPropUpdatedToEpisode', { name: item.name || (currentLocale.value === 'en' ? 'Prop' : '道具') }))
       } else {
         await propAPI.create({
           drama_id: store.dramaId,
@@ -525,11 +530,11 @@ export function useProps(deps) {
           image_url: item.image_url || undefined,
           local_path: item.local_path || undefined,
         })
-        ElMessage.success(`「${item.name || '道具'}」已加入本集`)
+        ElMessage.success(t('filmCreate.msgAddedToEpisode', { name: item.name || (currentLocale.value === 'en' ? 'Prop' : '道具') }))
       }
       await loadDrama()
     } catch (e) {
-      ElMessage.error(e.message || '加入失败')
+      ElMessage.error(e.message || t('filmCreate.msgJoinFailed'))
     } finally {
       addingPropFromLibraryId.value = null
     }
@@ -558,10 +563,10 @@ export function useProps(deps) {
       const res = await uploadAPI.extractDescriptionFromImage('prop', refImage.dataUrl, entityName)
       if (res?.description) {
         addPropForm.value.description = res.description
-        ElMessage.success('已从参考图提取特征描述')
+        ElMessage.success(currentLocale.value === 'en' ? 'Feature description extracted from reference image' : '已从参考图提取特征描述')
       }
     } catch (e) {
-      ElMessage.error(e.message || '提取失败，请检查 AI 配置中是否有支持视觉的模型')
+      ElMessage.error(e.message || (currentLocale.value === 'en' ? 'Extraction failed, please check vision model in AI Config' : '提取失败，请检查 AI 配置中是否有支持视觉的模型'))
     } finally {
       extractingPropAddDesc.value = false
     }

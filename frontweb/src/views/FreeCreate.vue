@@ -4,44 +4,47 @@
       <div class="header-left">
         <el-button text @click="$router.back()">
           <el-icon><ArrowLeft /></el-icon>
-          返回
+          {{ $t('common.back') }}
         </el-button>
-        <h2 class="page-title">自由创作</h2>
+        <h2 class="page-title">{{ $t('freeCreate.title') }}</h2>
       </div>
-      <p class="page-desc">不绑定剧集，直接输入文字生成图片或视频</p>
+      <div style="display: flex; align-items: center; gap: 12px; margin-left: auto;">
+        <LanguageToggle />
+      </div>
+      <p class="page-desc">{{ $t('freeCreate.subtitle') }}</p>
     </div>
 
     <div class="create-layout">
       <!-- 左侧：输入面板 -->
       <div class="input-panel">
         <el-tabs v-model="mode" class="mode-tabs">
-          <el-tab-pane label="🎨 生成图片" name="image" />
-          <el-tab-pane label="🎬 生成视频" name="video" />
+          <el-tab-pane :label="$t('freeCreate.tabImage')" name="image" />
+          <el-tab-pane :label="$t('freeCreate.tabVideo')" name="video" />
         </el-tabs>
 
         <div class="form-section">
-          <div class="form-label">提示词 <span class="required">*</span></div>
+          <div class="form-label">{{ $t('freeCreate.promptLabel') }} <span class="required">*</span></div>
           <el-input
             v-model="prompt"
             type="textarea"
             :rows="5"
-            placeholder="描述你想要生成的画面内容..."
+            :placeholder="$t('freeCreate.promptPlaceholder')"
             class="prompt-input"
           />
         </div>
 
         <div v-if="mode === 'video'" class="form-section">
-          <div class="form-label">参考图（可选）</div>
+          <div class="form-label">{{ $t('freeCreate.refImageLabel') }}</div>
           <div class="ref-image-zone" @click="triggerRefImageUpload" @dragover.prevent @drop.prevent="onRefImageDrop">
             <template v-if="refImageDataUrl">
               <img :src="refImageDataUrl" class="ref-preview" />
               <div class="ref-actions">
-                <el-button size="small" type="danger" plain @click.stop="clearRefImage">移除</el-button>
+                <el-button size="small" type="danger" plain @click.stop="clearRefImage">{{ $t('freeCreate.remove') }}</el-button>
               </div>
             </template>
             <template v-else>
               <el-icon class="upload-icon"><Picture /></el-icon>
-              <div class="upload-tip">点击或拖拽上传参考图</div>
+              <div class="upload-tip">{{ $t('freeCreate.refImageUploadTip') }}</div>
             </template>
           </div>
           <input ref="refImageInput" type="file" accept="image/*" style="display:none" @change="onRefImageChange" />
@@ -49,11 +52,11 @@
 
         <div class="form-section form-row">
           <div class="form-item">
-            <div class="form-label">风格</div>
-            <el-input v-model="style" placeholder="例如: cinematic, anime..." />
+            <div class="form-label">{{ $t('freeCreate.style') }}</div>
+            <el-input v-model="style" :placeholder="locale === 'en' ? 'e.g. cinematic, anime...' : '例如: cinematic, anime...'" />
           </div>
           <div v-if="mode === 'image'" class="form-item">
-            <div class="form-label">比例</div>
+            <div class="form-label">{{ $t('freeCreate.aspectRatio') }}</div>
             <el-select v-model="aspectRatio">
               <el-option label="16:9" value="16:9" />
               <el-option label="9:16" value="9:16" />
@@ -62,12 +65,12 @@
             </el-select>
           </div>
           <div v-if="mode === 'video'" class="form-item">
-            <div class="form-label">时长</div>
+            <div class="form-label">{{ $t('freeCreate.duration') }}</div>
             <el-select v-model="duration">
-              <el-option label="3秒" :value="3" />
-              <el-option label="5秒" :value="5" />
-              <el-option label="8秒" :value="8" />
-              <el-option label="10秒" :value="10" />
+              <el-option :label="$t('freeCreate.durationSeconds', { sec: 3 })" :value="3" />
+              <el-option :label="$t('freeCreate.durationSeconds', { sec: 5 })" :value="5" />
+              <el-option :label="$t('freeCreate.durationSeconds', { sec: 8 })" :value="8" />
+              <el-option :label="$t('freeCreate.durationSeconds', { sec: 10 })" :value="10" />
             </el-select>
           </div>
         </div>
@@ -80,25 +83,25 @@
           class="generate-btn"
           @click="generate"
         >
-          {{ generating ? '生成中...' : (mode === 'image' ? '生成图片' : '生成视频') }}
+          {{ generating ? $t('common.saving') : (mode === 'image' ? (locale === 'en' ? 'Generate Image' : '生成图片') : (locale === 'en' ? 'Generate Video' : '生成视频')) }}
         </el-button>
       </div>
 
       <!-- 右侧：结果展示 -->
       <div class="result-panel">
         <div class="result-header">
-          <span class="result-title">生成结果</span>
-          <el-button v-if="results.length > 0" size="small" plain @click="clearResults">清空</el-button>
+          <span class="result-title">{{ $t('freeCreate.resultTitle') }}</span>
+          <el-button v-if="results.length > 0" size="small" plain @click="clearResults">{{ $t('common.reset') }}</el-button>
         </div>
 
         <div v-if="results.length === 0 && !generating" class="empty-result">
           <el-icon class="empty-icon"><MagicStick /></el-icon>
-          <p>生成的内容将显示在这里</p>
+          <p>{{ locale === 'en' ? 'Generated media will appear here' : '生成的内容将显示在这里' }}</p>
         </div>
 
         <div v-if="generating" class="generating-tip">
           <el-icon class="is-loading"><Loading /></el-icon>
-          <span>正在生成，请稍候...</span>
+          <span>{{ $t('freeCreate.generatingTip') }}</span>
         </div>
 
         <div class="result-grid">
@@ -152,6 +155,10 @@ import { imagesAPI } from '@/api/images'
 import { videosAPI } from '@/api/videos'
 import { uploadAPI } from '@/api/upload'
 import { generationSettingsAPI } from '@/api/prompts'
+import LanguageToggle from '@/components/LanguageToggle.vue'
+import { useI18n } from '@/i18n'
+
+const { locale, t } = useI18n()
 
 const mode = ref('image')
 const prompt = ref('')

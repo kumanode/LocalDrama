@@ -8,42 +8,42 @@
     @wheel.stop
   >
     <div class="panel-head">
-      <span>剧本 · 第 {{ episode?.episode_number ?? '?' }} 集</span>
+      <span>{{ t('dramaCanvas.scriptEpisode', { num: episode?.episode_number ?? '?' }) }}</span>
       <div class="head-right">
         <span v-if="busyLabel" class="busy-tag">{{ busyLabel }}</span>
-        <el-button link size="small" @click.stop="closePanel">收起</el-button>
+        <el-button link size="small" @click.stop="closePanel">{{ t('dramaCanvas.collapse') }}</el-button>
       </div>
     </div>
 
-    <p class="flow-hint">创作起点：编写剧本 → 提取角色/场景/道具 → AI 生成分镜 → 生图/生视频</p>
+    <p class="flow-hint">{{ t('dramaCanvas.creationFlowHint') }}</p>
 
     <el-form label-position="left" label-width="44px" size="small" class="compact-form">
-      <el-form-item label="集标题">
-        <el-input v-model="form.title" placeholder="第 N 集" />
+      <el-form-item :label="t('dramaCanvas.episodeTitle')">
+        <el-input v-model="form.title" :placeholder="t('dramaCanvas.episodeTitlePlaceholder')" />
       </el-form-item>
-      <el-form-item label="剧本">
+      <el-form-item :label="t('dramaCanvas.script')">
         <el-input
           v-model="form.scriptContent"
           type="textarea"
           :rows="6"
           resize="vertical"
-          placeholder="在此粘贴或编写本集剧本…"
+          :placeholder="t('dramaCanvas.scriptPlaceholder')"
           class="script-textarea"
         />
       </el-form-item>
     </el-form>
 
     <div class="stats-row">
-      <span>素材：{{ charCount }} 角色 · {{ sceneCount }} 场景 · {{ propCount }} 道具</span>
-      <span class="len">{{ scriptLen }} 字</span>
+      <span>{{ t('dramaCanvas.materialsCount', { chars: charCount, scenes: sceneCount, props: propCount }) }}</span>
+      <span class="len">{{ t('dramaCanvas.wordsCount', { count: scriptLen }) }}</span>
     </div>
 
     <div class="panel-actions">
-      <el-button size="small" type="primary" :loading="saving" @click.stop="onSave">保存剧本</el-button>
-      <el-button size="small" :loading="extracting" @click.stop="onExtractChars">提取角色</el-button>
-      <el-button size="small" :loading="extracting" @click.stop="onExtractScenes">提取场景</el-button>
-      <el-button size="small" :loading="extracting" @click.stop="onExtractProps">提取道具</el-button>
-      <el-button size="small" type="warning" :loading="extracting" @click.stop="onExtractAll">一键提取</el-button>
+      <el-button size="small" type="primary" :loading="saving" @click.stop="onSave">{{ t('dramaCanvas.saveScript') }}</el-button>
+      <el-button size="small" :loading="extracting" @click.stop="onExtractChars">{{ t('dramaCanvas.extractChars') }}</el-button>
+      <el-button size="small" :loading="extracting" @click.stop="onExtractScenes">{{ t('dramaCanvas.extractScenes') }}</el-button>
+      <el-button size="small" :loading="extracting" @click.stop="onExtractProps">{{ t('dramaCanvas.extractProps') }}</el-button>
+      <el-button size="small" type="warning" :loading="extracting" @click.stop="onExtractAll">{{ t('dramaCanvas.extractAll') }}</el-button>
     </div>
   </div>
 </template>
@@ -51,6 +51,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from '@/i18n'
 import { useCanvasContext } from '@/composables/useCanvasContext'
 
 const props = defineProps({
@@ -58,6 +59,7 @@ const props = defineProps({
   nodeId: { type: String, required: true },
 })
 
+const { t } = useI18n()
 const ctx = useCanvasContext()
 const saving = ref(false)
 const extracting = ref(false)
@@ -77,7 +79,7 @@ const busyLabel = computed(() => {
 })
 
 function syncForm(ep) {
-  form.title = ep?.title || `第${ep?.episode_number ?? ''}集`
+  form.title = ep?.title || t('filmCreate.episodeNumber', { num: ep?.episode_number ?? '' })
   form.scriptContent = ep?.script_content || ''
 }
 
@@ -93,7 +95,7 @@ function getScriptApi() {
 
 async function onSave() {
   if (!form.scriptContent.trim()) {
-    ElMessage.warning('请先填写剧本内容')
+    ElMessage.warning(t('dramaCanvas.fillScriptFirst'))
     return
   }
   saving.value = true
@@ -103,7 +105,7 @@ async function onSave() {
       title: form.title,
     })
   } catch (e) {
-    ElMessage.error(e?.message || '保存失败')
+    ElMessage.error(e?.message || t('dramaCanvas.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -136,7 +138,7 @@ async function onExtractProps() {
 
 async function onExtractAll() {
   if (!form.scriptContent.trim()) {
-    ElMessage.warning('请先填写剧本')
+    ElMessage.warning(t('dramaCanvas.fillScriptFirst'))
     return
   }
   await runExtract(() =>

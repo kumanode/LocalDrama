@@ -3,16 +3,16 @@
     <header class="header">
       <div class="header-inner">
         <h1 class="logo" @click="router.push('/')">
-          <span class="logo-main">本地短剧助手</span>
-          <span class="logo-sub">画布模式</span>
+          <span class="logo-main">{{ $t('header.appTitle') }}</span>
+          <span class="logo-sub">{{ $t('dramaCanvas.canvasMode') }}</span>
         </h1>
         <span class="breadcrumb-sep">›</span>
-        <span class="page-title">{{ drama?.title || '加载中…' }}</span>
+        <span class="page-title">{{ drama?.title || (locale === 'en' ? 'Loading…' : '加载中…') }}</span>
 
         <el-select
           v-model="filterEpisodeId"
           class="episode-select"
-          placeholder="全部集数"
+          :placeholder="locale === 'en' ? 'All Episodes' : '全部集数'"
           clearable
           size="small"
           style="width: 150px"
@@ -20,66 +20,67 @@
           <el-option
             v-for="ep in (drama?.episodes || [])"
             :key="ep.id"
-            :label="ep.title || '第' + (ep.episode_number || 0) + '集'"
+            :label="ep.title || (locale === 'en' ? 'Episode ' + (ep.episode_number || 0) : '第' + (ep.episode_number || 0) + '集')"
             :value="ep.id"
           />
         </el-select>
 
-        <span v-if="layoutSaveState === 'saving'" class="layout-status saving">保存中…</span>
-        <span v-else-if="layoutSaveState === 'saved'" class="layout-status saved">已保存</span>
-        <span v-else-if="layoutSaveState === 'error'" class="layout-status error">保存失败</span>
+        <span v-if="layoutSaveState === 'saving'" class="layout-status saving">{{ $t('dramaCanvas.saving') }}</span>
+        <span v-else-if="layoutSaveState === 'saved'" class="layout-status saved">{{ $t('dramaCanvas.saved') }}</span>
+        <span v-else-if="layoutSaveState === 'error'" class="layout-status error">{{ $t('dramaCanvas.saveFailed') }}</span>
 
         <div class="header-actions">
+          <LanguageToggle />
           <el-button size="small" type="warning" plain @click="focusScriptNode">
-            剧本
+            {{ $t('filmCreate.stepScript') }}
           </el-button>
           <el-button size="small" @click="openCreateDialog('storyboard')">
             <el-icon><Plus /></el-icon>
-            分镜
+            {{ $t('filmCreate.stepStoryboard') }}
           </el-button>
-          <el-button size="small" @click="openCreateDialog('character')">角色</el-button>
-          <el-button size="small" @click="openCreateDialog('scene')">场景</el-button>
-          <el-button size="small" @click="openCreateDialog('prop')">道具</el-button>
+          <el-button size="small" @click="openCreateDialog('character')">{{ $t('filmCreate.stepCharacters') }}</el-button>
+          <el-button size="small" @click="openCreateDialog('scene')">{{ $t('filmCreate.stepScenes') }}</el-button>
+          <el-button size="small" @click="openCreateDialog('prop')">{{ $t('filmCreate.stepProps') }}</el-button>
           <el-button size="small" @click="openCreateDialog('episode')">
             <el-icon><Plus /></el-icon>
-            集
+            {{ locale === 'en' ? 'Episode' : '集' }}
           </el-button>
           <el-button size="small" :loading="aligningNodes" @click="onAlignNodes">
             <el-icon><Grid /></el-icon>
-            对齐节点
+            {{ $t('dramaCanvas.alignNodes') }}
           </el-button>
           <el-button type="primary" plain @click="goListMode">
             <el-icon><List /></el-icon>
-            列表模式
+            {{ $t('dramaCanvas.listMode') }}
           </el-button>
-          <el-button class="btn-theme" @click="toggleTheme">
+          <el-button class="btn-theme" :title="isDark ? $t('header.switchToLight') : $t('header.switchToDark')" @click="toggleTheme">
             <el-icon><Sunny v-if="isDark" /><Moon v-else /></el-icon>
-            {{ isDark ? '浅色' : '暗色' }}
+            {{ isDark ? $t('header.lightMode') : $t('header.darkMode') }}
           </el-button>
         </div>
       </div>
 
       <div class="workflow-bar">
-        <span class="wf-hint">已选 {{ selectedStoryboardIds.length }} 个分镜</span>
+        <span class="wf-hint">{{ $t('dramaCanvas.shotsSelected', { count: selectedStoryboardIds.length }) }}</span>
         <el-checkbox-group v-model="pipelineSteps" size="small" class="wf-steps">
-          <el-checkbox value="image">生图</el-checkbox>
-          <el-checkbox value="video">生视频</el-checkbox>
-          <el-checkbox value="audio">配音</el-checkbox>
+          <el-checkbox value="image">{{ $t('dramaCanvas.stepImage') }}</el-checkbox>
+          <el-checkbox value="video">{{ $t('dramaCanvas.stepVideo') }}</el-checkbox>
+          <el-checkbox value="audio">{{ $t('dramaCanvas.stepAudio') }}</el-checkbox>
         </el-checkbox-group>
         <el-button size="small" :disabled="selectedStoryboardIds.length === 0" @click="onCreateWorkflowGroup">
-          创建工作流
+          {{ $t('dramaCanvas.createWorkflow') }}
         </el-button>
         <el-select
           v-model="activeGroupId"
           size="small"
-          placeholder="选择工作流"
+          :placeholder="$t('dramaCanvas.selectWorkflow')"
           clearable
           style="width: 160px"
         >
           <el-option
             v-for="g in workflowGroups"
             :key="g.id"
-            :label="`${g.title} (${(g.storyboard_ids || []).length}镜)`"
+            :label="`${g.title} (${(g.storyboard_ids || []).length}${locale === 'en' ? ' shots' : '镜'})`"
             :value="g.id"
           />
         </el-select>
@@ -90,17 +91,17 @@
           :disabled="!activeGroupId"
           @click="onRunActiveGroup"
         >
-          整组重跑
+          {{ $t('dramaCanvas.rerunGroup') }}
         </el-button>
         <el-button size="small" type="danger" plain :disabled="!activeGroupId" @click="onDeleteActiveGroup">
-          删除工作流
+          {{ $t('dramaCanvas.deleteWorkflow') }}
         </el-button>
       </div>
 
       <div v-if="workflowProgress" class="workflow-progress">{{ workflowProgress }}</div>
 
       <div class="generate-bar">
-        <span class="gen-label">本集生成</span>
+        <span class="gen-label">{{ $t('dramaCanvas.episodeGen') }}</span>
         <el-button
           size="small"
           type="primary"
@@ -108,7 +109,7 @@
           :disabled="!filterEpisodeId || workflowRunning"
           @click="aiGenerateStoryboards"
         >
-          AI 生成分镜
+          {{ $t('filmCreate.breakdownStoryboards') }}
         </el-button>
         <el-button
           size="small"
@@ -116,7 +117,7 @@
           :disabled="!filterEpisodeId || workflowRunning"
           @click="batchGenerateImages"
         >
-          批量生图
+          {{ $t('filmCreate.batchGenerateFrames') }}
         </el-button>
         <el-button
           size="small"
@@ -124,9 +125,9 @@
           :disabled="!filterEpisodeId || workflowRunning"
           @click="batchGenerateVideos"
         >
-          批量生视频
+          {{ $t('filmCreate.batchGenerateVideos') }}
         </el-button>
-        <span class="gen-hint" title="完整创作流水线">剧本 → 提取角色/场景/道具 → 分镜 → 生图 → 视频</span>
+        <span class="gen-hint" :title="$t('dramaCanvas.pipelineHintTitle')">{{ $t('dramaCanvas.pipelineHint') }}</span>
       </div>
       <div v-if="episodeGenProgress" class="workflow-progress episode-gen">{{ episodeGenProgress }}</div>
     </header>
@@ -135,18 +136,18 @@
       <aside v-if="drama" class="canvas-sidebar">
         <div class="sidebar-section sidebar-script">
           <div class="sec-label sec-label-row">
-            <span>📜 剧本</span>
-            <el-button link size="small" type="warning" @click="focusScriptNode">编辑</el-button>
+            <span>📜 {{ $t('filmCreate.stepScript') }}</span>
+            <el-button link size="small" type="warning" @click="focusScriptNode">{{ $t('common.edit') }}</el-button>
           </div>
-          <p class="sidebar-script-tip">从头创作：先写剧本，再提取左侧素材</p>
+          <p class="sidebar-script-tip">{{ $t('dramaCanvas.scriptHint') }}</p>
         </div>
         <div class="sidebar-title">
-          素材库
-          <el-button v-if="highlightAssetId" link size="small" @click="clearAssetHighlight">清除</el-button>
+          {{ $t('library.title') }}
+          <el-button v-if="highlightAssetId" link size="small" @click="clearAssetHighlight">{{ locale === 'en' ? 'Clear' : '清除' }}</el-button>
         </div>
         <div class="sidebar-section">
           <div class="sec-label sec-label-row">
-            <span>角色 {{ (drama.characters || []).length }}</span>
+            <span>{{ $t('filmCreate.stepCharacters') }} {{ (drama.characters || []).length }}</span>
             <el-button link size="small" type="primary" @click="openCreateDialog('character')">+</el-button>
           </div>
           <div
@@ -156,12 +157,12 @@
             :class="{ active: highlightAssetId === 'char:' + c.id }"
             @click="selectSidebarAsset('char:' + c.id)"
           >
-            {{ c.name || '未命名' }}
+            {{ c.name || (locale === 'en' ? 'Untitled' : '未命名') }}
           </div>
         </div>
         <div class="sidebar-section">
           <div class="sec-label sec-label-row">
-            <span>场景 {{ (drama.scenes || []).length }}</span>
+            <span>{{ $t('filmCreate.stepScenes') }} {{ (drama.scenes || []).length }}</span>
             <el-button link size="small" type="primary" @click="openCreateDialog('scene')">+</el-button>
           </div>
           <div
@@ -171,12 +172,12 @@
             :class="{ active: highlightAssetId === 'scene:' + s.id }"
             @click="selectSidebarAsset('scene:' + s.id)"
           >
-            {{ s.location || '未命名' }}
+            {{ s.location || (locale === 'en' ? 'Untitled' : '未命名') }}
           </div>
         </div>
         <div class="sidebar-section">
           <div class="sec-label sec-label-row">
-            <span>道具 {{ (drama.props || []).length }}</span>
+            <span>{{ $t('filmCreate.stepProps') }} {{ (drama.props || []).length }}</span>
             <el-button link size="small" type="primary" @click="openCreateDialog('prop')">+</el-button>
           </div>
           <div
@@ -186,12 +187,12 @@
             :class="{ active: highlightAssetId === 'prop:' + p.id }"
             @click="selectSidebarAsset('prop:' + p.id)"
           >
-            {{ p.name || '未命名' }}
+            {{ p.name || (locale === 'en' ? 'Untitled' : '未命名') }}
           </div>
         </div>
 
         <div class="sidebar-section workflow-list">
-          <div class="sec-label">工作流 {{ workflowGroups.length }}</div>
+          <div class="sec-label">{{ locale === 'en' ? 'Workflows ' + workflowGroups.length : '工作流 ' + workflowGroups.length }}</div>
           <div
             v-for="g in workflowGroups"
             :key="g.id"
@@ -200,12 +201,12 @@
             @click="activeGroupId = g.id"
           >
             <div class="wf-item-title">{{ g.title }}</div>
-            <div class="wf-item-meta">{{ (g.storyboard_ids || []).length }} 镜 · {{ (g.pipeline || []).join('→') }}</div>
+            <div class="wf-item-meta">{{ (g.storyboard_ids || []).length }} {{ locale === 'en' ? 'shots' : '镜' }} · {{ (g.pipeline || []).join('→') }}</div>
           </div>
-          <div v-if="!workflowGroups.length" class="sidebar-empty">框选分镜后点「创建工作流」</div>
+          <div v-if="!workflowGroups.length" class="sidebar-empty">{{ locale === 'en' ? 'Select shots then click "Create Workflow"' : '框选分镜后点「创建工作流」' }}</div>
         </div>
 
-        <p class="sidebar-tip">经典模式流水线：分镜 → 脚本摘要 → 分镜图 → 视频。摘要节点是画布可视化，列表里合并在分镜编辑区。顶栏「本集生成」可 AI 批量操作；单击分镜可单镜生图/生视频。</p>
+        <p class="sidebar-tip">{{ locale === 'en' ? 'Classic pipeline: Storyboard → Summary → Images → Video. Use "Episode Gen" in top bar for AI batch generation.' : '经典模式流水线：分镜 → 脚本摘要 → 分镜图 → 视频。摘要节点是画布可视化，列表里合并在分镜编辑区。顶栏「本集生成」可 AI 批量操作；单击分镜可单镜生图/生视频。' }}</p>
       </aside>
 
       <div ref="canvasMainRef" class="canvas-main">
@@ -238,7 +239,7 @@
           <Controls />
           <MiniMap pannable zoomable />
         </VueFlow>
-        <el-empty v-else-if="!loading" description="暂无画布数据" />
+        <el-empty v-else-if="!loading" :description="$t('dramaCanvas.emptyCanvas')" />
         <CanvasFloatingToolbar v-if="drama && nodes.length" />
       </div>
     </div>
@@ -318,9 +319,12 @@ import CanvasContextMenu from '@/components/dramaCanvas/CanvasContextMenu.vue'
 import CanvasAddButtonNode from '@/components/dramaCanvas/CanvasAddButtonNode.vue'
 import CanvasFloatingToolbar from '@/components/dramaCanvas/CanvasFloatingToolbar.vue'
 import CanvasFlowAligner from '@/components/dramaCanvas/CanvasFlowAligner.vue'
+import LanguageToggle from '@/components/LanguageToggle.vue'
+import { useI18n } from '@/i18n'
 
 const route = useRoute()
 const router = useRouter()
+const { t, locale } = useI18n()
 const { isDark, toggle: toggleTheme } = useTheme()
 const { imagesBySbId, videosBySbId, loadForDrama } = useCanvasStoryboardMedia()
 
@@ -489,7 +493,7 @@ async function onCreateSubmit(form) {
   try {
     await submitCreate(form)
   } catch (e) {
-    ElMessage.error(e?.message || '创建失败')
+    ElMessage.error(e?.message || (locale.value === 'en' ? 'Creation failed' : '创建失败'))
   }
 }
 
@@ -651,7 +655,7 @@ function focusScriptNode() {
     if (eps.length === 1) epId = eps[0].id
   }
   if (!epId) {
-    ElMessage.warning('请先选择或新建集数')
+    ElMessage.warning(t('filmCreate.msgSelectEpisodeFirst'))
     return
   }
   if (!filterEpisodeId.value) filterEpisodeId.value = epId
@@ -693,9 +697,9 @@ async function onAlignNodes() {
       }
     }
     await persistCanvasState({ layoutOnly: true })
-    ElMessage.success('节点已按规则对齐并适配当前视图')
+    ElMessage.success(t('dramaCanvas.nodesAligned'))
   } catch (e) {
-    ElMessage.error(e?.message || '对齐失败')
+    ElMessage.error(e?.message || (locale.value === 'en' ? 'Alignment failed' : '对齐失败'))
   } finally {
     aligningNodes.value = false
   }
@@ -714,7 +718,7 @@ async function loadDrama(silent = false) {
     await loadForDrama(drama.value, filterEpisodeId.value)
     rebuildGraph()
   } catch (e) {
-    if (!silent) ElMessage.error(e?.message || '加载项目失败')
+    if (!silent) ElMessage.error(e?.message || (locale.value === 'en' ? 'Failed to load project' : '加载项目失败'))
   } finally {
     if (!silent) loading.value = false
   }
@@ -722,14 +726,14 @@ async function loadDrama(silent = false) {
 
 async function onCreateWorkflowGroup() {
   if (!selectedStoryboardIds.value.length) {
-    ElMessage.warning('请先框选或 Ctrl 点击选择分镜节点')
+    ElMessage.warning(t('dramaCanvas.boxSelectShotsFirst'))
     return
   }
   try {
-    const { value } = await ElMessageBox.prompt('工作流名称', '创建工作流', {
-      confirmButtonText: '创建',
-      cancelButtonText: '取消',
-      inputValue: `工作流 ${workflowGroups.value.length + 1}`,
+    const { value } = await ElMessageBox.prompt(t('dramaCanvas.workflowNamePrompt'), t('dramaCanvas.createWorkflow'), {
+      confirmButtonText: t('common.create'),
+      cancelButtonText: t('common.cancel'),
+      inputValue: locale.value === 'en' ? `Workflow ${workflowGroups.value.length + 1}` : `工作流 ${workflowGroups.value.length + 1}`,
     })
     workflowGroups.value = createWorkflowGroup(workflowGroups.value, {
       title: value?.trim() || undefined,
@@ -739,40 +743,46 @@ async function onCreateWorkflowGroup() {
     activeGroupId.value = workflowGroups.value[workflowGroups.value.length - 1]?.id || null
     await persistCanvasState({ groupsOnly: true })
     rebuildGraph()
-    ElMessage.success('工作流已创建')
+    ElMessage.success(t('dramaCanvas.workflowCreated'))
   } catch (_) {}
 }
 
 async function onDeleteActiveGroup() {
   if (!activeGroupId.value) return
   try {
-    await ElMessageBox.confirm('确定删除该工作流？', '删除工作流', { type: 'warning' })
+    await ElMessageBox.confirm(t('dramaCanvas.deleteWorkflowConfirm'), t('dramaCanvas.deleteWorkflow'), {
+      type: 'warning',
+      confirmButtonText: t('common.delete'),
+      cancelButtonText: t('common.cancel'),
+    })
     workflowGroups.value = deleteWorkflowGroup(workflowGroups.value, activeGroupId.value)
     activeGroupId.value = workflowGroups.value[0]?.id || null
     await persistCanvasState({ groupsOnly: true })
     rebuildGraph()
-    ElMessage.success('已删除')
+    ElMessage.success(t('common.deleted'))
   } catch (_) {}
 }
 
 async function onRunActiveGroup() {
   const group = workflowGroups.value.find((g) => g.id === activeGroupId.value)
   if (!group) {
-    ElMessage.warning('请先选择工作流')
+    ElMessage.warning(t('dramaCanvas.selectWorkflowFirst'))
     return
   }
   try {
     await ElMessageBox.confirm(
-      `将对 ${(group.storyboard_ids || []).length} 个分镜依次执行：${(group.pipeline || pipelineSteps.value).join(' → ')}\n耗时可能较长，是否继续？`,
-      '整组重跑',
-      { type: 'warning', confirmButtonText: '开始执行' }
+      locale.value === 'en'
+        ? `Will execute ${(group.pipeline || pipelineSteps.value).join(' → ')} on ${(group.storyboard_ids || []).length} shots in order.\nThis may take some time. Continue?`
+        : `将对 ${(group.storyboard_ids || []).length} 个分镜依次执行：${(group.pipeline || pipelineSteps.value).join(' → ')}\n耗时可能较长，是否继续？`,
+      t('dramaCanvas.rerunGroup'),
+      { type: 'warning', confirmButtonText: locale.value === 'en' ? 'Start' : '开始执行', cancelButtonText: t('common.cancel') }
     )
   } catch {
     return
   }
 
   workflowRunning.value = true
-  workflowProgress.value = '准备执行…'
+  workflowProgress.value = locale.value === 'en' ? 'Preparing execution…' : '准备执行…'
   try {
     const summary = await runWorkflowGroup(drama.value, {
       ...group,
@@ -785,22 +795,23 @@ async function onRunActiveGroup() {
         return findStoryboardInDrama(drama.value, storyboardId)?.storyboard
       },
       onStepStart: ({ storyboardId, step }) => {
-        workflowProgress.value = `分镜 #${storyboardId}：${step === 'image' ? '生图' : step === 'video' ? '生视频' : '配音'}…`
+        const stepLabel = step === 'image' ? t('dramaCanvas.stepImage') : step === 'video' ? t('dramaCanvas.stepVideo') : t('dramaCanvas.stepAudio')
+        workflowProgress.value = `${locale.value === 'en' ? 'Shot' : '分镜'} #${storyboardId}：${stepLabel}…`
       },
       onStoryboardError: ({ storyboardId, error }) => {
-        ElMessage.error(`分镜 #${storyboardId} 失败：${error?.message || error}`)
+        ElMessage.error(`${locale.value === 'en' ? 'Shot' : '分镜'} #${storyboardId} ${locale.value === 'en' ? 'failed' : '失败'}：${error?.message || error}`)
       },
     })
     await loadDrama(true)
     await loadForDrama(drama.value, filterEpisodeId.value)
     rebuildGraph()
     if (summary.failed.length) {
-      ElMessage.warning(`完成 ${summary.ok.length} 镜，失败 ${summary.failed.length} 镜`)
+      ElMessage.warning(t('dramaCanvas.workflowSummary', { ok: summary.ok.length, failed: summary.failed.length }))
     } else {
-      ElMessage.success(`工作流执行完成，共 ${summary.ok.length} 镜`)
+      ElMessage.success(t('dramaCanvas.workflowSuccess', { count: summary.ok.length }))
     }
   } catch (e) {
-    ElMessage.error(e?.message || '工作流执行失败')
+    ElMessage.error(e?.message || t('dramaCanvas.workflowFailed'))
   } finally {
     workflowRunning.value = false
     workflowProgress.value = ''

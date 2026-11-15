@@ -11,16 +11,16 @@
       <Handle type="source" :position="Position.Right" />
       <CanvasNodeStatusOverlay :node-id="id" />
       <div class="head">
-        <span class="badge">📜 剧本</span>
-        <span class="ep">第 {{ data.episode?.episode_number ?? '?' }} 集</span>
+        <span class="badge">📜 {{ $t('filmCreate.stepScript') }}</span>
+        <span class="ep">{{ locale === 'en' ? 'Ep ' + (data.episode?.episode_number ?? '?') : '第 ' + (data.episode?.episode_number ?? '?') + ' 集' }}</span>
       </div>
       <div class="preview">{{ previewText }}</div>
       <div class="meta">
-        <span>{{ charCount }} 角色</span>
-        <span>{{ sceneCount }} 场景</span>
-        <span>{{ propCount }} 道具</span>
+        <span>{{ charCount }} {{ locale === 'en' ? 'Chars' : '角色' }}</span>
+        <span>{{ sceneCount }} {{ locale === 'en' ? 'Scenes' : '场景' }}</span>
+        <span>{{ propCount }} {{ locale === 'en' ? 'Props' : '道具' }}</span>
       </div>
-      <div class="hint">{{ showPanel ? '下方可编辑与提取' : '单击展开 · 创作起点' }}</div>
+      <div class="hint">{{ showPanel ? (locale === 'en' ? 'Edit & extract below' : '下方可编辑与提取') : (locale === 'en' ? 'Click to expand' : '单击展开 · 创作起点') }}</div>
     </div>
     <CanvasScriptPanel
       v-if="showPanel"
@@ -34,6 +34,7 @@
 import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import { useCanvasContext } from '@/composables/useCanvasContext'
+import { useI18n } from '@/i18n'
 import CanvasScriptPanel from './CanvasScriptPanel.vue'
 import CanvasNodeStatusOverlay from './CanvasNodeStatusOverlay.vue'
 
@@ -43,12 +44,14 @@ const props = defineProps({
 })
 
 const ctx = useCanvasContext()
+const { t, locale } = useI18n()
 const showPanel = computed(() => ctx?.focusedNodeId?.value === props.id)
 
 const hasScript = computed(() => !!(props.data.episode?.script_content || '').trim())
 const previewText = computed(() => {
   if (props.data.summary) return props.data.summary
-  return hasScript.value ? '（剧本已填写）' : '暂无剧本，点击编辑'
+  const isEn = locale.value === 'en'
+  return hasScript.value ? (isEn ? '(Script written)' : '（剧本已填写）') : (isEn ? 'No script yet, click to edit' : '暂无剧本，点击编辑')
 })
 
 const charCount = computed(() => (ctx?.drama?.value?.characters || []).length)

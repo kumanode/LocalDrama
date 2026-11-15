@@ -12,46 +12,46 @@
       <span>{{ kindTitle }}</span>
       <div class="head-right">
         <span v-if="busyLabel" class="busy-tag">{{ busyLabel }}</span>
-        <el-button link size="small" @click.stop="closePanel">收起</el-button>
+        <el-button link size="small" @click.stop="closePanel">{{ t('dramaCanvas.collapse') }}</el-button>
       </div>
     </div>
 
     <div class="panel-body">
       <template v-if="kind === 'text'">
-        <p class="summary">{{ summary || '暂无脚本内容' }}</p>
-        <el-button size="small" type="primary" plain @click.stop="focusStoryboard">编辑脚本</el-button>
+        <p class="summary">{{ summary || t('dramaCanvas.noScriptContent') }}</p>
+        <el-button size="small" type="primary" plain @click.stop="focusStoryboard">{{ t('dramaCanvas.editScript') }}</el-button>
       </template>
 
       <template v-else-if="kind === 'universal'">
-        <p class="summary">{{ summary || '暂无全能分镜词' }}</p>
+        <p class="summary">{{ summary || t('dramaCanvas.noUniversalPrompt') }}</p>
         <div class="panel-actions">
-          <el-button size="small" plain @click.stop="focusStoryboard">编辑</el-button>
-          <el-button size="small" type="primary" :loading="busy" @click.stop="runStep('video')">重新生视频</el-button>
+          <el-button size="small" plain @click.stop="focusStoryboard">{{ t('dramaCanvas.edit') }}</el-button>
+          <el-button size="small" type="primary" :loading="busy" @click.stop="runStep('video')">{{ t('dramaCanvas.regenVideo') }}</el-button>
         </div>
       </template>
 
       <template v-else-if="kind === 'image'">
         <div class="preview-wrap">
           <img v-if="url && !busy" :src="url" alt="" class="preview-img" />
-          <div v-else-if="!busy" class="preview-empty">无分镜图</div>
-          <div v-if="busy" class="preview-loading"><span class="spinner" />生图中…</div>
+          <div v-else-if="!busy" class="preview-empty">{{ t('dramaCanvas.noImage') }}</div>
+          <div v-if="busy" class="preview-loading"><span class="spinner" />{{ t('dramaCanvas.generatingImage') }}</div>
         </div>
-        <el-button size="small" type="primary" :loading="busy" @click.stop="runStep('image')">重新生图</el-button>
+        <el-button size="small" type="primary" :loading="busy" @click.stop="runStep('image')">{{ t('dramaCanvas.regenImage') }}</el-button>
       </template>
 
       <template v-else-if="kind === 'video'">
         <div class="preview-wrap">
           <video v-if="url && !busy" :src="url" class="preview-vid" controls playsinline />
-          <div v-else-if="!busy" class="preview-empty">无视频</div>
-          <div v-if="busy" class="preview-loading"><span class="spinner" />生视频中…</div>
+          <div v-else-if="!busy" class="preview-empty">{{ t('dramaCanvas.noVideo') }}</div>
+          <div v-if="busy" class="preview-loading"><span class="spinner" />{{ t('dramaCanvas.generatingVideo') }}</div>
         </div>
-        <el-button size="small" type="primary" :loading="busy" @click.stop="runStep('video')">重新生视频</el-button>
+        <el-button size="small" type="primary" :loading="busy" @click.stop="runStep('video')">{{ t('dramaCanvas.regenVideo') }}</el-button>
       </template>
 
       <template v-else-if="kind === 'audio'">
-        <div class="audio-label">{{ audioType === 'narration' ? '旁白音频' : '对白音频' }}</div>
+        <div class="audio-label">{{ audioType === 'narration' ? t('dramaCanvas.narrationAudio') : t('dramaCanvas.dialogueAudio') }}</div>
         <audio v-if="url" :src="url" controls class="preview-aud" />
-        <el-button size="small" type="warning" :loading="busy" @click.stop="runStep('audio')">重新配音</el-button>
+        <el-button size="small" type="warning" :loading="busy" @click.stop="runStep('audio')">{{ t('dramaCanvas.regenAudio') }}</el-button>
       </template>
     </div>
   </div>
@@ -60,6 +60,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from '@/i18n'
 import { useCanvasContext } from '@/composables/useCanvasContext'
 import { CANVAS_NODE_STATUS_LABELS } from '@/composables/useCanvasNodeStatus'
 import { runImageStep, runVideoStep, runAudioStep } from '@/composables/useCanvasWorkflowRunner'
@@ -74,14 +75,21 @@ const props = defineProps({
   audioType: { type: String, default: 'dialogue' },
 })
 
+const { t } = useI18n()
 const ctx = useCanvasContext()
 const busy = ref(false)
 
 const sbNodeId = computed(() => (props.storyboard?.id ? `sb:${props.storyboard.id}` : ''))
 
 const kindTitle = computed(() => {
-  const map = { text: '脚本摘要', universal: '全能分镜词', image: '分镜图', video: '视频', audio: '音频' }
-  return map[props.kind] || '媒体'
+  const map = {
+    text: t('dramaCanvas.scriptSummary'),
+    universal: t('dramaCanvas.universalShotPrompt'),
+    image: t('dramaCanvas.storyboardImage'),
+    video: t('dramaCanvas.video'),
+    audio: t('dramaCanvas.audio'),
+  }
+  return map[props.kind] || t('dramaCanvas.media')
 })
 
 const busyLabel = computed(() => {
@@ -103,7 +111,7 @@ async function runStep(step) {
   const sbId = props.storyboard?.id
   if (!drama || !sbId) return
   busy.value = true
-  const statusMsg = CANVAS_NODE_STATUS_LABELS[step] || '处理中…'
+  const statusMsg = CANVAS_NODE_STATUS_LABELS[step] || (step === 'image' ? t('dramaCanvas.stepImage') : step === 'video' ? t('dramaCanvas.stepVideo') : t('dramaCanvas.stepAudio'))
   ctx?.nodeStatus?.set(props.nodeId, { step, message: statusMsg })
   ctx?.nodeStatus?.set(sbNodeId.value, { step, message: statusMsg })
   try {
@@ -115,14 +123,14 @@ async function runStep(step) {
     else if (step === 'audio') {
       const res = await runAudioStep(sb)
       if (res?.skipped) {
-        ElMessage.info(res.reason || '已跳过')
+        ElMessage.info(res.reason || 'skipped')
         return
       }
     }
-    ElMessage.success('生成完成')
+    ElMessage.success(t('dramaCanvas.genCompleted'))
     await ctx?.refresh?.()
   } catch (e) {
-    ElMessage.error(e?.message || '生成失败')
+    ElMessage.error(e?.message || t('filmCreate.msgGenFailed'))
   } finally {
     busy.value = false
     ctx?.nodeStatus?.clear(props.nodeId)

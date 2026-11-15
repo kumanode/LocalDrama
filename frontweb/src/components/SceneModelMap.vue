@@ -3,13 +3,13 @@
     <div class="page-header">
       <div class="header-left">
         <p class="page-desc">
-          配置不同业务场景使用的 AI 模型路由。当调用 generateText 时传入 scene_key，系统会优先使用此处配置的模型。
+          {{ locale === 'en' ? 'Route specific business scenarios to designated AI models. When generateText is called with a scene_key, the system uses the mapped model here.' : '配置不同业务场景使用的 AI 模型路由。当调用 generateText 时传入 scene_key，系统会优先使用此处配置的模型。' }}
         </p>
       </div>
       <div class="header-right">
         <el-button type="primary" @click="openAdd">
           <el-icon><Plus /></el-icon>
-          添加业务场景配置
+          {{ locale === 'en' ? 'Add Scenario Mapping' : '添加业务场景配置' }}
         </el-button>
       </div>
     </div>
@@ -22,7 +22,7 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="key" label="场景键 (scene_key)" min-width="220">
+        <el-table-column prop="key" :label="locale === 'en' ? 'Scene Key (scene_key)' : '场景键 (scene_key)'" min-width="220">
           <template #default="{ row }">
             <div class="">
               <code class="scene-key">{{ row.key }}</code>
@@ -30,53 +30,53 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="service_type" label="服务类型" width="120">
+        <el-table-column prop="service_type" :label="locale === 'en' ? 'Service Type' : '服务类型'" width="120">
           <template #default="{ row }">
             <el-tag :type="serviceTypeTagType(row.service_type)" size="small">
               {{ serviceTypeLabel(row.service_type) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="config_name" label="AI 配置" min-width="180">
+        <el-table-column prop="config_name" :label="locale === 'en' ? 'AI Config' : 'AI 配置'" min-width="180">
           <template #default="{ row }">
-            <span v-if="row.config_id">{{ row.config_name || '配置 #' + row.config_id }}</span>
-            <el-tag v-else type="info" size="small">使用默认配置</el-tag>
+            <span v-if="row.config_id">{{ row.config_name || (locale === 'en' ? 'Config #' + row.config_id : '配置 #' + row.config_id) }}</span>
+            <el-tag v-else type="info" size="small">{{ locale === 'en' ? 'Default Config' : '使用默认配置' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="model_override" label="模型覆盖" min-width="180">
+        <el-table-column prop="model_override" :label="locale === 'en' ? 'Model Override' : '模型覆盖'" min-width="180">
           <template #default="{ row }">
             <span v-if="row.model_override" class="model-override">{{ row.model_override }}</span>
-            <span v-else class="text-muted">使用配置默认模型</span>
+            <span v-else class="text-muted">{{ locale === 'en' ? 'Use config default model' : '使用配置默认模型' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column prop="description" :label="locale === 'en' ? 'Description' : '描述'" min-width="200" show-overflow-tooltip />
+        <el-table-column :label="$t('common.actions')" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button link type="danger" size="small" @click="onDelete(row)">删除</el-button>
+            <el-button link type="primary" size="small" @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
+            <el-button link type="danger" size="small" @click="onDelete(row)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <el-empty v-if="list.length === 0" description="暂无场景模型映射配置" />
+      <el-empty v-if="list.length === 0" :description="locale === 'en' ? 'No scenario model mappings configured' : '暂无场景模型映射配置'" />
     </template>
 
     <!-- 添加/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="editingKey ? '编辑业务场景映射' : '添加业务场景映射'"
+      :title="editingKey ? (locale === 'en' ? 'Edit Scenario Mapping' : '编辑业务场景映射') : (locale === 'en' ? 'Add Scenario Mapping' : '添加业务场景映射')"
       width="560px"
       :close-on-click-modal="false"
       @closed="resetForm"
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
-        <el-form-item prop="key" label="场景键">
+        <el-form-item prop="key" :label="locale === 'en' ? 'Scene Key' : '场景键'">
           <el-select
             v-model="form.key"
             filterable
             allow-create
             default-first-option
-            placeholder="选择或输入场景键"
+            :placeholder="locale === 'en' ? 'Select or enter scene key' : '选择或输入场景键'"
             style="width: 100%"
             :disabled="!!editingKey"
             @change="onKeyChange"
@@ -88,25 +88,25 @@
               :value="k.value"
             />
           </el-select>
-          <p class="field-tip">用于在代码中标识业务场景，选择后会自动设置对应的服务类型</p>
+          <p class="field-tip">{{ locale === 'en' ? 'Used to identify the business scenario in code; service type is set automatically.' : '用于在代码中标识业务场景，选择后会自动设置对应的服务类型' }}</p>
         </el-form-item>
 
-        <el-form-item prop="service_type" label="服务类型">
-          <el-select v-model="form.service_type" placeholder="选择服务类型" style="width: 100%" disabled>
-            <el-option label="文本/对话" value="text" />
-            <el-option label="文本生成图片" value="image" />
-            <el-option label="分镜图片生成" value="storyboard_image" />
-            <el-option label="视频生成" value="video" />
-            <el-option label="语音合成 TTS" value="tts" />
+        <el-form-item prop="service_type" :label="locale === 'en' ? 'Service Type' : '服务类型'">
+          <el-select v-model="form.service_type" :placeholder="locale === 'en' ? 'Select service type' : '选择服务类型'" style="width: 100%" disabled>
+            <el-option :label="locale === 'en' ? 'Text / Chat' : '文本/对话'" value="text" />
+            <el-option :label="locale === 'en' ? 'Text to Image' : '文本生成图片'" value="image" />
+            <el-option :label="locale === 'en' ? 'Storyboard Image' : '分镜图片生成'" value="storyboard_image" />
+            <el-option :label="locale === 'en' ? 'Video Generation' : '视频生成'" value="video" />
+            <el-option :label="locale === 'en' ? 'Voice Synthesis TTS' : '语音合成 TTS'" value="tts" />
           </el-select>
-          <p class="field-tip">由场景键自动决定，不可更改</p>
+          <p class="field-tip">{{ locale === 'en' ? 'Determined automatically by scene key' : '由场景键自动决定，不可更改' }}</p>
         </el-form-item>
 
-        <el-form-item label="AI 配置">
+        <el-form-item :label="locale === 'en' ? 'AI Config' : 'AI 配置'">
           <el-select
             v-model="form.config_id"
             clearable
-            placeholder="选择 AI 配置（留空使用默认）"
+            :placeholder="locale === 'en' ? 'Select AI config (blank for default)' : '选择 AI 配置（留空使用默认）'"
             style="width: 100%"
             @change="onConfigChange"
           >
@@ -117,14 +117,14 @@
               :value="c.id"
             />
           </el-select>
-          <p class="field-tip">指定具体的 AI 服务配置，不选则使用该类服务的默认配置</p>
+          <p class="field-tip">{{ locale === 'en' ? 'Specify AI service configuration; leaves blank to use default.' : '指定具体的 AI 服务配置，不选则使用该类服务的默认配置' }}</p>
         </el-form-item>
 
-        <el-form-item label="模型覆盖">
+        <el-form-item :label="locale === 'en' ? 'Model Override' : '模型覆盖'">
           <el-select
             v-model="form.model_override"
             clearable
-            placeholder="选择模型（留空使用配置默认）"
+            :placeholder="locale === 'en' ? 'Select model (blank for config default)' : '选择模型（留空使用配置默认）'"
             style="width: 100%"
             :disabled="!selectedConfigModels.length"
           >
@@ -136,20 +136,20 @@
             />
           </el-select>
           <p class="field-tip">
-            {{ selectedConfigModels.length ? '从该配置的可用模型中选择' : '请先选择 AI 配置' }}
+            {{ selectedConfigModels.length ? (locale === 'en' ? 'Select from available models' : '从该配置的可用模型中选择') : (locale === 'en' ? 'Please select AI config first' : '请先选择 AI 配置') }}
           </p>
         </el-form-item>
-        <el-form-item prop="description" label="描述">
+        <el-form-item prop="description" :label="locale === 'en' ? 'Description' : '描述'">
           <el-input
             v-model="form.description"
-            placeholder="输入场景描述，便于理解用途"
+            :placeholder="locale === 'en' ? 'Enter scenario description' : '输入场景描述，便于理解用途'"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="save">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -159,10 +159,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import { useI18n } from '@/i18n'
 import { sceneModelMapAPI } from '@/api/sceneModelMap'
 import { aiAPI } from '@/api/ai'
 import { getSelectableModels } from '@/utils/modelSelection'
 
+const { t, locale } = useI18n()
 const loading = ref(false)
 const saving = ref(false)
 const list = ref([])
@@ -179,48 +181,34 @@ const form = ref({
   model_override: ''
 })
 
-const rules = {
-  key: [{ required: true, message: '请输入场景键', trigger: 'blur' }],
-  service_type: [{ required: true, message: '请选择服务类型', trigger: 'change' }]
-}
+const rules = computed(() => ({
+  key: [{ required: true, message: locale.value === 'en' ? 'Please enter scene key' : '请输入场景键', trigger: 'blur' }],
+  service_type: [{ required: true, message: locale.value === 'en' ? 'Please select service type' : '请选择服务类型', trigger: 'change' }]
+}))
 
 // 预定义场景键及其对应的服务类型
-const predefinedKeys = [
-  { value: 'image_polish', label: 'image_polish - 分镜图提示词润色', service_type: 'text' },
-  // 目前程序里只内置了一个场景键：image_polish
-  // 以下为新增的场景键，已添加到对应的接口里
-  { value: 'role_image_polish', label: 'role_image_polish - 角色图提示词润色', service_type: 'text' },
-  { value: 'prop_image_polish', label: 'prop_image_polish - 道具图提示词润色', service_type: 'text' },
-  { value: 'scene_image_polish', label: 'scene_image_polish - 场景图提示词润色', service_type: 'text' },
-  { value: 'role_extraction', label: 'role_extraction - 角色提取', service_type: 'text' },
-  { value: 'prop_extraction', label: 'prop_extraction - 道具提取', service_type: 'text' },
-  { value: 'scene_extraction', label: 'scene_extraction - 场景提取', service_type: 'text' },
-  { value: 'storyboard_extraction', label: 'storyboard_extraction - 分镜生成', service_type: 'text' },
-  { value: 'identity_anchors', label: 'identity_anchors - 角色视觉锚点提炼', service_type: 'text' },
-  { value: 'frame_prompt', label: 'frame_prompt - 帧提示词生成', service_type: 'text' },
-  { value: 'novel_import', label: 'novel_import - 小说导入改写', service_type: 'text' },
-  { value: 'story_generation', label: 'story_generation - 故事生成', service_type: 'text' },
-  //  以下是其他服务类型...未实现
-  // 图片生成
-  // { value: 'role_image_gen', label: 'role_image_gen - 角色图片生成', service_type: 'image' },
-  // { value: 'prop_image_gen', label: 'prop_image_gen - 道具图片生成', service_type: 'image' },
-  // { value: 'scene_image_gen', label: 'scene_image_gen - 场景图片生成', service_type: 'image' },
-  // { value: 'storyboard_image_gen', label: 'storyboard_image_gen - 分镜图片生成', service_type: 'image' },
-  // { value: 'video_frame_gen', label: 'video_frame_gen - 视频帧生成', service_type: 'video' },// 首尾帧视频生成
-  // { value: 'video_full_gen', label: 'video_full_gen - 全能视频生成', service_type: 'video' },// 全能模式视频生成
-]
+const predefinedKeys = computed(() => {
+  const isEn = locale.value === 'en'
+  return [
+    { value: 'image_polish', label: isEn ? 'image_polish - Storyboard Image Prompt Polish' : 'image_polish - 分镜图提示词润色', service_type: 'text' },
+    { value: 'role_image_polish', label: isEn ? 'role_image_polish - Character Image Prompt Polish' : 'role_image_polish - 角色图提示词润色', service_type: 'text' },
+    { value: 'prop_image_polish', label: isEn ? 'prop_image_polish - Prop Image Prompt Polish' : 'prop_image_polish - 道具图提示词润色', service_type: 'text' },
+    { value: 'scene_image_polish', label: isEn ? 'scene_image_polish - Scene Image Prompt Polish' : 'scene_image_polish - 场景图提示词润色', service_type: 'text' },
+    { value: 'role_extraction', label: isEn ? 'role_extraction - Character Extraction' : 'role_extraction - 角色提取', service_type: 'text' },
+    { value: 'prop_extraction', label: isEn ? 'prop_extraction - Prop Extraction' : 'prop_extraction - 道具提取', service_type: 'text' },
+    { value: 'scene_extraction', label: isEn ? 'scene_extraction - Scene Extraction' : 'scene_extraction - 场景提取', service_type: 'text' },
+    { value: 'storyboard_extraction', label: isEn ? 'storyboard_extraction - Storyboard Generation' : 'storyboard_extraction - 分镜生成', service_type: 'text' },
+    { value: 'identity_anchors', label: isEn ? 'identity_anchors - Character Visual Anchors' : 'identity_anchors - 角色视觉锚点提炼', service_type: 'text' },
+    { value: 'frame_prompt', label: isEn ? 'frame_prompt - Frame Prompt Generation' : 'frame_prompt - 帧提示词生成', service_type: 'text' },
+    { value: 'novel_import', label: isEn ? 'novel_import - Novel Import Rewrite' : 'novel_import - 小说导入改写', service_type: 'text' },
+    { value: 'story_generation', label: isEn ? 'story_generation - Story Outline Generation' : 'story_generation - 故事生成', service_type: 'text' },
+  ]
+})
 
 // 根据服务类型筛选配置
 const filteredConfigs = computed(() => {
   const currentServiceType = form.value.service_type
-  console.log('filteredConfigs computed, service_type:', currentServiceType, 'configs:', configs.value.length)
-  const filtered = configs.value.filter(c => {
-    const match = c.service_type === currentServiceType && c.is_active
-    console.log('  config:', c.name, 'service_type:', c.service_type, 'match:', match)
-    return match
-  })
-  console.log('  filtered result:', filtered.length)
-  return filtered
+  return configs.value.filter(c => c.service_type === currentServiceType && c.is_active)
 })
 
 // 获取选中配置的可用模型列表
@@ -229,12 +217,13 @@ const selectedConfigModels = computed(() => {
 })
 
 function serviceTypeLabel(type) {
+  const isEn = locale.value === 'en'
   const map = {
-    text: '文本/对话',
-    image: '文本生成图片',
-    storyboard_image: '分镜图片生成',
-    video: '视频生成',
-    tts: '语音合成 TTS'
+    text: isEn ? 'Text / Chat' : '文本/对话',
+    image: isEn ? 'Text to Image' : '文本生成图片',
+    storyboard_image: isEn ? 'Storyboard Image' : '分镜图片生成',
+    video: isEn ? 'Video Generation' : '视频生成',
+    tts: isEn ? 'Voice Synthesis TTS' : '语音合成 TTS'
   }
   return map[type] || type
 }
@@ -252,7 +241,7 @@ function serviceTypeTagType(type) {
 
 // 获取场景键的 label
 function getSceneKeyLabel(key) {
-  const matched = predefinedKeys.find(k => k.value === key)
+  const matched = predefinedKeys.value.find(k => k.value === key)
   if (matched) {
     // 从 label 中提取描述部分（去掉 key 前缀）
     return matched.label.replace(matched.value + ' - ', '')
@@ -262,12 +251,9 @@ function getSceneKeyLabel(key) {
 
 // 场景键改变时自动设置服务类型
 function onKeyChange(key) {
-  console.log('onKeyChange called with key:', key)
-  const matched = predefinedKeys.find(k => k.value === key)
-  console.log('matched predefined key:', matched)
+  const matched = predefinedKeys.value.find(k => k.value === key)
   if (matched) {
     form.value.service_type = matched.service_type
-    console.log('service_type set to:', form.value.service_type)
   }
   // 重置配置和模型选择
   form.value.config_id = null
@@ -287,7 +273,6 @@ async function load() {
       aiAPI.list()
     ])
     configs.value = configsData || []
-    console.log('Loaded configs:', configs.value.map(c => ({ id: c.id, name: c.name, service_type: c.service_type, is_active: c.is_active })))
     
     // 合并配置名称
     list.value = (mapsData || []).map(item => {
@@ -298,7 +283,7 @@ async function load() {
       }
     })
   } catch (err) {
-    ElMessage.error('加载场景模型映射失败: ' + (err.message || '未知错误'))
+    ElMessage.error((locale.value === 'en' ? 'Failed to load scenario model mappings: ' : '加载场景模型映射失败: ') + (err.message || ''))
   } finally {
     loading.value = false
   }
@@ -343,15 +328,15 @@ async function save() {
     
     if (editingKey.value) {
       await sceneModelMapAPI.update(editingKey.value, body)
-      ElMessage.success('更新成功')
+      ElMessage.success(locale.value === 'en' ? 'Updated successfully' : '更新成功')
     } else {
       await sceneModelMapAPI.create({ ...body, key: form.value.key })
-      ElMessage.success('创建成功')
+      ElMessage.success(locale.value === 'en' ? 'Created successfully' : '创建成功')
     }
     dialogVisible.value = false
     await load()
   } catch (err) {
-    ElMessage.error('保存失败: ' + (err.message || '未知错误'))
+    ElMessage.error((locale.value === 'en' ? 'Save failed: ' : '保存失败: ') + (err.message || ''))
   } finally {
     saving.value = false
   }
@@ -360,17 +345,16 @@ async function save() {
 async function onDelete(row) {
   try {
     await ElMessageBox.confirm(
-      `确定要删除场景 "${row.key}" 的模型映射配置吗？`,
-      '确认删除',
-      { type: 'warning' }
+      locale.value === 'en' ? `Are you sure you want to delete scenario model mapping "${row.key}"?` : `确定要删除场景 "${row.key}" 的模型映射配置吗？`,
+      locale.value === 'en' ? 'Confirm Deletion' : '确认删除',
+      { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
     )
     await sceneModelMapAPI.delete(row.key)
-    ElMessage.success('删除成功')
+    ElMessage.success(locale.value === 'en' ? 'Deleted successfully' : '删除成功')
     await load()
   } catch (err) {
-    if (err !== 'cancel') {
-      ElMessage.error('删除失败: ' + (err.message || '未知错误'))
-    }
+    if (err === 'cancel') return
+    ElMessage.error((locale.value === 'en' ? 'Deletion failed: ' : '删除失败: ') + (err.message || ''))
   }
 }
 

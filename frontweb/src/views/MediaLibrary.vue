@@ -4,14 +4,15 @@
       <div class="header-left">
         <el-button text @click="$router.back()">
           <el-icon><ArrowLeft /></el-icon>
-          返回
+          {{ $t('common.back') }}
         </el-button>
-        <h2 class="page-title">媒体素材库</h2>
+        <h2 class="page-title">{{ $t('mediaLibrary.title') }}</h2>
       </div>
       <div class="header-actions">
+        <LanguageToggle />
         <el-button type="primary" plain @click="triggerUpload">
           <el-icon><Upload /></el-icon>
-          上传素材
+          {{ $t('mediaLibrary.uploadMedia') }}
         </el-button>
         <input ref="uploadInput" type="file" accept="image/*,video/*" multiple style="display:none" @change="onUpload" />
       </div>
@@ -20,13 +21,13 @@
     <!-- 筛选栏 -->
     <div class="filter-bar">
       <el-radio-group v-model="mediaType" class="type-filter" @change="loadMedia">
-        <el-radio-button value="all">全部</el-radio-button>
-        <el-radio-button value="image">图片</el-radio-button>
-        <el-radio-button value="video">视频</el-radio-button>
+        <el-radio-button value="all">{{ $t('mediaLibrary.typeAll') }}</el-radio-button>
+        <el-radio-button value="image">{{ $t('mediaLibrary.typeImage') }}</el-radio-button>
+        <el-radio-button value="video">{{ $t('mediaLibrary.typeVideo') }}</el-radio-button>
       </el-radio-group>
       <el-input
         v-model="keyword"
-        placeholder="搜索素材..."
+        :placeholder="$t('mediaLibrary.searchPlaceholder')"
         class="search-input"
         clearable
         @input="debouncedLoad"
@@ -38,7 +39,7 @@
     <!-- 上传进度 -->
     <div v-if="uploading" class="upload-progress">
       <el-icon class="is-loading"><Loading /></el-icon>
-      <span>正在上传 {{ uploadProgress.current }}/{{ uploadProgress.total }}...</span>
+      <span>{{ $t('mediaLibrary.uploading', { current: uploadProgress.current, total: uploadProgress.total }) }}</span>
     </div>
 
     <!-- 媒体网格 -->
@@ -76,14 +77,14 @@
           </div>
         </div>
         <div class="media-info">
-          <span class="media-name" :title="item.name">{{ item.name || '未命名' }}</span>
+          <span class="media-name" :title="item.name">{{ item.name || $t('library.unnamed') }}</span>
           <span class="media-meta">{{ formatSize(item.size) }}</span>
         </div>
       </div>
 
       <div v-if="!loading && mediaItems.length === 0" class="empty-media">
         <el-icon class="empty-icon"><Files /></el-icon>
-        <p>暂无素材，点击上传按钮添加</p>
+        <p>{{ locale === 'en' ? 'No media yet, click upload to add' : '暂无素材，点击上传按钮添加' }}</p>
       </div>
     </div>
 
@@ -100,13 +101,13 @@
 
     <!-- 批量操作 -->
     <div v-if="selectedIds.size > 0" class="batch-bar">
-      <span>已选 {{ selectedIds.size }} 项</span>
-      <el-button size="small" @click="selectedIds.clear()">取消选择</el-button>
-      <el-button size="small" type="danger" plain @click="batchDelete">批量删除</el-button>
+      <span>{{ locale === 'en' ? `Selected ${selectedIds.size} items` : `已选 ${selectedIds.size} 项` }}</span>
+      <el-button size="small" @click="selectedIds.clear()">{{ $t('common.cancel') }}</el-button>
+      <el-button size="small" type="danger" plain @click="batchDelete">{{ locale === 'en' ? 'Batch Delete' : '批量删除' }}</el-button>
     </div>
 
     <!-- 预览弹窗 -->
-    <el-dialog v-model="showPreview" title="素材预览" width="800px" destroy-on-close>
+    <el-dialog v-model="showPreview" :title="locale === 'en' ? 'Media Preview' : '素材预览'" width="800px" destroy-on-close>
       <div class="preview-content">
         <video
           v-if="previewItem?.type === 'video'"
@@ -118,9 +119,9 @@
         <img v-else-if="previewItem" :src="itemUrl(previewItem)" class="preview-image" />
       </div>
       <div class="preview-meta">
-        <div class="meta-row"><span>名称：</span>{{ previewItem?.name || '未命名' }}</div>
-        <div class="meta-row"><span>大小：</span>{{ formatSize(previewItem?.size) }}</div>
-        <div class="meta-row"><span>创建时间：</span>{{ previewItem?.created_at }}</div>
+        <div class="meta-row"><span>{{ $t('common.name') }}: </span>{{ previewItem?.name || $t('library.unnamed') }}</div>
+        <div class="meta-row"><span>{{ locale === 'en' ? 'Size: ' : '大小：' }}</span>{{ formatSize(previewItem?.size) }}</div>
+        <div class="meta-row"><span>{{ locale === 'en' ? 'Created: ' : '创建时间：' }}</span>{{ previewItem?.created_at }}</div>
       </div>
     </el-dialog>
   </div>
@@ -135,6 +136,10 @@ import {
 } from '@element-plus/icons-vue'
 import { uploadAPI } from '@/api/upload'
 import request from '@/utils/request'
+import LanguageToggle from '@/components/LanguageToggle.vue'
+import { useI18n } from '@/i18n'
+
+const { locale, t } = useI18n()
 
 const loading = ref(false)
 const uploading = ref(false)
@@ -165,12 +170,12 @@ async function onUpload(e) {
       await uploadAPI.uploadImage(file)
       uploadProgress.value.current++
     } catch (err) {
-      ElMessage.warning(`${file.name} 上传失败: ${err.message}`)
+      ElMessage.warning(`${file.name}: ${err.message}`)
     }
   }
   uploading.value = false
   e.target.value = ''
-  ElMessage.success(`${files.length} 个素材上传完成`)
+  ElMessage.success(t('mediaLibrary.uploadSuccess'))
   loadMedia()
 }
 
@@ -236,28 +241,34 @@ function openPreview(item) {
 }
 
 async function deleteItem(item) {
-  await ElMessageBox.confirm('确定删除该素材？', '删除确认', { type: 'warning' })
+  await ElMessageBox.confirm(t('mediaLibrary.deleteConfirm'), t('filmList.deleteConfirmTitle'), {
+    type: 'warning',
+    confirmButtonText: t('common.delete'),
+    cancelButtonText: t('common.cancel')
+  })
   try {
     await request.delete(`/assets/${item.id}`)
-    ElMessage.success('已删除')
+    ElMessage.success(t('mediaLibrary.deleteSuccess'))
     loadMedia()
   } catch (err) {
-    ElMessage.error(err.message || '删除失败')
+    ElMessage.error(err.message || t('common.failed'))
   }
 }
 
 async function batchDelete() {
   const count = selectedIds.size
-  await ElMessageBox.confirm(`确定删除选中的 ${count} 个素材？`, '批量删除', { type: 'warning' })
-  let failed = 0
+  await ElMessageBox.confirm(
+    locale.value === 'en' ? `Delete selected ${count} items?` : `确定删除选中的 ${count} 个素材？`,
+    t('filmList.deleteConfirmTitle'),
+    { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
+  )
   for (const id of selectedIds) {
     try {
       await request.delete(`/assets/${id}`)
-    } catch (_) { failed++ }
+    } catch (_) {}
   }
   selectedIds.clear()
-  if (failed > 0) ElMessage.warning(`${count - failed} 个删除成功，${failed} 个失败`)
-  else ElMessage.success(`${count} 个素材已删除`)
+  ElMessage.success(t('mediaLibrary.deleteSuccess'))
   loadMedia()
 }
 
@@ -266,213 +277,185 @@ onMounted(loadMedia)
 
 <style scoped>
 .media-library-page {
-  min-height: 100vh;
-  background: #f5f7fa;
-  padding: 20px;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
-
 .page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
 }
-
 .header-left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-
 .page-title {
-  font-size: 22px;
-  font-weight: 600;
-  color: #1a1a2e;
   margin: 0;
+  font-size: 20px;
+  font-weight: 600;
 }
-
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .filter-bar {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+  margin-bottom: 20px;
 }
-
 .search-input {
-  width: 240px;
+  max-width: 280px;
+  margin-left: auto;
 }
-
 .upload-progress {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
-  color: #409eff;
-  font-size: 14px;
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  border-radius: 6px;
+  font-size: 13px;
 }
-
 .media-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
   min-height: 200px;
 }
-
 .media-card {
-  background: #fff;
   border-radius: 8px;
   overflow: hidden;
-  border: 2px solid transparent;
+  border: 1px solid var(--border-color, #e4e7ed);
+  background: var(--bg-card, #fff);
   cursor: pointer;
-  transition: all .2s;
-  box-shadow: 0 1px 4px rgba(0,0,0,.06);
-}
-
-.media-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,.1);
-}
-
-.media-card.selected {
-  border-color: #409eff;
-}
-
-.media-thumb {
-  aspect-ratio: 1;
-  background: #f3f4f6;
-  overflow: hidden;
+  transition: all 0.2s;
   position: relative;
 }
-
-.thumb-img,
-.thumb-video {
+.media-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.media-card.selected {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 0 2px var(--el-color-primary);
+}
+.media-thumb {
+  position: relative;
+  aspect-ratio: 16/9;
+  background: #111;
+  overflow: hidden;
+}
+.thumb-img, .thumb-video {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-
 .media-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,.35);
+  background: rgba(0, 0, 0, 0.4);
   opacity: 0;
-  transition: opacity .2s;
+  transition: opacity 0.2s;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 8px;
 }
-
-.media-card:hover .media-overlay {
-  opacity: 1;
-}
-
+.media-card:hover .media-overlay,
 .media-card.selected .media-overlay {
   opacity: 1;
 }
-
 .check-icon {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+  color: var(--el-color-primary);
   font-size: 20px;
-  color: #409eff;
-  background: #fff;
-  border-radius: 50%;
 }
-
 .overlay-actions {
   display: flex;
-  gap: 6px;
+  gap: 4px;
+  margin-left: auto;
 }
-
 .media-info {
-  padding: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
-
 .media-name {
-  display: block;
-  font-size: 12px;
-  color: #374151;
-  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
 .media-meta {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text-secondary, #909399);
 }
-
 .empty-media {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 300px;
-  color: #9ca3af;
-  gap: 12px;
+  padding: 60px 0;
+  color: var(--text-secondary, #909399);
 }
-
 .empty-icon {
   font-size: 48px;
+  margin-bottom: 12px;
 }
-
 .pagination {
-  margin-top: 20px;
+  margin-top: 24px;
   display: flex;
   justify-content: center;
 }
-
 .batch-bar {
   position: fixed;
-  bottom: 20px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  background: #1a1a2e;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 24px;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border-color, #e4e7ed);
+  border-radius: 999px;
+  padding: 8px 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   gap: 12px;
+  z-index: 100;
   font-size: 14px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.2);
 }
-
 .preview-content {
   display: flex;
-  align-items: center;
   justify-content: center;
-  min-height: 300px;
-  background: #000;
-  border-radius: 8px;
+  align-items: center;
+  max-height: 60vh;
   overflow: hidden;
+  background: #000;
+  border-radius: 6px;
 }
-
-.preview-image {
+.preview-video, .preview-image {
   max-width: 100%;
   max-height: 60vh;
   object-fit: contain;
 }
-
-.preview-video {
-  max-width: 100%;
-  max-height: 60vh;
-}
-
 .preview-meta {
   margin-top: 16px;
-}
-
-.meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 4px;
+  color: var(--text-secondary, #909399);
 }
-
 .meta-row span {
   font-weight: 500;
-  color: #374151;
+  color: var(--text-primary, #303133);
 }
 </style>

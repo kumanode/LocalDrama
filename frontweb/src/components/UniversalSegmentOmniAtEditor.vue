@@ -5,7 +5,7 @@
       class="omni-at-editor"
       contenteditable="true"
       spellcheck="false"
-      data-placeholder="输入 @ 选择素材；编辑区显示 @场景名 / @角色名，保存与提交仍为 @图片N"
+      :data-placeholder="locale === 'en' ? 'Type @ to select asset; shows @Scene / @Character, saved as @ImageN' : '输入 @ 选择素材；编辑区显示 @场景名 / @角色名，保存与提交仍为 @图片N'"
       @input="onInput"
       @blur="onBlur"
       @keydown="onKeydown"
@@ -21,7 +21,7 @@
         role="listbox"
         @mousedown.prevent
       >
-        <div v-if="!slots.length" class="omni-at-menu-empty">当前没有可用的参考图（请为场景 / 角色 / 物品选择带图素材）</div>
+        <div v-if="!slots.length" class="omni-at-menu-empty">{{ locale === 'en' ? 'No reference images available' : '当前没有可用的参考图（请为场景 / 角色 / 物品选择带图素材）' }}</div>
         <button
           v-for="s in slots"
           :key="s.index"
@@ -38,16 +38,16 @@
             <span class="omni-at-menu-tag" :class="'omni-at-menu-tag--' + s.kind">{{ kindLabel(s.kind) }}</span>
             <span class="omni-at-menu-name">{{ s.name }}</span>
             <span class="omni-at-menu-at">{{ menuPrimaryAt(s) }}</span>
-            <span class="omni-at-menu-at-sub">提交 {{ canonicalAt(s.index) }}</span>
+            <span class="omni-at-menu-at-sub">{{ locale === 'en' ? 'Submits' : '提交' }} {{ canonicalAt(s.index) }}</span>
           </span>
         </button>
       </div>
     </teleport>
     <div class="omni-at-footer">
-      <el-tooltip content="复制为 @图片N 格式（与提交视频一致）" placement="top">
+      <el-tooltip :content="locale === 'en' ? 'Copy in @ImageN format (used for video submission)' : '复制为 @图片N 格式（与提交视频一致）'" placement="top">
         <el-button type="default" text size="small" class="omni-at-copy-btn" @click="onCopyCanonical">
           <el-icon><DocumentCopy /></el-icon>
-          复制提示词
+          {{ locale === 'en' ? 'Copy Prompt' : '复制提示词' }}
         </el-button>
       </el-tooltip>
     </div>
@@ -58,6 +58,9 @@
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { DocumentCopy } from '@element-plus/icons-vue'
+import { useI18n } from '@/i18n'
+
+const { locale, t } = useI18n()
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -83,6 +86,12 @@ let skipNextModelWatch = false
 const CHIP_CLASS = 'omni-at-chip'
 
 function kindLabel(kind) {
+  if (locale.value === 'en') {
+    if (kind === 'scene') return 'Scene'
+    if (kind === 'character') return 'Character'
+    if (kind === 'prop') return 'Prop'
+    return 'Ref'
+  }
   if (kind === 'scene') return '场景'
   if (kind === 'character') return '角色'
   if (kind === 'prop') return '物品'
@@ -445,7 +454,7 @@ async function onCopyCanonical() {
   const text = serializeEditor(el)
   try {
     await navigator.clipboard.writeText(text)
-    ElMessage.success('已复制（@图片N 格式，与提交一致）')
+    ElMessage.success(locale.value === 'en' ? 'Copied in @ImageN format' : '已复制（@图片N 格式，与提交一致）')
   } catch (_) {
     try {
       const ta = document.createElement('textarea')

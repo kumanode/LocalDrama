@@ -40,6 +40,7 @@ import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import { assetImageUrl } from '@/utils/mediaUrl'
 import { useCanvasContext } from '@/composables/useCanvasContext'
+import { useI18n } from '@/i18n'
 import CanvasAssetPanel from './CanvasAssetPanel.vue'
 import CanvasNodeStatusOverlay from './CanvasNodeStatusOverlay.vue'
 
@@ -49,11 +50,13 @@ const props = defineProps({
 })
 
 const ctx = useCanvasContext()
+const { locale } = useI18n()
 const showPanel = computed(() => ctx?.focusedNodeId?.value === props.id)
 
 const kindLabel = computed(() => {
-  const map = { character: '角色', scene: '场景', prop: '道具' }
-  return map[props.data.kind] || '素材'
+  const isEn = locale.value === 'en'
+  const map = { character: isEn ? 'Character' : '角色', scene: isEn ? 'Scene' : '场景', prop: isEn ? 'Prop' : '道具' }
+  return map[props.data.kind] || (isEn ? 'Asset' : '素材')
 })
 
 const kindIcon = computed(() => {
@@ -63,7 +66,7 @@ const kindIcon = computed(() => {
 
 const displayName = computed(() => {
   const e = props.data.entity || {}
-  return e.name || e.location || '未命名'
+  return e.name || e.location || (locale.value === 'en' ? 'Untitled' : '未命名')
 })
 
 const thumbUrl = computed(() => assetImageUrl(props.data.entity))
@@ -75,13 +78,14 @@ const isNodeBusy = computed(() => {
 })
 
 const statusChip = computed(() => {
+  const isEn = locale.value === 'en'
   const map = ctx?.nodeStatus?.map
   const busy = map?.[props.id]
-  if (busy) return { key: 'busy', label: busy.message?.slice(0, 8) || '处理中' }
+  if (busy) return { key: 'busy', label: busy.message?.slice(0, 8) || (isEn ? 'Busy' : '处理中') }
   const s = entityStatus.value
-  if (s === 'processing') return { key: 'processing', label: '生成中' }
-  if (s === 'failed') return { key: 'failed', label: '失败' }
-  if (thumbUrl.value) return { key: 'ready', label: '有图' }
+  if (s === 'processing') return { key: 'processing', label: isEn ? 'Generating' : '生成中' }
+  if (s === 'failed') return { key: 'failed', label: isEn ? 'Failed' : '失败' }
+  if (thumbUrl.value) return { key: 'ready', label: isEn ? 'Image Ready' : '有图' }
   return null
 })
 </script>

@@ -10,15 +10,15 @@
         <span class="num">#{{ data.storyboard?.storyboard_number ?? data.index }}</span>
         <span v-if="data.workflowGroup?.title" class="wf-badge">{{ data.workflowGroup.title }}</span>
         <span v-if="data.storyboard?.segment_title" class="seg">{{ data.storyboard.segment_title }}</span>
-      <span v-if="data.storyboard?.creation_mode === 'universal'" class="mode-badge">全能</span>
+      <span v-if="data.storyboard?.creation_mode === 'universal'" class="mode-badge">{{ locale === 'en' ? 'Omni' : '全能' }}</span>
       </div>
-      <div class="title">{{ data.storyboard?.title || '分镜' }}</div>
+      <div class="title">{{ data.storyboard?.title || (locale === 'en' ? 'Shot' : '分镜') }}</div>
       <div class="chips">
         <span v-if="data.storyboard?.shot_type">{{ data.storyboard.shot_type }}</span>
         <span v-if="data.storyboard?.duration">{{ data.storyboard.duration }}s</span>
         <span :class="'st-' + (data.storyboard?.status || 'pending')">{{ statusLabel }}</span>
       </div>
-      <div class="hint">{{ showPanel ? '下方可编辑与生成' : '单击展开操作 · 双击进列表' }}</div>
+      <div class="hint">{{ showPanel ? (locale === 'en' ? 'Edit & generate below' : '下方可编辑与生成') : (locale === 'en' ? 'Click to expand · Double-click for list' : '单击展开操作 · 双击进列表') }}</div>
     </div>
     <CanvasStoryboardPanel
       v-if="showPanel"
@@ -33,6 +33,7 @@
 import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import { useCanvasContext } from '@/composables/useCanvasContext'
+import { useI18n } from '@/i18n'
 import CanvasStoryboardPanel from './CanvasStoryboardPanel.vue'
 import CanvasNodeStatusOverlay from './CanvasNodeStatusOverlay.vue'
 
@@ -43,11 +44,18 @@ const props = defineProps({
 })
 
 const ctx = useCanvasContext()
+const { locale } = useI18n()
 const showPanel = computed(() => ctx?.focusedNodeId?.value === props.id)
 
 const statusLabel = computed(() => {
+  const isEn = locale.value === 'en'
   const s = props.data.storyboard?.status || 'pending'
-  const map = { pending: '待处理', processing: '生成中', completed: '已完成', failed: '失败' }
+  const map = {
+    pending: isEn ? 'Pending' : '待处理',
+    processing: isEn ? 'Generating' : '生成中',
+    completed: isEn ? 'Completed' : '已完成',
+    failed: isEn ? 'Failed' : '失败',
+  }
   return map[s] || s
 })
 

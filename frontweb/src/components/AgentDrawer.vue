@@ -1,40 +1,40 @@
 <template>
-  <el-drawer :model-value="open" title="助手" direction="rtl" size="400px" @close="emit('update:open', false)">
+  <el-drawer :model-value="open" :title="t('agent.drawerTitle')" direction="rtl" size="400px" @close="emit('update:open', false)">
     <div class="agent-drawer">
       <el-select
         v-if="showEpisodePicker"
         :model-value="agent.episodeId"
         class="episode-picker"
-        placeholder="当前集"
+        :placeholder="t('agent.currentEpisode')"
         clearable
         @change="agent.setEpisodeId"
       >
         <el-option
           v-for="episode in agent.episodes"
           :key="episode.id"
-          :label="episode.title || ('第' + (episode.episode_number || '') + '集')"
+          :label="episode.title || t('filmCreate.episodeNumber', { num: episode.episode_number || '' })"
           :value="episode.id"
         />
       </el-select>
 
       <div ref="logRef" class="log">
-        <p v-if="!messages.length && !errorText" class="empty">可以让我看看这个项目，或改剧本、角色、场景和分镜。</p>
+        <p v-if="!messages.length && !errorText" class="empty">{{ t('agent.emptyState') }}</p>
         <article v-for="(message, index) in messages" :key="index" class="bubble" :class="message.role">
           <p v-if="message.text">{{ message.text }}</p>
           <p v-if="message.summary" class="summary">{{ message.summary }}</p>
           <img v-if="thumb(message)" :src="thumb(message)" alt="" />
           <div v-if="message.approval && message.approval.pending" class="approval">
-            <span>删除{{ message.approval.label || '这一项' }}？</span>
-            <el-button size="small" type="danger" @click="decide(message, true)">允许</el-button>
-            <el-button size="small" @click="decide(message, false)">拒绝</el-button>
+            <span>{{ t('agent.confirmDelete', { label: message.approval.label || t('agent.thisItem') }) }}</span>
+            <el-button size="small" type="danger" @click="decide(message, true)">{{ t('agent.allow') }}</el-button>
+            <el-button size="small" @click="decide(message, false)">{{ t('agent.reject') }}</el-button>
           </div>
         </article>
         <p v-if="errorText" class="error">{{ errorText }}</p>
       </div>
 
       <form class="composer" @submit.prevent="send">
-        <el-input v-model="draft" type="textarea" :rows="3" placeholder="说说要改什么" :disabled="busy" />
-        <el-button type="primary" native-type="submit" :loading="busy" :disabled="!draft.trim()">发送</el-button>
+        <el-input v-model="draft" type="textarea" :rows="3" :placeholder="t('agent.inputPlaceholder')" :disabled="busy" />
+        <el-button type="primary" native-type="submit" :loading="busy" :disabled="!draft.trim()">{{ t('agent.send') }}</el-button>
       </form>
     </div>
   </el-drawer>
@@ -43,6 +43,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from '@/i18n'
 import { agentAPI } from '@/api/agent'
 import { taskAPI } from '@/api/task'
 import { useAgentContext } from '@/stores/agentContext'
@@ -53,6 +54,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:open'])
 
+const { t } = useI18n()
 const route = useRoute()
 const agent = useAgentContext()
 const messages = ref([])
