@@ -3,6 +3,10 @@
   "version": "1.2.9",
   "description": "LocalMiniDrama 本地桌面客户端",
   "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kumanode/LocalDrama.git"
+  },
   "author": "LocalMiniDrama",
   "license": "MIT",
   "scripts": {
@@ -42,6 +46,11 @@
   "build": {
     "appId": "com.localminidrama.desktop",
     "productName": "本地短剧助手",
+    "publish": {
+      "provider": "github",
+      "owner": "kumanode",
+      "repo": "LocalDrama"
+    },
     "npmRebuild": false,
     "directories": {
       "output": "release"
