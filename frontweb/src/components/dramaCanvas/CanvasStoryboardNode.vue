@@ -10,7 +10,7 @@
         <span class="num">#{{ data.storyboard?.storyboard_number ?? data.index }}</span>
         <span v-if="data.workflowGroup?.title" class="wf-badge">{{ data.workflowGroup.title }}</span>
         <span v-if="data.storyboard?.segment_title" class="seg">{{ data.storyboard.segment_title }}</span>
-      <span v-if="data.storyboard?.creation_mode === 'universal'" class="mode-badge">{{ locale === 'en' ? 'Omni' : '全能' }}</span>
+      <span v-if="data.storyboard?.creation_mode === 'universal'" class="mode-badge">{{ t('dramaCanvas.omniBadge') }}</span>
       </div>
       <div class="title">{{ data.storyboard?.title || t('dramaCanvas.shot') }}</div>
       <div class="chips">
@@ -18,7 +18,7 @@
         <span v-if="data.storyboard?.duration">{{ data.storyboard.duration }}s</span>
         <span :class="'st-' + (data.storyboard?.status || 'pending')">{{ statusLabel }}</span>
       </div>
-      <div class="hint">{{ showPanel ? (locale === 'en' ? 'Edit & generate below' : '下方可编辑与生成') : (locale === 'en' ? 'Click to expand · Double-click for list' : '单击展开操作 · 双击进列表') }}</div>
+      <div class="hint">{{ showPanel ? t('dramaCanvas.editGenBelow') : t('dramaCanvas.expandClickHint') }}</div>
     </div>
     <CanvasStoryboardPanel
       v-if="showPanel"

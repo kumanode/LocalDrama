@@ -435,8 +435,8 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
     const sceneIdSet = new Set(scenes.map((s) => Number(s.id)))
     const propIdSet = new Set(props.map((p) => Number(p.id)))
     const epLabel = dramaTitle
-      ? `${dramaTitle} · 第${episodeNumber ?? ''}集`
-      : `第${episodeNumber ?? episodeId}集`
+      ? i18nT('generationStore.episodeWithTitle', { title: dramaTitle, num: episodeNumber ?? '' })
+      : i18nT('generationStore.episodeOnly', { num: episodeNumber ?? episodeId })
 
     const pollOpts = { ElMessage, showErrorToast: false, showTimeoutToast: false }
 
@@ -454,20 +454,20 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
         const sb = storyboards.find((s) => Number(s.id) === resourceId)
         const num = sb?.storyboard_number ?? resourceId
         label = resourceType === GEN_RESOURCE.SB_LAST_IMAGE
-          ? `${epLabel} 尾帧 #${num}`
+          ? i18nT('generationStore.sbLastImage', { episode: epLabel, num })
           : resourceType === GEN_RESOURCE.SB_FIRST_IMAGE
-            ? `${epLabel} 首帧 #${num}`
-            : `${epLabel} 分镜图 #${num}`
+            ? i18nT('generationStore.sbFirstImage', { episode: epLabel, num })
+            : i18nT('generationStore.sbImage', { episode: epLabel, num })
       } else if (img.character_id != null && charIdSet.has(Number(img.character_id))) {
         resourceType = GEN_RESOURCE.CHAR_IMAGE
         resourceId = Number(img.character_id)
         const c = characters.find((x) => Number(x.id) === resourceId)
-        label = `${epLabel} 角色图: ${c?.name || resourceId}`
+        label = i18nT('generationStore.charImage', { episode: epLabel, name: c?.name || resourceId })
       } else if (img.scene_id != null && sceneIdSet.has(Number(img.scene_id))) {
         resourceType = GEN_RESOURCE.SCENE_IMAGE
         resourceId = Number(img.scene_id)
         const s = scenes.find((x) => Number(x.id) === resourceId)
-        label = `${epLabel} 场景图: ${s?.location || resourceId}`
+        label = i18nT('generationStore.sceneImage', { episode: epLabel, name: s?.location || resourceId })
       } else {
         return
       }
@@ -501,7 +501,7 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
         episodeNumber,
         resourceType: GEN_RESOURCE.SB_VIDEO,
         resourceId,
-        label: `${epLabel} 分镜视频 #${num}`,
+        label: i18nT('generationStore.sbVideo', { episode: epLabel, num }),
       }
       _recoverAttachTask(vid.task_id, meta, () => callbacks.onStoryboardMedia?.(resourceId), pollOpts)
     }
@@ -536,16 +536,16 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
             episodeNumber,
             resourceType: GEN_RESOURCE.EPISODE_MERGE,
             resourceId: Number(episodeId),
-            label: `${epLabel} 合成视频`,
+            label: i18nT('generationStore.episodeMerge', { episode: epLabel }),
             taskId: t.id,
           }
           _recoverAttachTask(t.id, meta, () => callbacks.onDramaRefresh?.(), pollOpts)
           continue
         }
         const extractTypeMap = {
-          prop_extraction: { resourceType: GEN_RESOURCE.EXTRACT_PROPS, label: `${epLabel} 提取道具` },
-          background_extraction: { resourceType: GEN_RESOURCE.EXTRACT_SCENES, label: `${epLabel} 提取场景` },
-          storyboard_generation: { resourceType: GEN_RESOURCE.GENERATE_STORYBOARD, label: `${epLabel} AI生成分镜` },
+          prop_extraction: { resourceType: GEN_RESOURCE.EXTRACT_PROPS, label: i18nT('generationStore.extractProps', { episode: epLabel }) },
+          background_extraction: { resourceType: GEN_RESOURCE.EXTRACT_SCENES, label: i18nT('generationStore.extractScenes', { episode: epLabel }) },
+          storyboard_generation: { resourceType: GEN_RESOURCE.GENERATE_STORYBOARD, label: i18nT('generationStore.generateStoryboard', { episode: epLabel }) },
         }
         const extractCfg = extractTypeMap[t.type]
         if (extractCfg) {
@@ -577,7 +577,7 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
           episodeNumber,
           resourceType: GEN_RESOURCE.EXTRACT_CHARACTERS,
           resourceId: Number(episodeId),
-          label: `${epLabel} 提取角色`,
+          label: i18nT('generationStore.extractCharacters', { episode: epLabel }),
           taskId: t.id,
         }
         _recoverAttachTask(t.id, meta, () => callbacks.onDramaRefresh?.(), pollOpts)
@@ -625,15 +625,15 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
       await Promise.all([
         ...[...charIdSet].map((id) => {
           const c = characters.find((x) => Number(x.id) === Number(id))
-          return attachResourceTask(id, GEN_RESOURCE.CHAR_IMAGE, `${epLabel} 角色图: ${c?.name || id}`)
+          return attachResourceTask(id, GEN_RESOURCE.CHAR_IMAGE, i18nT('generationStore.charImage', { episode: epLabel, name: c?.name || id }))
         }),
         ...[...propIdSet].map((id) => {
           const p = props.find((x) => Number(x.id) === Number(id))
-          return attachResourceTask(id, GEN_RESOURCE.PROP_IMAGE, `${epLabel} 道具图: ${p?.name || id}`)
+          return attachResourceTask(id, GEN_RESOURCE.PROP_IMAGE, i18nT('generationStore.propImage', { episode: epLabel, name: p?.name || id }))
         }),
         ...[...sceneIdSet].map((id) => {
           const s = scenes.find((x) => Number(x.id) === Number(id))
-          return attachResourceTask(id, GEN_RESOURCE.SCENE_IMAGE, `${epLabel} 场景图: ${s?.location || id}`)
+          return attachResourceTask(id, GEN_RESOURCE.SCENE_IMAGE, i18nT('generationStore.sceneImage', { episode: epLabel, name: s?.location || id }))
         }),
       ])
 

@@ -5,7 +5,7 @@
     @click="toggleLanguage"
   >
     <span class="lang-icon">🌐</span>
-    <span class="lang-text">{{ locale === 'en' ? 'EN' : '中文' }}</span>
+    <span class="lang-text">{{ locale === 'en' ? 'EN' : '中文' }}</span> <!-- i18n-scan-ignore: language switcher autonym -->
   </el-button>
 </template>
 

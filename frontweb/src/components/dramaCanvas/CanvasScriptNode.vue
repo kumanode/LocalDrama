@@ -12,15 +12,15 @@
       <CanvasNodeStatusOverlay :node-id="id" />
       <div class="head">
         <span class="badge">📜 {{ $t('filmCreate.stepScript') }}</span>
-        <span class="ep">{{ locale === 'en' ? 'Ep ' + (data.episode?.episode_number ?? '?') : '第 ' + (data.episode?.episode_number ?? '?') + ' 集' }}</span>
+        <span class="ep">{{ t('dramaCanvas.episodeNum', { num: data.episode?.episode_number ?? '?' }) }}</span>
       </div>
       <div class="preview">{{ previewText }}</div>
       <div class="meta">
-        <span>{{ charCount }} {{ locale === 'en' ? 'Chars' : '角色' }}</span>
+        <span>{{ charCount }} {{ t('dramaDetail.characters') }}</span>
         <span>{{ sceneCount }} {{ t('dramaDetail.scenes') }}</span>
         <span>{{ propCount }} {{ t('dramaDetail.props') }}</span>
       </div>
-      <div class="hint">{{ showPanel ? (locale === 'en' ? 'Edit & extract below' : '下方可编辑与提取') : (locale === 'en' ? 'Click to expand' : '单击展开 · 创作起点') }}</div>
+      <div class="hint">{{ showPanel ? t('dramaCanvas.editExtractBelow') : t('dramaCanvas.clickExpandStart') }}</div>
     </div>
     <CanvasScriptPanel
       v-if="showPanel"

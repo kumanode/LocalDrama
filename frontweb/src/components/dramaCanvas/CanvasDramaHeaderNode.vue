@@ -2,10 +2,10 @@
   <div class="canvas-drama-header">
     <div class="title">{{ data.drama?.title || t('filmList.unnamedProject') }}</div>
     <div class="meta">
-      <span v-if="data.drama?.style">风格 {{ data.drama.style }}</span>
-      <span>{{ (data.drama?.episodes || []).length }} 集</span>
-      <span>{{ assetCount }} 素材</span>
-      <span>{{ storyboardCount }} 分镜</span>
+      <span v-if="data.drama?.style">{{ t('dramaCanvas.styleTag', { style: data.drama.style }) }}</span>
+      <span>{{ t('dramaCanvas.episodesCount', { count: (data.drama?.episodes || []).length }) }}</span>
+      <span>{{ t('dramaCanvas.assetsCount', { count: assetCount }) }}</span>
+      <span>{{ t('dramaCanvas.storyboardsCount', { count: storyboardCount }) }}</span>
     </div>
   </div>
 </template>

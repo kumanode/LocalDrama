@@ -106,7 +106,7 @@ function watchTask(taskId, message) {
       if (data.status === 'failed') {
         message.summary = data.error || data.message || t('filmCreate.msgGenFailed')
       } else if (result.count != null) {
-        message.summary = `已完成，共 ${result.count} 个`
+        message.summary = t('agent.completedCount', { count: result.count })
       } else {
         message.summary = t('dramaCanvas.statusCompleted')
       }
@@ -125,7 +125,7 @@ function onEvent(event) {
     if (last && last.role === 'assistant' && last.streaming) last.text += event.text || ''
     else messages.value.push({ role: 'assistant', text: event.text || '', streaming: true })
   } else if (event.type === 'tool-call') {
-    messages.value.push({ role: 'assistant', text: '', summary: `正在使用 ${event.toolName || t('agent.tool')}` })
+    messages.value.push({ role: 'assistant', text: '', summary: t('agent.usingTool', { tool: event.toolName || t('agent.tool') }) })
   } else if (event.type === 'tool-result') {
     const message = {
       role: 'assistant',

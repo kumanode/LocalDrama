@@ -45,7 +45,7 @@ export async function runGenerateStoryFromPremise({
     let dramaId = store.dramaId
     if (!dramaId) {
       const drama = await dramaAPI.create({
-        title: scriptTitle || (currentLocale.value === 'en' ? 'New Story' : '新故事'),
+        title: scriptTitle || t('filmCreate.newStoryTitle'),
         description: text,
         genre: storyType || undefined,
         style: generationStyle || undefined,
@@ -62,7 +62,7 @@ export async function runGenerateStoryFromPremise({
       }
     }
 
-    const dramaTitle = store.drama?.title || scriptTitle || (currentLocale.value === 'en' ? 'Project' : '项目')
+    const dramaTitle = store.drama?.title || scriptTitle || t('common.project')
     const meta = {
       dramaId,
       episodeId: store.currentEpisode?.id ?? selectedEpisodeId?.value ?? 0,
@@ -70,7 +70,7 @@ export async function runGenerateStoryFromPremise({
       episodeNumber: store.currentEpisode?.episode_number ?? 1,
       resourceType: GEN_RESOURCE.GENERATE_STORY,
       resourceId: Number(dramaId),
-      label: `${dramaTitle} ${currentLocale.value === 'en' ? 'Generate Script' : '生成剧本'}`,
+      label: t('common.generateScriptFor', { name: dramaTitle }),
     }
 
     scriptGenerating.value = true
@@ -94,7 +94,7 @@ export async function runGenerateStoryFromPremise({
 
       const taskId = res?.task_id
       if (!taskId) {
-        ElMessage.error(currentLocale.value === 'en' ? 'Failed to start script generation task' : '未能启动剧本生成任务')
+        ElMessage.error(t('filmCreate.failedToStartScriptGen'))
         return { ok: false }
       }
 
@@ -122,7 +122,7 @@ export async function runGenerateStoryFromPremise({
       if (!skipPostLoad) {
         ElMessage.success(n > 1 ? t('filmCreate.msgStoryGeneratedMulti', { count: n }) : t('filmCreate.msgStoryGenerated'))
       } else {
-        ElMessage.success(n > 1 ? (currentLocale.value === 'en' ? `Script generated, ${n} episodes total` : `剧本已生成，共 ${n} 集`) : t('filmCreate.msgStoryGenerated'))
+        ElMessage.success(n > 1 ? t('filmCreate.msgStoryGeneratedMulti', { count: n }) : t('filmCreate.msgStoryGenerated'))
       }
       if (typeof onComplete === 'function') {
         onComplete({ episodeCount: n, dramaId })

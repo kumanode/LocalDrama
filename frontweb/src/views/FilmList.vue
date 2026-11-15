@@ -100,8 +100,8 @@
               <p class="project-desc">{{ d.description || $t('filmList.noDescription') }}</p>
               <div class="project-badges">
                 <span class="badge badge-status" :class="'badge-status--' + (d.status || 'draft')">{{ formatStatus(d.status) }}</span>
-                <span v-if="d.episodes?.length" class="badge badge-episodes">{{ d.episodes.length }} {{ locale === 'en' ? 'Ep' : '集' }}</span>
-                <span v-if="totalStoryboards(d) > 0" class="badge badge-storyboards">{{ totalStoryboards(d) }} {{ locale === 'en' ? 'Shots' : '分镜' }}</span>
+                <span v-if="d.episodes?.length" class="badge badge-episodes">{{ d.episodes.length }} {{ t('filmList.episodeCountUnit') }}</span>
+                <span v-if="totalStoryboards(d) > 0" class="badge badge-storyboards">{{ totalStoryboards(d) }} {{ t('filmList.storyboardCountUnit') }}</span>
                 <span v-if="d.metadata?.aspect_ratio" class="badge badge-ratio">{{ d.metadata.aspect_ratio }}</span>
                 <span v-if="d.style" class="badge badge-style">{{ formatStyle(d.style) }}</span>
                 <span v-if="d.genre" class="badge badge-genre">{{ formatGenre(d.genre) }}</span>
@@ -130,14 +130,14 @@
         </el-form-item>
         <el-form-item :label="$t('filmList.aspectRatio')">
           <el-select v-model="newForm.aspect_ratio" style="width: 100%">
-            <el-option :label="locale === 'en' ? '16:9 Landscape (Default)' : '16:9 横屏（默认）'" value="16:9" />
-            <el-option :label="locale === 'en' ? '9:16 Portrait (Short Video)' : '9:16 竖屏（短视频）'" value="9:16" />
-            <el-option :label="locale === 'en' ? '3:4 Portrait' : '3:4 竖版'" value="3:4" />
-            <el-option :label="locale === 'en' ? '1:1 Square' : '1:1 方形'" value="1:1" />
-            <el-option :label="locale === 'en' ? '4:3 Traditional' : '4:3 传统横屏'" value="4:3" />
-            <el-option :label="locale === 'en' ? '21:9 Widescreen' : '21:9 宽银幕'" value="21:9" />
+            <el-option :label="`${t('filmCreate.aspectRatio16_9')} ${t('filmList.aspectDefaultSuffix')}`" value="16:9" />
+            <el-option :label="`${t('filmCreate.aspectRatio9_16')} ${t('filmList.aspectShortSuffix')}`" value="9:16" />
+            <el-option :label="t('filmCreate.aspectRatio3_4')" value="3:4" />
+            <el-option :label="t('filmCreate.aspectRatio1_1')" value="1:1" />
+            <el-option :label="t('filmCreate.aspectRatio4_3')" value="4:3" />
+            <el-option :label="t('filmCreate.aspectRatio21_9')" value="21:9" />
           </el-select>
-          <p style="margin: 4px 0 0; font-size: 12px; color: #71717a;">{{ locale === 'en' ? 'Affects shot images and video aspect ratio (use 9:16 for short dramas)' : '影响分镜图和视频的生成比例，短视频选 9:16' }}</p>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #71717a;">{{ t('filmList.aspectRatioHint') }}</p>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -147,7 +147,7 @@
     </el-dialog>
 
     <!-- AI 配置弹窗 -->
-    <el-dialog v-model="showAiConfigDialog" title="AI 配置" width="90%" destroy-on-close>
+    <el-dialog v-model="showAiConfigDialog" :title="t('routes.aiConfig')" width="90%" destroy-on-close>
       <AIConfigContent v-if="showAiConfigDialog" />
     </el-dialog>
 
@@ -317,8 +317,8 @@
     <!-- 微信二维码 -->
     <el-dialog v-if="!vendorLockEnabled" v-model="showWechat" :title="$t('header.wechatTitle')" width="320px" align-center>
       <div style="text-align:center;padding:8px 0 4px">
-        <img src="/wx.jpg" alt="微信二维码" style="width:240px;height:240px;object-fit:contain;border-radius:8px;" />
-        <p style="margin:12px 0 0;font-size:13px;color:var(--text-secondary,#a1a1aa);">{{ locale === 'en' ? 'Scan QR code to add WeChat for communication' : '扫码添加微信，欢迎交流' }}</p>
+        <img src="/wx.jpg" :alt="t('header.wechatQrAlt')" style="width:240px;height:240px;object-fit:contain;border-radius:8px;" />
+        <p style="margin:12px 0 0;font-size:13px;color:var(--text-secondary,#a1a1aa);">{{ t('header.wechatHint') }}</p>
       </div>
     </el-dialog>
 
@@ -391,44 +391,44 @@ async function doUploadLibImg(event, form, api, reloadFn) {
     const res = await uploadAPI.uploadImage(file)
     const data = res?.data ?? res
     const url = data?.url || data?.path || data?.local_path
-    if (!url) { ElMessage.error('上传未返回地址'); return }
+    if (!url) { ElMessage.error(t('filmList.uploadNoUrl')); return }
     form.image_url = url
     form.local_path = data?.local_path ?? null
     await api.update(form.id, { image_url: url, local_path: null })
     reloadFn()
-    ElMessage.success('图片已更新')
-  } catch (e) { ElMessage.error(e.message || '上传失败') }
+    ElMessage.success(t('filmList.imageUpdated'))
+  } catch (e) { ElMessage.error(e.message || t('filmList.uploadFailed')) }
   finally { form.imgUploading = false }
 }
 
 // 共享：AI 生成图片
 async function doGenerateLibImg(form, prompt, api, reloadFn) {
-  if (!prompt?.trim()) { ElMessage.warning('请先填写名称或描述'); return }
+  if (!prompt?.trim()) { ElMessage.warning(t('filmList.fillNameOrDescFirst')); return }
   form.imgGenerating = true
   try {
     const res = await imagesAPI.create({ prompt: prompt.trim(), drama_id: null })
     const imgData = res?.data ?? res
     const taskId = imgData?.task_id
-    if (!taskId) throw new Error('未返回任务ID')
+    if (!taskId) throw new Error(t('filmList.noTaskId'))
     let task = null
     for (let i = 0; i < 300; i++) {
       await new Promise(r => setTimeout(r, 1500))
       const tr = await taskAPI.get(taskId)
       task = tr?.data ?? tr
       if (task.status === 'completed') break
-      if (task.status === 'failed') throw new Error(task.error || '生成失败')
+      if (task.status === 'failed') throw new Error(task.error || t('filmList.generateFailed'))
     }
-    if (!task || task.status !== 'completed') throw new Error('生成超时')
+    if (!task || task.status !== 'completed') throw new Error(t('filmList.generateTimeout'))
     const result = task.result
     const imageUrl = result?.image_url
     const localPath = result?.local_path ?? null
-    if (!imageUrl && !localPath) throw new Error('未获取到图片地址')
+    if (!imageUrl && !localPath) throw new Error(t('filmList.noImageUrl'))
     form.image_url = imageUrl || ''
     form.local_path = localPath
     await api.update(form.id, { image_url: imageUrl || null, local_path: localPath })
     reloadFn()
-    ElMessage.success('AI 图片已生成')
-  } catch (e) { ElMessage.error(e.message || '生成失败') }
+    ElMessage.success(t('filmList.aiImageGenerated'))
+  } catch (e) { ElMessage.error(e.message || t('filmList.generateFailed')) }
   finally { form.imgGenerating = false }
 }
 
@@ -490,14 +490,14 @@ async function submitEditCharLibrary() {
   editCharLibrarySaving.value = true
   try {
     await characterLibraryAPI.update(editCharLibraryForm.value.id, { name: editCharLibraryForm.value.name, category: editCharLibraryForm.value.category || null, description: editCharLibraryForm.value.description || null, tags: editCharLibraryForm.value.tags || null, image_url: editCharLibraryForm.value.image_url || null, local_path: editCharLibraryForm.value.local_path ?? null })
-    ElMessage.success('已保存')
+    ElMessage.success(t('filmList.saved'))
     showEditCharLibrary.value = false
     loadCharLibraryList()
-  } catch (e) { ElMessage.error(e.message || '保存失败') } finally { editCharLibrarySaving.value = false }
+  } catch (e) { ElMessage.error(e.message || t('filmList.saveFailed')) } finally { editCharLibrarySaving.value = false }
 }
 async function onDeleteCharLibrary(item) {
-  try { await ElMessageBox.confirm(`确定删除公共角色「${(item.name || '未命名').slice(0, 20)}」吗？`, '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
-  try { await characterLibraryAPI.delete(item.id); ElMessage.success('已删除'); loadCharLibraryList() } catch (e) { ElMessage.error(e.message || '删除失败') }
+  try { await ElMessageBox.confirm(t('filmCreate.deletePublicCharacterPrompt', { name: (item.name || t('common.unnamed')).slice(0, 20) }), t('filmCreate.confirmDeletionTitle'), { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }) } catch { return }
+  try { await characterLibraryAPI.delete(item.id); ElMessage.success(t('filmList.deleted')); loadCharLibraryList() } catch (e) { ElMessage.error(e.message || t('filmList.deleteFailed')) }
 }
 
 // 公共场景库
@@ -537,15 +537,15 @@ async function submitEditSceneLibrary() {
   editSceneLibrarySaving.value = true
   try {
     await sceneLibraryAPI.update(editSceneLibraryForm.value.id, { location: editSceneLibraryForm.value.location, time: editSceneLibraryForm.value.time || null, category: editSceneLibraryForm.value.category || null, description: editSceneLibraryForm.value.description || null, tags: editSceneLibraryForm.value.tags || null, image_url: editSceneLibraryForm.value.image_url || null, local_path: editSceneLibraryForm.value.local_path ?? null })
-    ElMessage.success('已保存')
+    ElMessage.success(t('filmList.saved'))
     showEditSceneLibrary.value = false
     loadSceneLibraryList()
-  } catch (e) { ElMessage.error(e.message || '保存失败') } finally { editSceneLibrarySaving.value = false }
+  } catch (e) { ElMessage.error(e.message || t('filmList.saveFailed')) } finally { editSceneLibrarySaving.value = false }
 }
 async function onDeleteSceneLibrary(item) {
-  const name = (item.location || item.time || '未命名').slice(0, 20)
-  try { await ElMessageBox.confirm(`确定删除公共场景「${name}」吗？`, '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
-  try { await sceneLibraryAPI.delete(item.id); ElMessage.success('已删除'); loadSceneLibraryList() } catch (e) { ElMessage.error(e.message || '删除失败') }
+  const name = (item.location || item.time || t('common.unnamed')).slice(0, 20)
+  try { await ElMessageBox.confirm(t('filmCreate.deletePublicScenePrompt', { name }), t('filmCreate.confirmDeletionTitle'), { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }) } catch { return }
+  try { await sceneLibraryAPI.delete(item.id); ElMessage.success(t('filmList.deleted')); loadSceneLibraryList() } catch (e) { ElMessage.error(e.message || t('filmList.deleteFailed')) }
 }
 
 // 公共道具库
@@ -585,14 +585,14 @@ async function submitEditPropLibrary() {
   editPropLibrarySaving.value = true
   try {
     await propLibraryAPI.update(editPropLibraryForm.value.id, { name: editPropLibraryForm.value.name, category: editPropLibraryForm.value.category || null, description: editPropLibraryForm.value.description || null, tags: editPropLibraryForm.value.tags || null, image_url: editPropLibraryForm.value.image_url || null, local_path: editPropLibraryForm.value.local_path ?? null })
-    ElMessage.success('已保存')
+    ElMessage.success(t('filmList.saved'))
     showEditPropLibrary.value = false
     loadPropLibraryList()
-  } catch (e) { ElMessage.error(e.message || '保存失败') } finally { editPropLibrarySaving.value = false }
+  } catch (e) { ElMessage.error(e.message || t('filmList.saveFailed')) } finally { editPropLibrarySaving.value = false }
 }
 async function onDeletePropLibrary(item) {
-  try { await ElMessageBox.confirm(`确定删除公共道具「${(item.name || '未命名').slice(0, 20)}」吗？`, '删除确认', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }) } catch { return }
-  try { await propLibraryAPI.delete(item.id); ElMessage.success('已删除'); loadPropLibraryList() } catch (e) { ElMessage.error(e.message || '删除失败') }
+  try { await ElMessageBox.confirm(t('filmCreate.deletePublicPropPrompt', { name: (item.name || t('common.unnamed')).slice(0, 20) }), t('filmCreate.confirmDeletionTitle'), { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }) } catch { return }
+  try { await propLibraryAPI.delete(item.id); ElMessage.success(t('filmList.deleted')); loadPropLibraryList() } catch (e) { ElMessage.error(e.message || t('filmList.deleteFailed')) }
 }
 
 const showNewDialog = ref(false)
@@ -615,10 +615,10 @@ async function onImportExample(ex) {
   importingExample.value = ex.filename
   try {
     const data = await dramaAPI.importExample(ex.filename)
-    ElMessage.success(`示例导入成功：${data?.title || ex.name}`)
+    ElMessage.success(t('filmList.sampleImported', { name: data?.title || ex.name }))
     loadList()
   } catch (e) {
-    const msg = e.response?.data?.message || e.message || '导入失败'
+    const msg = e.response?.data?.message || e.message || t('filmList.importFailedSimple')
     ElMessage.error(msg)
   } finally {
     importingExample.value = null
@@ -653,10 +653,8 @@ function formatDate(val) {
 }
 
 function formatStatus(status) {
-  const mapZh = { draft: '草稿', published: '已发布', archived: '已归档', generating: '生成中' }
-  const mapEn = { draft: 'Draft', published: 'Published', archived: 'Archived', generating: 'Generating' }
-  const map = locale.value === 'en' ? mapEn : mapZh
-  return map[status] || status || (locale.value === 'en' ? 'Draft' : '草稿')
+  const keys = { draft: 'statusDraft', published: 'statusPublished', archived: 'statusArchived', generating: 'statusGenerating' }
+  return keys[status] ? t(`filmList.${keys[status]}`) : status || t('filmList.statusDraft')
 }
 
 function formatStyle(style) {
@@ -666,10 +664,8 @@ function formatStyle(style) {
 }
 
 function formatGenre(genre) {
-  const mapZh = { drama: '剧情', comedy: '喜剧', adventure: '冒险', romance: '爱情', thriller: '悬疑', action: '动作', horror: '恐怖' }
-  const mapEn = { drama: 'Drama', comedy: 'Comedy', adventure: 'Adventure', romance: 'Romance', thriller: 'Suspense', action: 'Action', horror: 'Horror' }
-  const map = locale.value === 'en' ? mapEn : mapZh
-  return map[genre] || genre
+  const keys = { drama: 'genreDrama', comedy: 'genreComedy', adventure: 'genreAdventure', romance: 'genreRomance', thriller: 'genreThriller', action: 'genreAction', horror: 'genreHorror' }
+  return keys[genre] ? t(`filmList.${keys[genre]}`) : genre
 }
 
 function totalStoryboards(d) {
@@ -759,7 +755,7 @@ async function onImportFile(e) {
   if (!file) return
   e.target.value = ''
   if (!file.name.endsWith('.zip')) {
-    ElMessage.error(locale.value === 'en' ? 'Please select a .zip file' : '请选择 .zip 格式的文件')
+    ElMessage.error(t('filmList.selectZipFile'))
     return
   }
   importing.value = true

@@ -8,53 +8,53 @@
   >
     <el-form label-position="top" size="default" @submit.prevent="onSubmit">
       <template v-if="type === 'storyboard'">
-        <el-form-item :label="locale === 'en' ? 'Shot Title' : '分镜标题'">
-          <el-input v-model="form.title" :placeholder="locale === 'en' ? 'Auto-named if blank' : '留空则自动命名'" />
+        <el-form-item :label="t('dramaCanvas.storyboardTitleField')">
+          <el-input v-model="form.title" :placeholder="t('dramaCanvas.autoNamedIfBlank')" />
         </el-form-item>
-        <el-form-item :label="locale === 'en' ? 'Description (optional)' : '描述（可选）'">
-          <el-input v-model="form.description" type="textarea" :rows="2" :placeholder="locale === 'en' ? 'Brief description' : '简要描述'" />
+        <el-form-item :label="t('dramaCanvas.descOptional')">
+          <el-input v-model="form.description" type="textarea" :rows="2" :placeholder="t('dramaCanvas.briefDesc')" />
         </el-form-item>
       </template>
 
       <template v-else-if="type === 'episode'">
         <el-form-item :label="t('dramaCanvas.episodeTitle')">
-          <el-input v-model="form.title" :placeholder="locale === 'en' ? 'Auto-named if blank' : '留空则自动命名'" />
+          <el-input v-model="form.title" :placeholder="t('dramaCanvas.autoNamedIfBlank')" />
         </el-form-item>
       </template>
 
       <template v-else-if="type === 'character'">
-        <el-form-item :label="locale === 'en' ? 'Character Name' : '角色名称'" required>
-          <el-input v-model="form.name" :placeholder="locale === 'en' ? 'Required' : '必填'" />
+        <el-form-item :label="t('dramaCanvas.characterName')" required>
+          <el-input v-model="form.name" :placeholder="t('common.requiredField')" />
         </el-form-item>
-        <el-form-item :label="locale === 'en' ? 'Role Type' : '角色类型'">
+        <el-form-item :label="t('dramaCanvas.roleType')">
           <el-select v-model="form.role" :placeholder="t('library.optional')" clearable style="width: 100%">
             <el-option :label="$t('filmCreate.roleMain')" value="main" />
             <el-option :label="$t('filmCreate.roleSupporting')" value="supporting" />
           </el-select>
         </el-form-item>
-        <el-form-item :label="locale === 'en' ? 'Appearance' : '外貌描述'">
+        <el-form-item :label="t('dramaCanvas.appearance')">
           <el-input v-model="form.appearance" type="textarea" :rows="2" />
         </el-form-item>
-        <el-form-item :label="locale === 'en' ? 'Bio / Description' : '简介'">
+        <el-form-item :label="t('dramaCanvas.bio')">
           <el-input v-model="form.description" type="textarea" :rows="2" />
         </el-form-item>
       </template>
 
       <template v-else-if="type === 'scene'">
-        <el-form-item :label="locale === 'en' ? 'Scene Location' : '场景地点'" required>
-          <el-input v-model="form.location" :placeholder="locale === 'en' ? 'Required, e.g. Living room' : '必填，如：客厅'" />
+        <el-form-item :label="t('dramaCanvas.sceneLocation')" required>
+          <el-input v-model="form.location" :placeholder="t('dramaCanvas.locationPlaceholderExample')" />
         </el-form-item>
-        <el-form-item :label="locale === 'en' ? 'Time / Lighting' : '时间'">
-          <el-input v-model="form.time" :placeholder="locale === 'en' ? 'e.g. Day, Night' : '如：白天、夜晚'" />
+        <el-form-item :label="t('dramaCanvas.timeLighting')">
+          <el-input v-model="form.time" :placeholder="t('dramaCanvas.timePlaceholderExample')" />
         </el-form-item>
-        <el-form-item :label="locale === 'en' ? 'Scene Description' : '场景描述'">
+        <el-form-item :label="t('dramaCanvas.sceneDescPlaceholder')">
           <el-input v-model="form.prompt" type="textarea" :rows="3" />
         </el-form-item>
       </template>
 
       <template v-else-if="type === 'prop'">
         <el-form-item :label="t('filmCreate.propName')" required>
-          <el-input v-model="form.name" :placeholder="locale === 'en' ? 'Required' : '必填'" />
+          <el-input v-model="form.name" :placeholder="t('common.requiredField')" />
         </el-form-item>
         <el-form-item :label="t('common.description')">
           <el-input v-model="form.description" type="textarea" :rows="2" />
@@ -104,15 +104,14 @@ const form = reactive({
 })
 
 const dialogTitle = computed(() => {
-  const isEn = locale.value === 'en'
   const map = {
-    storyboard: isEn ? 'New Shot' : t('dramaCanvas.newShot'),
-    episode: isEn ? 'New Episode' : t('dramaCanvas.newEpisode'),
-    character: isEn ? 'New Character' : t('dramaCanvas.newCharacter'),
-    scene: isEn ? 'New Scene' : t('dramaCanvas.newScene'),
-    prop: isEn ? 'New Prop' : t('dramaCanvas.newProp'),
+    storyboard: t('dramaCanvas.newShot'),
+    episode: t('dramaCanvas.newEpisode'),
+    character: t('dramaCanvas.newCharacter'),
+    scene: t('dramaCanvas.newScene'),
+    prop: t('dramaCanvas.newProp'),
   }
-  return map[props.type] || (isEn ? 'Create' : t('common.create'))
+  return map[props.type] || t('common.create')
 })
 
 function resetForm() {
@@ -132,12 +131,12 @@ watch(() => props.type, () => resetForm())
 function validate() {
   if (props.type === 'character' || props.type === 'prop') {
     if (!form.name.trim()) {
-      ElMessage.warning(locale.value === 'en' ? 'Please enter a name' : '请填写名称')
+      ElMessage.warning(t('dramaCanvas.enterName'))
       return false
     }
   }
   if (props.type === 'scene' && !form.location.trim()) {
-    ElMessage.warning(locale.value === 'en' ? 'Please enter scene location' : '请填写场景地点')
+    ElMessage.warning(t('dramaCanvas.enterSceneLocation'))
     return false
   }
   return true

@@ -1,30 +1,36 @@
-/** 分镜表导出列：每镜头一行，每个元素类型一列 */
-const COLUMNS = [
-  '镜头序号',
-  '镜号',
-  '镜头标题',
-  '段幕',
-  '时长(秒)',
-  '景别',
-  '运镜',
-  '场景',
-  '角色',
-  '道具',
-  '地点',
-  '时间',
-  '镜头描述',
-  '对白',
-  '解说旁白',
-  '动作',
-  '结果',
-  '氛围',
-  '布局描述',
-  '首帧提示词',
-  '尾帧提示词',
-  '图片提示词',
-  '视频提示词',
-  '全能片段',
-]
+import { t } from '@/i18n'
+
+/**
+ * Returns column header labels localized for the active language.
+ */
+export function getStoryboardSheetColumns() {
+  return [
+    t('exportStoryboard.colIndex'),
+    t('exportStoryboard.colShotNumber'),
+    t('exportStoryboard.colTitle'),
+    t('exportStoryboard.colSegment'),
+    t('exportStoryboard.colDuration'),
+    t('exportStoryboard.colShotType'),
+    t('exportStoryboard.colMovement'),
+    t('exportStoryboard.colScene'),
+    t('exportStoryboard.colCharacter'),
+    t('exportStoryboard.colProp'),
+    t('exportStoryboard.colLocation'),
+    t('exportStoryboard.colTime'),
+    t('exportStoryboard.colDescription'),
+    t('exportStoryboard.colDialogue'),
+    t('exportStoryboard.colNarration'),
+    t('exportStoryboard.colAction'),
+    t('exportStoryboard.colResult'),
+    t('exportStoryboard.colAtmosphere'),
+    t('exportStoryboard.colLayout'),
+    t('exportStoryboard.colFirstFramePrompt'),
+    t('exportStoryboard.colLastFramePrompt'),
+    t('exportStoryboard.colImagePrompt'),
+    t('exportStoryboard.colVideoPrompt'),
+    t('exportStoryboard.colUniversalSegment'),
+  ]
+}
 
 function cellText(v) {
   if (v == null) return ''
@@ -40,38 +46,40 @@ function escapeHtml(s) {
 }
 
 function escapeCsvCell(s) {
-  const t = cellText(s)
-  if (/[",\n\r]/.test(t)) return `"${t.replace(/"/g, '""')}"`
-  return t
+  const text = cellText(s)
+  if (text.includes('"') || text.includes(',') || text.includes('\n') || text.includes('\r')) {
+    return `"${text.replaceAll('"', '""')}"`
+  }
+  return text
 }
 
 function charBlock(char) {
-  const name = cellText(char.name) || '未命名'
+  const name = cellText(char.name) || t('exportStoryboard.unnamedCharacter')
   const parts = [
-    char.appearance && `外貌：${char.appearance}`,
-    char.personality && `性格：${char.personality}`,
-    char.description && `描述：${char.description}`,
-    char.polished_prompt && `提示词：${char.polished_prompt}`,
+    char.appearance && t('exportStoryboard.charAppearance', { val: char.appearance }),
+    char.personality && t('exportStoryboard.charPersonality', { val: char.personality }),
+    char.description && t('exportStoryboard.charDescription', { val: char.description }),
+    char.polished_prompt && t('exportStoryboard.charPrompt', { val: char.polished_prompt }),
   ].filter(Boolean)
   return parts.length ? `${name}\n${parts.join('\n')}` : name
 }
 
 function sceneBlock(scene) {
-  const head = cellText(scene.location) || '未命名场景'
+  const head = cellText(scene.location) || t('exportStoryboard.unnamedScene')
   const parts = [
-    scene.time && `时间：${scene.time}`,
-    scene.prompt && `提示词：${scene.prompt}`,
-    scene.polished_prompt && `润色：${scene.polished_prompt}`,
+    scene.time && t('exportStoryboard.sceneTime', { val: scene.time }),
+    scene.prompt && t('exportStoryboard.scenePrompt', { val: scene.prompt }),
+    scene.polished_prompt && t('exportStoryboard.scenePolishedPrompt', { val: scene.polished_prompt }),
   ].filter(Boolean)
   return parts.length ? `${head}\n${parts.join('\n')}` : head
 }
 
 function propBlock(prop) {
-  const name = cellText(prop.name) || '未命名'
+  const name = cellText(prop.name) || t('exportStoryboard.unnamedProp')
   const parts = [
-    prop.type && `类型：${prop.type}`,
-    prop.description && `描述：${prop.description}`,
-    prop.prompt && `提示词：${prop.prompt}`,
+    prop.type && t('exportStoryboard.propType', { val: prop.type }),
+    prop.description && t('exportStoryboard.propDescription', { val: prop.description }),
+    prop.prompt && t('exportStoryboard.propPrompt', { val: prop.prompt }),
   ].filter(Boolean)
   return parts.length ? `${name}\n${parts.join('\n')}` : name
 }
@@ -87,17 +95,8 @@ function field(getField, sb, key) {
 }
 
 /**
- * @param {object} ctx
- * @param {Array} ctx.storyboards
- * @param {Function} ctx.getScene - (sbId) => scene | null
- * @param {Function} ctx.getCharacters - (sbId) => character[]
- * @param {Function} ctx.getProps - (sbId) => prop[]
- * @param {Function} ctx.getMovementLabel - (code) => string
- * @param {Function} ctx.getField - (sb, key) => string
- * @param {Function} [ctx.getFirstFramePrompt] - (sbId) => string
- * @param {Function} [ctx.getLastFramePrompt] - (sbId) => string
+ * Builds storyboard spreadsheet rows: strictly 1 row per storyboard.
  */
-/** 构建分镜表数据：严格一行对应一个分镜 */
 export function buildStoryboardSheetRows(ctx) {
   const {
     storyboards = [],
@@ -117,8 +116,8 @@ export function buildStoryboardSheetRows(ctx) {
     const segmentTitle = cellText(sb.segment_title)
     const segmentIndex = sb.segment_index != null ? Number(sb.segment_index) + 1 : ''
     const segment = segmentTitle
-      ? (segmentIndex ? `第${segmentIndex}幕·${segmentTitle}` : segmentTitle)
-      : (segmentIndex ? `第${segmentIndex}幕` : '')
+      ? (segmentIndex ? t('exportStoryboard.actWithTitle', { index: segmentIndex, title: segmentTitle }) : segmentTitle)
+      : (segmentIndex ? t('exportStoryboard.actWithoutTitle', { index: segmentIndex }) : '')
 
     const scene = getScene?.(sbId)
     const chars = getCharacters?.(sbId) || []
@@ -127,7 +126,7 @@ export function buildStoryboardSheetRows(ctx) {
     rows.push([
       i + 1,
       sb.storyboard_number ?? i + 1,
-      cellText(field(getField, sb, 'title')) || `镜头${i + 1}`,
+      cellText(field(getField, sb, 'title')) || t('exportStoryboard.defaultShotTitle', { num: i + 1 }),
       segment,
       field(getField, sb, 'duration') || sb.duration || '',
       field(getField, sb, 'shot_type'),
@@ -155,23 +154,26 @@ export function buildStoryboardSheetRows(ctx) {
 }
 
 function formatExcelCellContent(s) {
-  // Excel 识别 &#10; 为单元格内换行，避免 <br/> 在部分软件里被拆成多行
   return escapeHtml(s).replace(/\n/g, '&#10;')
 }
 
-/** 导出为 Excel 可打开的 HTML 表格（.xls，无需额外依赖） */
+/**
+ * Downloads storyboard data as Excel-compatible HTML (.xls).
+ */
 export function downloadStoryboardExcel(rows, filename) {
   const tdStyle = 'style="white-space:normal;vertical-align:top;mso-data-placement:same-cell;"'
-  const header = COLUMNS.map((c) => `<th>${escapeHtml(c)}</th>`).join('')
+  const columns = getStoryboardSheetColumns()
+  const header = columns.map((c) => `<th>${escapeHtml(c)}</th>`).join('')
   const body = rows.map((row) => {
     const cells = row.map((c) => `<td ${tdStyle}>${formatExcelCellContent(c)}</td>`).join('')
     return `<tr>${cells}</tr>`
   }).join('')
 
+  const sheetName = escapeHtml(t('exportStoryboard.sheetName'))
   const html = `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
 <head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
-<x:Name>分镜表</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+<x:Name>${sheetName}</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
 <body><table border="1"><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table></body></html>`
 
   const blob = new Blob(['\uFEFF' + html], { type: 'application/vnd.ms-excel;charset=utf-8' })
@@ -182,10 +184,13 @@ export function downloadStoryboardExcel(rows, filename) {
   URL.revokeObjectURL(a.href)
 }
 
-/** CSV 备选（部分环境 .xls 受限时使用） */
+/**
+ * Downloads storyboard data as CSV fallback.
+ */
 export function downloadStoryboardCsv(rows, filename) {
+  const columns = getStoryboardSheetColumns()
   const lines = [
-    COLUMNS.map(escapeCsvCell).join(','),
+    columns.map(escapeCsvCell).join(','),
     ...rows.map((row) => row.map(escapeCsvCell).join(',')),
   ]
   const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' })

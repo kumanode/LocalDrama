@@ -53,7 +53,7 @@
         <div class="form-section form-row">
           <div class="form-item">
             <div class="form-label">{{ $t('freeCreate.style') }}</div>
-            <el-input v-model="style" :placeholder="locale === 'en' ? 'e.g. cinematic, anime...' : '例如: cinematic, anime...'" />
+            <el-input v-model="style" :placeholder="$t('freeCreate.stylePlaceholder')" />
           </div>
           <div v-if="mode === 'image'" class="form-item">
             <div class="form-label">{{ $t('freeCreate.aspectRatio') }}</div>
@@ -83,7 +83,7 @@
           class="generate-btn"
           @click="generate"
         >
-          {{ generating ? $t('common.saving') : (mode === 'image' ? (locale === 'en' ? 'Generate Image' : '生成图片') : (locale === 'en' ? 'Generate Video' : '生成视频')) }}
+          {{ generating ? $t('common.saving') : (mode === 'image' ? $t('freeCreate.generateImage') : $t('freeCreate.generateVideo')) }}
         </el-button>
       </div>
 
@@ -96,7 +96,7 @@
 
         <div v-if="results.length === 0 && !generating" class="empty-result">
           <el-icon class="empty-icon"><MagicStick /></el-icon>
-          <p>{{ locale === 'en' ? 'Generated media will appear here' : '生成的内容将显示在这里' }}</p>
+          <p>{{ $t('freeCreate.emptyTip') }}</p>
         </div>
 
         <div v-if="generating" class="generating-tip">
@@ -122,17 +122,17 @@
               />
               <div v-else-if="item.status === 'pending' || item.status === 'processing'" class="media-loading">
                 <el-icon class="is-loading"><Loading /></el-icon>
-                <span>{{ item.status === 'processing' ? '生成中...' : '排队中...' }}</span>
+                <span>{{ item.status === 'processing' ? $t('freeCreate.generatingStatus') : $t('freeCreate.queuingStatus') }}</span>
               </div>
               <div v-else-if="item.status === 'failed'" class="media-error">
                 <el-icon><CircleClose /></el-icon>
-                <span>{{ item.error || '生成失败' }}</span>
+                <span>{{ item.error || $t('freeCreate.generateFailed') }}</span>
               </div>
             </div>
             <div class="result-meta">
               <span class="result-prompt">{{ item.prompt }}</span>
               <div class="result-actions">
-                <el-button v-if="item.url" size="small" plain @click="downloadItem(item)">下载</el-button>
+                <el-button v-if="item.url" size="small" plain @click="downloadItem(item)">{{ $t('common.download') }}</el-button>
               </div>
             </div>
           </div>
@@ -268,12 +268,12 @@ async function generate() {
         await pollVideoTask(res.task_id, newItem)
       } else {
         newItem.status = 'failed'
-        newItem.error = '提交失败'
+        newItem.error = t('freeCreate.submitFailed')
       }
     }
   } catch (e) {
     newItem.status = 'failed'
-    newItem.error = e.message || '生成失败'
+    newItem.error = e.message || t('freeCreate.generateFailed')
     ElMessage.error(newItem.error)
   } finally {
     generating.value = false
@@ -295,13 +295,13 @@ async function pollImageTask(taskId, item, maxMs = 180000) {
       }
       if (res.status === 'failed') {
         item.status = 'failed'
-        item.error = res.error || '生成失败'
+        item.error = res.error || t('freeCreate.generateFailed')
         return
       }
     } catch (_) {}
   }
   item.status = 'failed'
-  item.error = '超时'
+  item.error = t('freeCreate.timeout')
 }
 
 async function pollVideoTask(taskId, item) {
@@ -324,13 +324,13 @@ async function pollVideoTask(taskId, item) {
       }
       if (res?.status === 'failed') {
         item.status = 'failed'
-        item.error = res.error || '生成失败'
+        item.error = res.error || t('freeCreate.generateFailed')
         return
       }
     } catch (_) {}
   }
   item.status = 'failed'
-  item.error = '超时'
+  item.error = t('freeCreate.timeout')
 }
 </script>
 

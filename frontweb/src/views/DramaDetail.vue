@@ -591,44 +591,44 @@ async function doUploadLibImg(event, form, api, reloadFn) {
     const res = await uploadAPI.uploadImage(file, { dramaId })
     const data = res?.data ?? res
     const url = data?.url || data?.path || data?.local_path
-    if (!url) { ElMessage.error('上传未返回地址'); return }
+    if (!url) { ElMessage.error(t('filmList.uploadNoUrl')); return }
     form.image_url = url
     form.local_path = data?.local_path ?? null
     await api.update(form.id, { image_url: url, local_path: null })
     reloadFn()
-    ElMessage.success('图片已更新')
-  } catch (e) { ElMessage.error(e.message || '上传失败') }
+    ElMessage.success(t('filmList.imageUpdated'))
+  } catch (e) { ElMessage.error(e.message || t('filmList.uploadFailed')) }
   finally { form.imgUploading = false }
 }
 
 // 共享：AI 生成图片到库条目
 async function doGenerateLibImg(form, prompt, api, reloadFn) {
-  if (!prompt?.trim()) { ElMessage.warning('请先填写名称或描述'); return }
+  if (!prompt?.trim()) { ElMessage.warning(t('filmList.fillNameOrDescFirst')); return }
   form.imgGenerating = true
   try {
     const res = await imagesAPI.create({ prompt: prompt.trim(), drama_id: dramaId || null })
     const imgData = res?.data ?? res
     const taskId = imgData?.task_id
-    if (!taskId) throw new Error('未返回任务ID')
+    if (!taskId) throw new Error(t('filmList.noTaskId'))
     let task = null
     for (let i = 0; i < 300; i++) {
       await new Promise(r => setTimeout(r, 1500))
       const tr = await taskAPI.get(taskId)
       task = tr?.data ?? tr
       if (task.status === 'completed') break
-      if (task.status === 'failed') throw new Error(task.error || '生成失败')
+      if (task.status === 'failed') throw new Error(task.error || t('filmList.generateFailed'))
     }
-    if (!task || task.status !== 'completed') throw new Error('生成超时')
+    if (!task || task.status !== 'completed') throw new Error(t('filmList.generateTimeout'))
     const result = task.result
     const imageUrl = result?.image_url
     const localPath = result?.local_path ?? null
-    if (!imageUrl && !localPath) throw new Error('未获取到图片地址')
+    if (!imageUrl && !localPath) throw new Error(t('filmList.noImageUrl'))
     form.image_url = imageUrl || ''
     form.local_path = localPath
     await api.update(form.id, { image_url: imageUrl || null, local_path: localPath })
     reloadFn()
-    ElMessage.success('AI 图片已生成')
-  } catch (e) { ElMessage.error(e.message || '生成失败') }
+    ElMessage.success(t('filmList.aiImageGenerated'))
+  } catch (e) { ElMessage.error(e.message || t('filmList.generateFailed')) }
   finally { form.imgGenerating = false }
 }
 
@@ -655,10 +655,10 @@ async function saveDramaChar() {
       personality: editDramaCharForm.value.personality || null,
       appearance: editDramaCharForm.value.appearance || null,
     })
-    ElMessage.success('已保存')
+    ElMessage.success(t('filmList.saved'))
     editDramaCharVisible.value = false
     loadDrama()
-  } catch (e) { ElMessage.error(e.message || '保存失败') }
+  } catch (e) { ElMessage.error(e.message || t('filmList.saveFailed')) }
   finally { editDramaCharSaving.value = false }
 }
 async function uploadDramaCharImg(event) {
@@ -671,13 +671,13 @@ async function uploadDramaCharImg(event) {
     const res = await uploadAPI.uploadImage(file, { dramaId })
     const data = res?.data ?? res
     const url = data?.url || data?.path || data?.local_path
-    if (!url) { ElMessage.error('上传未返回地址'); return }
+    if (!url) { ElMessage.error(t('filmList.uploadNoUrl')); return }
     form.image_url = url
     form.local_path = data?.local_path ?? null
     await characterAPI.putImage(form.id, { image_url: url, local_path: null })
     loadDrama()
-    ElMessage.success('图片已更新')
-  } catch (e) { ElMessage.error(e.message || '上传失败') }
+    ElMessage.success(t('filmList.imageUpdated'))
+  } catch (e) { ElMessage.error(e.message || t('filmList.uploadFailed')) }
   finally { form.imgUploading = false }
 }
 async function generateDramaCharImg() {
@@ -688,21 +688,21 @@ async function generateDramaCharImg() {
     const res = await characterAPI.generateImage(form.id, null, null)
     const data = res?.data ?? res
     const taskId = data?.task_id
-    if (!taskId) throw new Error('未返回任务ID')
+    if (!taskId) throw new Error(t('filmList.noTaskId'))
     let task = null
     for (let i = 0; i < 300; i++) {
       await new Promise(r => setTimeout(r, 1500))
       const tr = await taskAPI.get(taskId)
       task = tr?.data ?? tr
       if (task.status === 'completed') break
-      if (task.status === 'failed') throw new Error(task.error || '生成失败')
+      if (task.status === 'failed') throw new Error(task.error || t('filmList.generateFailed'))
     }
-    if (!task || task.status !== 'completed') throw new Error('生成超时')
+    if (!task || task.status !== 'completed') throw new Error(t('filmList.generateTimeout'))
     form.image_url = task.result?.image_url || ''
     form.local_path = task.result?.local_path ?? null
     loadDrama()
-    ElMessage.success('AI 图片已生成')
-  } catch (e) { ElMessage.error(e.message || '生成失败') }
+    ElMessage.success(t('filmList.aiImageGenerated'))
+  } catch (e) { ElMessage.error(e.message || t('filmList.generateFailed')) }
   finally { form.imgGenerating = false }
 }
 
@@ -725,10 +725,10 @@ async function saveDramaScene() {
       description: editDramaSceneForm.value.description || null,
       prompt: editDramaSceneForm.value.prompt || null,
     })
-    ElMessage.success('已保存')
+    ElMessage.success(t('filmList.saved'))
     editDramaSceneVisible.value = false
     loadDrama()
-  } catch (e) { ElMessage.error(e.message || '保存失败') }
+  } catch (e) { ElMessage.error(e.message || t('filmList.saveFailed')) }
   finally { editDramaSceneSaving.value = false }
 }
 async function uploadDramaSceneImg(event) {
@@ -741,40 +741,40 @@ async function uploadDramaSceneImg(event) {
     const res = await uploadAPI.uploadImage(file, { dramaId })
     const data = res?.data ?? res
     const url = data?.url || data?.path || data?.local_path
-    if (!url) { ElMessage.error('上传未返回地址'); return }
+    if (!url) { ElMessage.error(t('filmList.uploadNoUrl')); return }
     form.image_url = url
     form.local_path = data?.local_path ?? null
     await sceneAPI.update(form.id, { image_url: url, local_path: null })
     loadDrama()
-    ElMessage.success('图片已更新')
-  } catch (e) { ElMessage.error(e.message || '上传失败') }
+    ElMessage.success(t('filmList.imageUpdated'))
+  } catch (e) { ElMessage.error(e.message || t('filmList.uploadFailed')) }
   finally { form.imgUploading = false }
 }
 async function generateDramaSceneImg() {
   const form = editDramaSceneForm.value
   if (!form?.id) return
   const prompt = [form.location, form.time, form.description].filter(Boolean).join(', ')
-  if (!prompt) { ElMessage.warning('请先填写地点或描述'); return }
+  if (!prompt) { ElMessage.warning(t('filmList.fillLocationOrDescFirst')); return }
   form.imgGenerating = true
   try {
     const res = await sceneAPI.generateImage({ scene_id: form.id, drama_id: dramaId, prompt })
     const data = res?.data ?? res
     const taskId = data?.task_id
-    if (!taskId) throw new Error('未返回任务ID')
+    if (!taskId) throw new Error(t('filmList.noTaskId'))
     let task = null
     for (let i = 0; i < 300; i++) {
       await new Promise(r => setTimeout(r, 1500))
       const tr = await taskAPI.get(taskId)
       task = tr?.data ?? tr
       if (task.status === 'completed') break
-      if (task.status === 'failed') throw new Error(task.error || '生成失败')
+      if (task.status === 'failed') throw new Error(task.error || t('filmList.generateFailed'))
     }
-    if (!task || task.status !== 'completed') throw new Error('生成超时')
+    if (!task || task.status !== 'completed') throw new Error(t('filmList.generateTimeout'))
     form.image_url = task.result?.image_url || ''
     form.local_path = task.result?.local_path ?? null
     loadDrama()
-    ElMessage.success('AI 图片已生成')
-  } catch (e) { ElMessage.error(e.message || '生成失败') }
+    ElMessage.success(t('filmList.aiImageGenerated'))
+  } catch (e) { ElMessage.error(e.message || t('filmList.generateFailed')) }
   finally { form.imgGenerating = false }
 }
 
@@ -797,10 +797,10 @@ async function saveDramaProp() {
       description: editDramaPropForm.value.description || null,
       prompt: editDramaPropForm.value.prompt || null,
     })
-    ElMessage.success('已保存')
+    ElMessage.success(t('filmList.saved'))
     editDramaPropVisible.value = false
     loadDrama()
-  } catch (e) { ElMessage.error(e.message || '保存失败') }
+  } catch (e) { ElMessage.error(e.message || t('filmList.saveFailed')) }
   finally { editDramaPropSaving.value = false }
 }
 async function uploadDramaPropImg(event) {
@@ -813,13 +813,13 @@ async function uploadDramaPropImg(event) {
     const res = await uploadAPI.uploadImage(file, { dramaId })
     const data = res?.data ?? res
     const url = data?.url || data?.path || data?.local_path
-    if (!url) { ElMessage.error('上传未返回地址'); return }
+    if (!url) { ElMessage.error(t('filmList.uploadNoUrl')); return }
     form.image_url = url
     form.local_path = data?.local_path ?? null
     await propAPI.update(form.id, { image_url: url, local_path: null })
     loadDrama()
-    ElMessage.success('图片已更新')
-  } catch (e) { ElMessage.error(e.message || '上传失败') }
+    ElMessage.success(t('filmList.imageUpdated'))
+  } catch (e) { ElMessage.error(e.message || t('filmList.uploadFailed')) }
   finally { form.imgUploading = false }
 }
 async function generateDramaPropImg() {
@@ -830,21 +830,21 @@ async function generateDramaPropImg() {
     const res = await propAPI.generateImage(form.id, null, null)
     const data = res?.data ?? res
     const taskId = data?.task_id
-    if (!taskId) throw new Error('未返回任务ID')
+    if (!taskId) throw new Error(t('filmList.noTaskId'))
     let task = null
     for (let i = 0; i < 300; i++) {
       await new Promise(r => setTimeout(r, 1500))
       const tr = await taskAPI.get(taskId)
       task = tr?.data ?? tr
       if (task.status === 'completed') break
-      if (task.status === 'failed') throw new Error(task.error || '生成失败')
+      if (task.status === 'failed') throw new Error(task.error || t('filmList.generateFailed'))
     }
-    if (!task || task.status !== 'completed') throw new Error('生成超时')
+    if (!task || task.status !== 'completed') throw new Error(t('filmList.generateTimeout'))
     form.image_url = task.result?.image_url || ''
     form.local_path = task.result?.local_path ?? null
     loadDrama()
-    ElMessage.success('AI 图片已生成')
-  } catch (e) { ElMessage.error(e.message || '生成失败') }
+    ElMessage.success(t('filmList.aiImageGenerated'))
+  } catch (e) { ElMessage.error(e.message || t('filmList.generateFailed')) }
   finally { form.imgGenerating = false }
 }
 
@@ -890,7 +890,7 @@ async function loadDrama() {
     }
     infoForm.aspect_ratio = d.metadata?.aspect_ratio || '16:9'
   } catch (e) {
-    ElMessage.error(e.message || '加载失败')
+    ElMessage.error(e.message || t('filmList.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -899,7 +899,7 @@ async function loadDrama() {
 let infoSaveTimer = null
 function saveInfo() {
   if (infoForm.style === CUSTOM_STYLE_VALUE && !(infoForm.customStylePrompt || '').trim()) {
-    ElMessage.warning('请填写画风描述')
+    ElMessage.warning(t('filmList.fillStyleDescFirst'))
     return
   }
   if (infoSaveTimer) clearTimeout(infoSaveTimer)
@@ -1184,9 +1184,9 @@ async function doImport(item) {
       })
       loadPropList()
     }
-    ElMessage.success('已导入到本剧资源库')
+    ElMessage.success(t('filmList.importedToDramaLibrary'))
   } catch (e) {
-    ElMessage.error(e.message || '导入失败')
+    ElMessage.error(e.message || t('filmList.importFailedSimple'))
   } finally {
     importingId.value = null
   }

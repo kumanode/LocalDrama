@@ -1,5 +1,5 @@
 /**
- * 从剧本文本中按行首「第…集 / 章 / 节」拆分为多集（与小说导入规则一致，且支持同集标题后紧跟正文）。
+ * Splits script text into episodes by headline pattern (e.g. Chapter / Episode headers).
  * @param {string} text
  * @returns {{ split: boolean, episodes: Array<{ title: string, script_content: string }> }}
  */
@@ -11,17 +11,16 @@ export function parseScriptIntoEpisodes(text) {
   }
 
   const markerRe =
-    /^(第\s*(?:[零一二三四五六七八九十百千]|\d|[\uFF10-\uFF19])+\s*(?:集|章|节))\s*(.*)$/
+    /^(第\s*(?:[零一二三四五六七八九十百千]|\d|[\uFF10-\uFF19])+\s*(?:集|章|节)|(?:Chapter|Episode)\s*\d+)\s*(.*)$/i // i18n-scan-ignore: chapter regex
 
-  /** 行首各类括号包住「第…集/章/节」时，先展平成「第一集 …」再匹配 markerRe */
+  /** Unwrap brackets around episode headers before matching markerRe */
   const TITLE_IN_EP =
-    '第\\s*(?:[零一二三四五六七八九十百千]|\\d|[\\uFF10-\\uFF19])+\\s*(?:集|章|节)'
+    '(?:第\\s*(?:[零一二三四五六七八九十百千]|\\d|[\\uFF10-\\uFF19])+\\s*(?:集|章|节)|(?:Chapter|Episode)\\s*\\d+)' // i18n-scan-ignore: chapter regex
   const EP_LINE_UNWRAPPERS = [
     new RegExp(`^【\\s*(${TITLE_IN_EP})(?:\\s*】\\s*|\\s{1,})(.*)$`),
     new RegExp(`^《\\s*(${TITLE_IN_EP})(?:\\s*》\\s*|\\s{1,})(.*)$`),
     new RegExp(`^<\\s*(${TITLE_IN_EP})(?:\\s*>\\s*|\\s{1,})(.*)$`),
     new RegExp(`^＜\\s*(${TITLE_IN_EP})(?:\\s*＞\\s*|\\s{1,})(.*)$`),
-    // ASCII [ … ] / [ … 】 / [ … 正文
     new RegExp(`^\\[\\s*(${TITLE_IN_EP})(?:\\s*\\]\\s*|\\s*】\\s*|\\s{1,})(.*)$`),
     new RegExp(`^［\\s*(${TITLE_IN_EP})(?:\\s*］\\s*|\\s{1,})(.*)$`),
   ]
@@ -78,7 +77,7 @@ export function parseScriptIntoEpisodes(text) {
 }
 
 /**
- * 将分集列表拼成纯文本（每集「标题」与正文分行），便于再次保存时按行首标题拆分。
+ * Combines episode list back into plain script text.
  * @param {Array<{ title: string, script_content?: string }>} episodes
  */
 export function episodesListToPlainScript(episodes) {

@@ -54,9 +54,8 @@ const { locale, t } = useI18n()
 const showPanel = computed(() => ctx?.focusedNodeId?.value === props.id)
 
 const kindLabel = computed(() => {
-  const isEn = locale.value === 'en'
-  const map = { character: isEn ? 'Character' : t('dramaDetail.characters'), scene: isEn ? 'Scene' : t('dramaDetail.scenes'), prop: isEn ? 'Prop' : t('dramaDetail.props') }
-  return map[props.data.kind] || (isEn ? 'Asset' : t('dramaCanvas.asset'))
+  const map = { character: t('dramaDetail.characters'), scene: t('dramaDetail.scenes'), prop: t('dramaDetail.props') }
+  return map[props.data.kind] || t('dramaCanvas.asset')
 })
 
 const kindIcon = computed(() => {
@@ -66,7 +65,7 @@ const kindIcon = computed(() => {
 
 const displayName = computed(() => {
   const e = props.data.entity || {}
-  return e.name || e.location || (locale.value === 'en' ? 'Untitled' : '未命名')
+  return e.name || e.location || t('library.unnamed')
 })
 
 const thumbUrl = computed(() => assetImageUrl(props.data.entity))
@@ -78,14 +77,13 @@ const isNodeBusy = computed(() => {
 })
 
 const statusChip = computed(() => {
-  const isEn = locale.value === 'en'
   const map = ctx?.nodeStatus?.map
   const busy = map?.[props.id]
-  if (busy) return { key: 'busy', label: busy.message?.slice(0, 8) || (isEn ? 'Busy' : t('dramaCanvas.processing')) }
+  if (busy) return { key: 'busy', label: busy.message?.slice(0, 8) || t('dramaCanvas.processing') }
   const s = entityStatus.value
-  if (s === 'processing') return { key: 'processing', label: isEn ? 'Generating' : '生成中' }
-  if (s === 'failed') return { key: 'failed', label: isEn ? 'Failed' : '失败' }
-  if (thumbUrl.value) return { key: 'ready', label: isEn ? 'Image Ready' : t('dramaCanvas.hasImage') }
+  if (s === 'processing') return { key: 'processing', label: t('freeCreate.generatingStatus') }
+  if (s === 'failed') return { key: 'failed', label: t('common.failed') }
+  if (thumbUrl.value) return { key: 'ready', label: t('dramaCanvas.hasImage') }
   return null
 })
 </script>

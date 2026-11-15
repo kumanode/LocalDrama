@@ -22,7 +22,7 @@
       <template v-else-if="data.kind === 'audio'">
         <div class="audio-wrap">
           <span>🎵</span>
-          <span>{{ data.audioType === 'narration' ? '旁白' : '对白' }}</span>
+          <span>{{ data.audioType === 'narration' ? t('dramaCanvas.narration') : t('dramaCanvas.dialogue') }}</span>
         </div>
       </template>
     </div>

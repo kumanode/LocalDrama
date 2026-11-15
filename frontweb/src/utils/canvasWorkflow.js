@@ -35,7 +35,7 @@ export function createWorkflowGroup(existingGroups, { title, storyboardIds, pipe
   if (!ids.length) throw new Error(t('dramaCanvas.selectAtLeastOneShot'))
   const group = {
     id: `wg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    title: title || `工作流 ${(existingGroups?.length || 0) + 1}`,
+    title: title || t('dramaCanvas.defaultWorkflowName', { num: (existingGroups?.length || 0) + 1 }),
     storyboard_ids: ids,
     pipeline: normalizePipeline(pipeline),
     created_at: new Date().toISOString(),

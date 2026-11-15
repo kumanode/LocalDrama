@@ -78,7 +78,7 @@
               @click="openCustomEditor"
             >
               <div class="spd-thumb" :style="{ background: CUSTOM_SWATCH }">
-                <span class="spd-thumb-text">{{ locale === 'en' ? 'Cust' : '自定' }}</span>
+                <span class="spd-thumb-text">{{ t('styleOptions.customShort') }}</span>
               </div>
               <div class="spd-name">{{ t('styleOptions.custom') }}</div>
               <div v-if="modelValue === CUSTOM_STYLE_VALUE" class="spd-check">✓</div>
@@ -166,7 +166,7 @@ const triggerSwatchStyle = computed(() => {
 const showCustomSection = computed(() => {
   const kw = search.value.trim().toLowerCase()
   if (!kw) return true
-  return '自定义'.includes(kw) || 'custom'.includes(kw) || kw.includes('自定义') || kw.includes('custom')
+  return '自定义'.includes(kw) || 'custom'.includes(kw) || kw.includes('自定义') || kw.includes('custom') // i18n-scan-ignore: style search keyword
 })
 
 const filteredGroups = computed(() => {

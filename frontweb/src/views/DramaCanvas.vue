@@ -7,12 +7,12 @@
           <span class="logo-sub">{{ $t('dramaCanvas.canvasMode') }}</span>
         </h1>
         <span class="breadcrumb-sep">›</span>
-        <span class="page-title">{{ drama?.title || (locale === 'en' ? 'Loading…' : '加载中…') }}</span>
+        <span class="page-title">{{ drama?.title || $t('common.loading') }}</span>
 
         <el-select
           v-model="filterEpisodeId"
           class="episode-select"
-          :placeholder="locale === 'en' ? 'All Episodes' : '全部集数'"
+          :placeholder="$t('dramaCanvas.allEpisodes')"
           clearable
           size="small"
           style="width: 150px"
@@ -20,7 +20,7 @@
           <el-option
             v-for="ep in (drama?.episodes || [])"
             :key="ep.id"
-            :label="ep.title || (locale === 'en' ? 'Episode ' + (ep.episode_number || 0) : '第' + (ep.episode_number || 0) + '集')"
+            :label="ep.title || $t('dramaCanvas.episodeNum', { num: ep.episode_number || 0 })"
             :value="ep.id"
           />
         </el-select>
@@ -43,7 +43,7 @@
           <el-button size="small" @click="openCreateDialog('prop')">{{ $t('filmCreate.stepProps') }}</el-button>
           <el-button size="small" @click="openCreateDialog('episode')">
             <el-icon><Plus /></el-icon>
-            {{ locale === 'en' ? 'Episode' : '集' }}
+            {{ $t('dramaCanvas.episodeBtn') }}
           </el-button>
           <el-button size="small" :loading="aligningNodes" @click="onAlignNodes">
             <el-icon><Grid /></el-icon>
@@ -80,7 +80,7 @@
           <el-option
             v-for="g in workflowGroups"
             :key="g.id"
-            :label="`${g.title} (${(g.storyboard_ids || []).length}${locale === 'en' ? ' shots' : '镜'})`"
+            :label="`${g.title} (${$t('dramaCanvas.shotCount', { count: (g.storyboard_ids || []).length })})`"
             :value="g.id"
           />
         </el-select>
@@ -143,7 +143,7 @@
         </div>
         <div class="sidebar-title">
           {{ $t('library.title') }}
-          <el-button v-if="highlightAssetId" link size="small" @click="clearAssetHighlight">{{ locale === 'en' ? 'Clear' : '清除' }}</el-button>
+          <el-button v-if="highlightAssetId" link size="small" @click="clearAssetHighlight">{{ $t('common.clear') }}</el-button>
         </div>
         <div class="sidebar-section">
           <div class="sec-label sec-label-row">
@@ -157,7 +157,7 @@
             :class="{ active: highlightAssetId === 'char:' + c.id }"
             @click="selectSidebarAsset('char:' + c.id)"
           >
-            {{ c.name || (locale === 'en' ? 'Untitled' : '未命名') }}
+            {{ c.name || $t('library.unnamed') }}
           </div>
         </div>
         <div class="sidebar-section">
@@ -172,7 +172,7 @@
             :class="{ active: highlightAssetId === 'scene:' + s.id }"
             @click="selectSidebarAsset('scene:' + s.id)"
           >
-            {{ s.location || (locale === 'en' ? 'Untitled' : '未命名') }}
+            {{ s.location || $t('library.unnamed') }}
           </div>
         </div>
         <div class="sidebar-section">
@@ -187,12 +187,12 @@
             :class="{ active: highlightAssetId === 'prop:' + p.id }"
             @click="selectSidebarAsset('prop:' + p.id)"
           >
-            {{ p.name || (locale === 'en' ? 'Untitled' : '未命名') }}
+            {{ p.name || $t('library.unnamed') }}
           </div>
         </div>
 
         <div class="sidebar-section workflow-list">
-          <div class="sec-label">{{ locale === 'en' ? 'Workflows ' + workflowGroups.length : '工作流 ' + workflowGroups.length }}</div>
+          <div class="sec-label">{{ $t('dramaCanvas.workflowHeader', { count: workflowGroups.length }) }}</div>
           <div
             v-for="g in workflowGroups"
             :key="g.id"
@@ -201,12 +201,12 @@
             @click="activeGroupId = g.id"
           >
             <div class="wf-item-title">{{ g.title }}</div>
-            <div class="wf-item-meta">{{ (g.storyboard_ids || []).length }} {{ locale === 'en' ? 'shots' : '镜' }} · {{ (g.pipeline || []).join('→') }}</div>
+            <div class="wf-item-meta">{{ $t('dramaCanvas.shotCount', { count: (g.storyboard_ids || []).length }) }} · {{ (g.pipeline || []).join('→') }}</div>
           </div>
-          <div v-if="!workflowGroups.length" class="sidebar-empty">{{ locale === 'en' ? 'Select shots then click "Create Workflow"' : '框选分镜后点「创建工作流」' }}</div>
+          <div v-if="!workflowGroups.length" class="sidebar-empty">{{ $t('dramaCanvas.boxSelectTip') }}</div>
         </div>
 
-        <p class="sidebar-tip">{{ locale === 'en' ? 'Classic pipeline: Storyboard → Summary → Images → Video. Use "Episode Gen" in top bar for AI batch generation.' : '经典模式流水线：分镜 → 脚本摘要 → 分镜图 → 视频。摘要节点是画布可视化，列表里合并在分镜编辑区。顶栏「本集生成」可 AI 批量操作；单击分镜可单镜生图/生视频。' }}</p>
+        <p class="sidebar-tip">{{ $t('dramaCanvas.sidebarTip') }}</p>
       </aside>
 
       <div ref="canvasMainRef" class="canvas-main">
@@ -493,7 +493,7 @@ async function onCreateSubmit(form) {
   try {
     await submitCreate(form)
   } catch (e) {
-    ElMessage.error(e?.message || (locale.value === 'en' ? 'Creation failed' : '创建失败'))
+    ElMessage.error(e?.message || t('dramaCanvas.createFailed'))
   }
 }
 
@@ -699,7 +699,7 @@ async function onAlignNodes() {
     await persistCanvasState({ layoutOnly: true })
     ElMessage.success(t('dramaCanvas.nodesAligned'))
   } catch (e) {
-    ElMessage.error(e?.message || (locale.value === 'en' ? 'Alignment failed' : '对齐失败'))
+    ElMessage.error(e?.message || t('dramaCanvas.alignFailed'))
   } finally {
     aligningNodes.value = false
   }
@@ -718,7 +718,7 @@ async function loadDrama(silent = false) {
     await loadForDrama(drama.value, filterEpisodeId.value)
     rebuildGraph()
   } catch (e) {
-    if (!silent) ElMessage.error(e?.message || (locale.value === 'en' ? 'Failed to load project' : '加载项目失败'))
+    if (!silent) ElMessage.error(e?.message || t('dramaCanvas.loadFailed'))
   } finally {
     if (!silent) loading.value = false
   }
@@ -733,7 +733,7 @@ async function onCreateWorkflowGroup() {
     const { value } = await ElMessageBox.prompt(t('dramaCanvas.workflowNamePrompt'), t('dramaCanvas.createWorkflow'), {
       confirmButtonText: t('common.create'),
       cancelButtonText: t('common.cancel'),
-      inputValue: locale.value === 'en' ? `Workflow ${workflowGroups.value.length + 1}` : `工作流 ${workflowGroups.value.length + 1}`,
+      inputValue: t('dramaCanvas.defaultWorkflowName', { num: workflowGroups.value.length + 1 }),
     })
     workflowGroups.value = createWorkflowGroup(workflowGroups.value, {
       title: value?.trim() || undefined,
@@ -771,18 +771,19 @@ async function onRunActiveGroup() {
   }
   try {
     await ElMessageBox.confirm(
-      locale.value === 'en'
-        ? `Will execute ${(group.pipeline || pipelineSteps.value).join(' → ')} on ${(group.storyboard_ids || []).length} shots in order.\nThis may take some time. Continue?`
-        : `将对 ${(group.storyboard_ids || []).length} 个分镜依次执行：${(group.pipeline || pipelineSteps.value).join(' → ')}\n耗时可能较长，是否继续？`,
+      t('dramaCanvas.runWorkflowConfirm', {
+        count: (group.storyboard_ids || []).length,
+        steps: (group.pipeline || pipelineSteps.value).join(' → '),
+      }),
       t('dramaCanvas.rerunGroup'),
-      { type: 'warning', confirmButtonText: locale.value === 'en' ? 'Start' : '开始执行', cancelButtonText: t('common.cancel') }
+      { type: 'warning', confirmButtonText: t('dramaCanvas.startExecute'), cancelButtonText: t('common.cancel') }
     )
   } catch {
     return
   }
 
   workflowRunning.value = true
-  workflowProgress.value = locale.value === 'en' ? 'Preparing execution…' : '准备执行…'
+  workflowProgress.value = t('dramaCanvas.preparingExecution')
   try {
     const summary = await runWorkflowGroup(drama.value, {
       ...group,
@@ -799,7 +800,7 @@ async function onRunActiveGroup() {
         workflowProgress.value = `${t('dramaCanvas.shot')} #${storyboardId}：${stepLabel}…`
       },
       onStoryboardError: ({ storyboardId, error }) => {
-        ElMessage.error(`${t('dramaCanvas.shot')} #${storyboardId} ${locale.value === 'en' ? 'failed' : '失败'}：${error?.message || error}`)
+        ElMessage.error(`${t('dramaCanvas.shot')} #${storyboardId} ${t('common.failed')}：${error?.message || error}`)
       },
     })
     await loadDrama(true)

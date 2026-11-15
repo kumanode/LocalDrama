@@ -5,7 +5,7 @@
       class="omni-at-editor"
       contenteditable="true"
       spellcheck="false"
-      :data-placeholder="locale === 'en' ? 'Type @ to select asset; shows @Scene / @Character, saved as @ImageN' : '输入 @ 选择素材；编辑区显示 @场景名 / @角色名，保存与提交仍为 @图片N'"
+      :data-placeholder="t('universalEditor.placeholder')"
       @input="onInput"
       @blur="onBlur"
       @keydown="onKeydown"
@@ -21,7 +21,7 @@
         role="listbox"
         @mousedown.prevent
       >
-        <div v-if="!slots.length" class="omni-at-menu-empty">{{ locale === 'en' ? 'No reference images available' : '当前没有可用的参考图（请为场景 / 角色 / 物品选择带图素材）' }}</div>
+        <div v-if="!slots.length" class="omni-at-menu-empty">{{ t('universalEditor.noReferenceImages') }}</div>
         <button
           v-for="s in slots"
           :key="s.index"
@@ -38,16 +38,16 @@
             <span class="omni-at-menu-tag" :class="'omni-at-menu-tag--' + s.kind">{{ kindLabel(s.kind) }}</span>
             <span class="omni-at-menu-name">{{ s.name }}</span>
             <span class="omni-at-menu-at">{{ menuPrimaryAt(s) }}</span>
-            <span class="omni-at-menu-at-sub">{{ locale === 'en' ? 'Submits' : '提交' }} {{ canonicalAt(s.index) }}</span>
+            <span class="omni-at-menu-at-sub">{{ t('universalEditor.submitsTag') }} {{ canonicalAt(s.index) }}</span>
           </span>
         </button>
       </div>
     </teleport>
     <div class="omni-at-footer">
-      <el-tooltip :content="locale === 'en' ? 'Copy in @ImageN format (used for video submission)' : '复制为 @图片N 格式（与提交视频一致）'" placement="top">
+      <el-tooltip :content="t('universalEditor.copyPromptTooltip')" placement="top">
         <el-button type="default" text size="small" class="omni-at-copy-btn" @click="onCopyCanonical">
           <el-icon><DocumentCopy /></el-icon>
-          {{ locale === 'en' ? 'Copy Prompt' : '复制提示词' }}
+          {{ t('universalEditor.copyPrompt') }}
         </el-button>
       </el-tooltip>
     </div>
@@ -86,16 +86,10 @@ let skipNextModelWatch = false
 const CHIP_CLASS = 'omni-at-chip'
 
 function kindLabel(kind) {
-  if (locale.value === 'en') {
-    if (kind === 'scene') return 'Scene'
-    if (kind === 'character') return 'Character'
-    if (kind === 'prop') return 'Prop'
-    return 'Ref'
-  }
-  if (kind === 'scene') return '场景'
-  if (kind === 'character') return '角色'
-  if (kind === 'prop') return '物品'
-  return i18nT('universalEditor.reference')
+  if (kind === 'scene') return t('universalEditor.scene')
+  if (kind === 'character') return t('universalEditor.character')
+  if (kind === 'prop') return t('universalEditor.prop')
+  return t('universalEditor.reference')
 }
 
 function slotByIndex(index) {
@@ -105,8 +99,8 @@ function slotByIndex(index) {
 
 function canonicalAt(index) {
   const n = Number(index)
-  if (!Number.isFinite(n) || n < 1) return i18nT('universalEditor.image1')
-  return `@图片${n}`
+  if (!Number.isFinite(n) || n < 1) return '@图片1' // i18n-scan-ignore: omni prompt token protocol
+  return `@图片${n}` // i18n-scan-ignore: omni prompt token protocol
 }
 
 /** 编辑区展示用 @token；与存库/提交的 @图片N 一一对应 */
@@ -118,7 +112,7 @@ function makeDisplayAtToken(index) {
   const list = props.slots || []
   const dup = list.filter((x) => String(x.name || '').trim() === name).length > 1
   if (!dup) return `@${name}`
-  const prefix = slot.kind === 'scene' ? '场景' : slot.kind === 'prop' ? '物品' : '角色'
+  const prefix = slot.kind === 'scene' ? t('universalEditor.scene') : slot.kind === 'prop' ? t('universalEditor.prop') : t('universalEditor.character')
   return `@${prefix}·${name}`
 }
 
@@ -134,7 +128,7 @@ function applyPlainTextToEditor(el, text) {
     el.appendChild(document.createTextNode(''))
     return
   }
-  const re = /@图片(\d+)/g
+  const re = /@图片(\d+)/g // i18n-scan-ignore: omni prompt token protocol
   let last = 0
   let m
   while ((m = re.exec(raw)) !== null) {
@@ -147,7 +141,7 @@ function applyPlainTextToEditor(el, text) {
     span.textContent = disp
     span.setAttribute('role', 'button')
     span.setAttribute('tabindex', '0')
-    span.setAttribute('aria-label', `${disp}（提交为 ${canonicalAt(m[1])}），点击可更换`)
+    span.setAttribute('aria-label', t('universalEditor.chipAriaLabel', { disp, target: canonicalAt(m[1]) }))
     span.addEventListener('mousedown', onChipMouseDown)
     span.addEventListener('click', onChipClick)
     el.appendChild(span)
@@ -298,7 +292,7 @@ function maybeOpenAtMenu() {
   const off = getCaretCanonicalOffset(el)
   if (off < 1 || s[off - 1] !== '@') return
   const before = s.slice(0, off)
-  if (/@图片\d+$/.test(before)) return
+  if (/@图片\d+$/.test(before)) return // i18n-scan-ignore: omni prompt token protocol
   if (before.endsWith('@@')) return
   insertAtOffset = off
   menuMode = 'insert'
@@ -378,7 +372,7 @@ function onPickSlot(index) {
     replaceChipEl.dataset.n = String(index)
     const disp = makeDisplayAtToken(index)
     replaceChipEl.textContent = disp
-    replaceChipEl.setAttribute('aria-label', `${disp}（提交为 ${canonicalAt(index)}），点击可更换`)
+    replaceChipEl.setAttribute('aria-label', t('universalEditor.chipAriaLabel', { disp, target: canonicalAt(index) }))
     const next = serializeEditor(el)
     skipNextModelWatch = true
     emit('update:modelValue', next)
@@ -391,13 +385,13 @@ function onPickSlot(index) {
     closeMenu()
     return
   }
-  const newS = s.slice(0, at - 1) + `@图片${index}` + s.slice(at)
+  const newS = s.slice(0, at - 1) + `@图片${index}` + s.slice(at) // i18n-scan-ignore: omni prompt token protocol
   applyPlainTextToEditor(el, newS)
   const next = serializeEditor(el)
   skipNextModelWatch = true
   emit('update:modelValue', next)
   nextTick(() => {
-    const pos = at - 1 + (`@图片${index}`).length
+    const pos = at - 1 + (`@图片${index}`).length // i18n-scan-ignore: omni prompt token protocol
     setCaretCanonicalOffset(el, pos)
     el.focus()
   })
@@ -435,7 +429,7 @@ watch(
       if (n == null) return
       const disp = makeDisplayAtToken(n)
       chip.textContent = disp
-      chip.setAttribute('aria-label', `${disp}（提交为 ${canonicalAt(n)}），点击可更换`)
+      chip.setAttribute('aria-label', t('universalEditor.chipAriaLabel', { disp, target: canonicalAt(n) }))
     })
   },
   { deep: true }
@@ -454,7 +448,7 @@ async function onCopyCanonical() {
   const text = serializeEditor(el)
   try {
     await navigator.clipboard.writeText(text)
-    ElMessage.success(locale.value === 'en' ? 'Copied in @ImageN format' : '已复制（@图片N 格式，与提交一致）')
+    ElMessage.success(t('universalEditor.copySuccess'))
   } catch (_) {
     try {
       const ta = document.createElement('textarea')
@@ -465,9 +459,9 @@ async function onCopyCanonical() {
       ta.select()
       document.execCommand('copy')
       document.body.removeChild(ta)
-      ElMessage.success(i18nT('universalEditor.copiedAsImagen'))
+      ElMessage.success(t('universalEditor.copySuccess'))
     } catch (e2) {
-      ElMessage.error(e2?.message || i18nT('universalEditor.copyFailed'))
+      ElMessage.error(e2?.message || t('universalEditor.copyFailed'))
     }
   }
 }

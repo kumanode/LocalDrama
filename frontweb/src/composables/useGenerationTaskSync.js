@@ -1,11 +1,14 @@
 import { GEN_RESOURCE } from '@/stores/generationTaskStore'
+import { t } from '../i18n/index.js'
 
 export function buildExtractTaskMeta(store, dramaId, episodeId, resourceType, labelSuffix) {
   const dramaTitle = store.drama?.title || ''
   const ep = store.drama?.episodes?.find((e) => Number(e.id) === Number(episodeId))
     || (Number(store.currentEpisode?.id) === Number(episodeId) ? store.currentEpisode : null)
-  const epNum = ep?.episode_number ?? store.currentEpisode?.episode_number
-  const epLabel = dramaTitle ? `${dramaTitle} · 第${epNum ?? ''}集` : `第${epNum ?? ''}集`
+  const epNum = ep?.episode_number ?? store.currentEpisode?.episode_number ?? ''
+  const epLabel = dramaTitle
+    ? t('generationStore.episodeWithTitle', { title: dramaTitle, num: epNum })
+    : t('generationStore.episodeOnly', { num: epNum })
   return {
     dramaId,
     episodeId,

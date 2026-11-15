@@ -7,13 +7,13 @@
       @mousedown.stop
       @contextmenu.prevent
     >
-      <div class="ctx-title">{{ locale === 'en' ? 'Add Here' : '在此添加' }}</div>
-      <button type="button" class="ctx-item" @click="pick('storyboard')">{{ locale === 'en' ? 'Storyboard' : '分镜' }}</button>
-      <button type="button" class="ctx-item" @click="pick('character')">{{ locale === 'en' ? 'Character' : '角色' }}</button>
-      <button type="button" class="ctx-item" @click="pick('scene')">{{ locale === 'en' ? 'Scene' : '场景' }}</button>
-      <button type="button" class="ctx-item" @click="pick('prop')">{{ locale === 'en' ? 'Prop' : '道具' }}</button>
+      <div class="ctx-title">{{ t('dramaCanvas.addHere') }}</div>
+      <button type="button" class="ctx-item" @click="pick('storyboard')">{{ t('dramaCanvas.storyboard') }}</button>
+      <button type="button" class="ctx-item" @click="pick('character')">{{ t('dramaCanvas.character') }}</button>
+      <button type="button" class="ctx-item" @click="pick('scene')">{{ t('dramaCanvas.scene') }}</button>
+      <button type="button" class="ctx-item" @click="pick('prop')">{{ t('dramaCanvas.prop') }}</button>
       <div class="ctx-divider" />
-      <button type="button" class="ctx-item" @click="pick('episode')">{{ locale === 'en' ? 'New Episode' : '新集' }}</button>
+      <button type="button" class="ctx-item" @click="pick('episode')">{{ t('dramaCanvas.newEpisodeShort') }}</button>
     </div>
     <div v-if="visible" class="canvas-context-backdrop" @mousedown="close" @contextmenu.prevent="close" />
   </Teleport>
@@ -28,7 +28,7 @@ const props = defineProps({
   y: { type: Number, default: 0 },
 })
 
-const { locale } = useI18n()
+const { t } = useI18n()
 
 const emit = defineEmits(['select', 'close'])
 

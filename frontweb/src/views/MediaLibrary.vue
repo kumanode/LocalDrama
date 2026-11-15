@@ -84,7 +84,7 @@
 
       <div v-if="!loading && mediaItems.length === 0" class="empty-media">
         <el-icon class="empty-icon"><Files /></el-icon>
-        <p>{{ locale === 'en' ? 'No media yet, click upload to add' : '暂无素材，点击上传按钮添加' }}</p>
+        <p>{{ t('mediaLibrary.emptyTip') }}</p>
       </div>
     </div>
 
@@ -101,13 +101,13 @@
 
     <!-- 批量操作 -->
     <div v-if="selectedIds.size > 0" class="batch-bar">
-      <span>{{ locale === 'en' ? `Selected ${selectedIds.size} items` : `已选 ${selectedIds.size} 项` }}</span>
+      <span>{{ t('mediaLibrary.selectedCount', { count: selectedIds.size }) }}</span>
       <el-button size="small" @click="selectedIds.clear()">{{ $t('common.cancel') }}</el-button>
-      <el-button size="small" type="danger" plain @click="batchDelete">{{ locale === 'en' ? 'Batch Delete' : '批量删除' }}</el-button>
+      <el-button size="small" type="danger" plain @click="batchDelete">{{ t('mediaLibrary.batchDelete') }}</el-button>
     </div>
 
     <!-- 预览弹窗 -->
-    <el-dialog v-model="showPreview" :title="locale === 'en' ? 'Media Preview' : '素材预览'" width="800px" destroy-on-close>
+    <el-dialog v-model="showPreview" :title="t('mediaLibrary.previewTitle')" width="800px" destroy-on-close>
       <div class="preview-content">
         <video
           v-if="previewItem?.type === 'video'"
@@ -120,8 +120,8 @@
       </div>
       <div class="preview-meta">
         <div class="meta-row"><span>{{ $t('common.name') }}: </span>{{ previewItem?.name || $t('library.unnamed') }}</div>
-        <div class="meta-row"><span>{{ locale === 'en' ? 'Size: ' : '大小：' }}</span>{{ formatSize(previewItem?.size) }}</div>
-        <div class="meta-row"><span>{{ locale === 'en' ? 'Created: ' : '创建时间：' }}</span>{{ previewItem?.created_at }}</div>
+        <div class="meta-row"><span>{{ t('mediaLibrary.sizeLabel') }}</span>{{ formatSize(previewItem?.size) }}</div>
+        <div class="meta-row"><span>{{ t('mediaLibrary.createdLabel') }}</span>{{ previewItem?.created_at }}</div>
       </div>
     </el-dialog>
   </div>
@@ -258,7 +258,7 @@ async function deleteItem(item) {
 async function batchDelete() {
   const count = selectedIds.size
   await ElMessageBox.confirm(
-    locale.value === 'en' ? `Delete selected ${count} items?` : `确定删除选中的 ${count} 个素材？`,
+    t('mediaLibrary.batchDeleteConfirm', { count }),
     t('filmList.deleteConfirmTitle'),
     { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
   )

@@ -14,7 +14,7 @@ function postUniversalSegmentNdjsonStream(url, body, onDelta) {
     body: JSON.stringify(body || {}),
   }).then(async (res) => {
     if (!res.ok) {
-      let msg = `请求失败 (${res.status})`
+      let msg = i18nT('common.requestFailedStatus', { status: res.status })
       try {
         const j = await res.json()
         if (j?.error?.message) msg = j.error.message
@@ -47,7 +47,7 @@ function postUniversalSegmentNdjsonStream(url, body, onDelta) {
           continue
         }
         if (obj.type === 'delta' && obj.text && typeof onDelta === 'function') onDelta(String(obj.text))
-        if (obj.type === 'error') throw new Error(obj.message || '请求失败')
+        if (obj.type === 'error') throw new Error(obj.message || i18nT('common.requestFailed'))
         if (obj.type === 'done') {
           finalText = (obj.universal_segment_text && String(obj.universal_segment_text).trim()) || ''
         }
@@ -57,7 +57,7 @@ function postUniversalSegmentNdjsonStream(url, body, onDelta) {
     if (tail) {
       try {
         const obj = JSON.parse(tail)
-        if (obj.type === 'error') throw new Error(obj.message || '请求失败')
+        if (obj.type === 'error') throw new Error(obj.message || i18nT('common.requestFailed'))
         if (obj.type === 'done') finalText = (obj.universal_segment_text && String(obj.universal_segment_text).trim()) || finalText
       } catch (e) {
         if (e instanceof Error && e.message && !e.message.includes('JSON')) throw e
