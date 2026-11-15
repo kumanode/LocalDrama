@@ -8,12 +8,12 @@
           <span class="logo-sub">{{ $t('header.appSubtitle') }}</span>
         </h1>
         <span class="breadcrumb-sep">›</span>
-        <span class="page-title">{{ dramaId ? (store.drama?.title || (locale === 'en' ? 'Project' : '项目')) : (locale === 'en' ? 'New Story' : '新建故事') }}</span>
+        <span class="page-title">{{ dramaId ? (store.drama?.title || $t('common.project')) : $t('filmCreate.newStoryTitle') }}</span>
         <el-select
           v-if="dramaId"
           v-model="selectedEpisodeId"
           class="header-episode-select"
-          :placeholder="locale === 'en' ? 'Select Episode' : '选择集数'"
+          :placeholder="$t('filmCreate.selectEpisode')"
           clearable
           size="small"
           style="width: 130px"
@@ -22,13 +22,13 @@
           <el-option
             v-for="ep in (store.drama?.episodes || [])"
             :key="ep.id"
-            :label="ep.title || (locale === 'en' ? 'Episode ' + (ep.episode_number || 0) : '第' + (ep.episode_number || 0) + '集')"
+            :label="ep.title || $t('filmCreate.episodeNum', { num: ep.episode_number || 0 })"
             :value="ep.id"
           />
         </el-select>
         <el-button v-if="dramaId" class="btn-back-drama" @click="router.push('/drama/' + dramaId)">
           <el-icon><ArrowLeft /></el-icon>
-          {{ locale === 'en' ? 'Episodes' : '返回剧集' }}
+          {{ $t('filmCreate.backToEpisodes') }}
         </el-button>
         <el-button v-if="dramaId" type="primary" plain class="btn-canvas-mode" @click="goCanvasMode">
           <el-icon><Grid /></el-icon>
@@ -52,7 +52,7 @@
     <nav class="quick-nav" :class="{ collapsed: navCollapsed }" :aria-label="$t('filmCreate.quickNav')">
       <div class="nav-sidebar-header">
         <span v-if="!navCollapsed" class="nav-sidebar-title">{{ $t('filmCreate.quickNav') }}</span>
-        <div class="nav-toggle" :title="navCollapsed ? (locale === 'en' ? 'Expand Navigation' : '展开导航') : (locale === 'en' ? 'Collapse Navigation' : '收起导航')" @click="toggleNav()">
+        <div class="nav-toggle" :title="navCollapsed ? $t('filmCreate.expandNav') : $t('filmCreate.collapseNav')" @click="toggleNav()">
           <el-icon><Expand v-if="navCollapsed" /><Fold v-else /></el-icon>
         </div>
       </div>
@@ -84,7 +84,7 @@
           <div class="step-body">
             <span class="step-label">{{ step.label }}</span>
             <span v-if="step.count > 0 && step.status !== 'done'" class="step-count">{{ step.count }}</span>
-            <span v-if="step.status === 'partial'" class="step-badge partial-badge" :title="locale === 'en' ? 'Partially Done' : '部分完成'">
+            <span v-if="step.status === 'partial'" class="step-badge partial-badge" :title="$t('filmCreate.partialDone')">
               <el-icon><WarningFilled /></el-icon>
             </span>
             <span v-else-if="step.status === 'generating'" class="step-badge gen-badge" :title="$t('common.generating')">
@@ -112,10 +112,10 @@
             </div>
             <div
               class="nav-sub-item"
-              :title="sb.title || (locale === 'en' ? 'Shot ' + (i + 1) : '分镜 ' + (i + 1))"
+              :title="sb.title || $t('filmCreate.shotIndex', { num: i + 1 })"
               @click="scrollToAnchor('sb-' + sb.id)"
             >
-              {{ i + 1 }}. {{ sb.title || (locale === 'en' ? 'Shot' : '分镜') }}
+              {{ i + 1 }}. {{ sb.title || $t('filmCreate.shot') }}
             </div>
           </template>
         </div>
@@ -249,7 +249,7 @@
                     <el-option
                       v-for="ep in (store.drama?.episodes || [])"
                       :key="ep.id"
-                      :label="ep.title || (locale === 'en' ? 'Episode ' + (ep.episode_number || 0) : '第' + (ep.episode_number || 0) + '集')"
+                      :label="ep.title || $t('filmCreate.episodeNum', { num: ep.episode_number || 0 })"
                       :value="ep.id"
                     />
                   </el-select>
@@ -300,7 +300,7 @@
                   <el-tab-pane
                     v-for="ep in (store.drama?.episodes || [])"
                     :key="ep.id"
-                    :label="ep.title || (locale === 'en' ? 'Episode ' + (ep.episode_number || 0) : ('第' + (ep.episode_number || 0) + '集'))"
+                    :label="ep.title || $t('filmCreate.episodeNum', { num: ep.episode_number || 0 })"
                     :name="String(ep.id)"
                   >
                     <el-input
@@ -396,7 +396,7 @@
           <el-button
             :loading="pipelineRunning && !pipelinePaused"
             :disabled="!currentEpisodeId || pipelineRunning"
-            :title="locale === 'en' ? 'Only extract characters, scenes, props and generate storyboards without images and videos' : '仅提取角色、场景、道具与生成分镜文本，不生成图片与视频'"
+            :title="$t('filmCreate.generateTextFrameworkTip')"
             @click="startTextFrameworkPipeline"
           >
             {{ $t('filmCreate.generateTextFramework') }}
@@ -409,7 +409,7 @@
         <div v-if="pipelineRunning || pipelineErrorLog.length > 0" class="pipeline-status">
           <div v-if="pipelineCurrentStep" class="pipeline-current-step">
             <span v-if="pipelineStepIndex > 0" class="pipeline-step-badge">{{ pipelineStepIndex }}/{{ pipelineStepTotal }}</span>
-            {{ pipelineCurrentStep.replace(/^\[步骤 \d+\/\d+\] /, '') }}
+            {{ pipelineCurrentStep.replace(/^\[.*?\]\s*/, '') }}
           </div>
           <!-- 阶段间倒计时 -->
           <div v-if="pipelineCountdown > 0" class="pipeline-countdown">
@@ -447,23 +447,23 @@
       <!-- 资源管理：角色 / 道具 / 场景 -->
       <section class="section card resource-panel">
         <div class="collapse-header" @click="resourcePanelCollapsed = !resourcePanelCollapsed">
-          <h2 class="section-title">资源管理</h2>
+          <h2 class="section-title">{{ $t('filmCreate.resourceManagement') }}</h2>
           <el-icon class="collapse-icon"><ArrowUp v-if="!resourcePanelCollapsed" /><ArrowDown v-else /></el-icon>
         </div>
         <div v-show="!resourcePanelCollapsed" class="resource-panel-body">
           <!-- 角色生成 -->
           <div id="anchor-characters" class="resource-block card">
             <div class="collapse-header resource-block-header" @click="charactersBlockCollapsed = !charactersBlockCollapsed">
-              <h3 class="resource-block-title">角色生成</h3>
+              <h3 class="resource-block-title">{{ $t('filmCreate.charactersBlock') }}</h3>
               <el-icon class="collapse-icon"><ArrowUp v-if="!charactersBlockCollapsed" /><ArrowDown v-else /></el-icon>
             </div>
             <div v-show="!charactersBlockCollapsed" class="resource-block-body">
               <div class="asset-actions">
                 <el-button type="primary" size="small" :loading="charactersGenerating" :disabled="!dramaId" @click="onGenerateCharacters">
-                  剧本自动提取角色
+                  {{ $t('filmCreate.autoExtractCharacters') }}
                 </el-button>
-                <el-button size="small" :disabled="!dramaId" @click="openAddCharacter">添加角色</el-button>
-                <el-button size="small" @click="showCharLibrary = true">本剧角色库</el-button>
+                <el-button size="small" :disabled="!dramaId" @click="openAddCharacter">{{ $t('filmCreate.addCharacter') }}</el-button>
+                <el-button size="small" @click="showCharLibrary = true">{{ $t('filmCreate.dramaCharLib') }}</el-button>
               </div>
               <div class="asset-list asset-list-two">
                 <div v-for="char in characters" :key="char.id" class="asset-item asset-item-left-right">
@@ -473,18 +473,18 @@
                         <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ char.name }}</span>
                         <el-tag v-if="char.role" size="small" effect="plain" :type="char.role === 'main' ? 'danger' : char.role === 'supporting' ? 'warning' : 'info'" style="flex-shrink:0;padding:0 5px;font-size:11px;height:18px;line-height:18px">{{ charRoleLabel(char.role) }}</el-tag>
                       </span>
-                      <el-button type="danger" text size="small" class="btn-delete-icon" title="删除" @click="onDeleteCharacter(char)">
+                      <el-button type="danger" text size="small" class="btn-delete-icon" :title="$t('common.delete')" @click="onDeleteCharacter(char)">
                         <el-icon><Delete /></el-icon>
                       </el-button>
                     </div>
-                    <div class="asset-desc-full">{{ char.appearance || char.description || '暂无描述' }}</div>
+                    <div class="asset-desc-full">{{ char.appearance || char.description || $t('common.noDescription') }}</div>
                     <div class="asset-btns">
-                      <el-button size="small" @click="editCharacter(char)">编辑</el-button>
+                      <el-button size="small" @click="editCharacter(char)">{{ $t('common.edit') }}</el-button>
                       <el-button size="small" :loading="addingCharToLibraryId === char.id" :disabled="!hasAssetImage(char)" @click="onAddCharacterToLibrary(char)">
-                        加入本剧库
+                        {{ $t('common.addToDramaLibShort') }}
                       </el-button>
                       <el-button size="small" :loading="addingCharToMaterialId === char.id" :disabled="!hasAssetImage(char)" @click="onAddCharacterToMaterialLibrary(char)">
-                        加入素材库
+                        {{ $t('common.addToGlobalLibShort') }}
                       </el-button><el-button
                         size="small"
                         :type="char.seedance2_asset?.status === 'active' ? 'success' : 'warning'"
@@ -508,7 +508,7 @@
                           @click="playSd2Voice(char)"
                         >
                           <el-icon><VideoPlay /></el-icon>
-                          <span style="margin-left:4px">试听</span>
+                          <span style="margin-left:4px">{{ $t('filmCreate.voiceSample') }}</span>
                         </el-button>
                         <el-button
                           size="small"
@@ -517,9 +517,9 @@
                           :loading="sd2VoiceUploadingId === char.id"
                           @click="onSd2VoiceReplace(char)"
                         >
-                          更换
+                          {{ $t('filmCreate.replaceVoice') }}
                         </el-button>
-                        <span style="font-size:11px;color:#67c23a">音色已设置</span>
+                        <span style="font-size:11px;color:#67c23a">{{ $t('filmCreate.voiceConfigured') }}</span>
                       </template>
                       <template v-else>
                         <el-button
@@ -531,17 +531,17 @@
                         >
                           {{ sd2VoiceActionLabel(char) }}
                         </el-button>
-                        <span v-if="char.seedance2_voice_asset?.status === 'stale'" style="font-size:11px;color:#e6a23c">需刷新</span>
+                        <span v-if="char.seedance2_voice_asset?.status === 'stale'" style="font-size:11px;color:#e6a23c">{{ $t('filmCreate.needRefresh') }}</span>
                       </template>
-                      <span style="font-size:10px;color:#909399">仅 Seedance 2.0 模型生效</span>
+                      <span style="font-size:10px;color:#909399">{{ $t('filmCreate.seedance2Only') }}</span>
                     </div>
                     <div v-if="getCharAffectedStoryboards(char.id).length" class="asset-storyboard-link">
-                      <span class="asl-label">影响的分镜：</span>
+                      <span class="asl-label">{{ $t('filmCreate.affectedStoryboards') }}</span>
                       <span
                         v-for="sb in getCharAffectedStoryboards(char.id)"
                         :key="sb.id"
                         class="asl-chip"
-                        title="点击跳转到该分镜"
+                        :title="$t('filmCreate.jumpToStoryboardTip')"
                         @click="scrollToStoryboard(sb.id)"
                       >#{{ sb.storyboard_number }}</span>
                       <span v-if="regenSbImagesForAsset.has('char-' + char.id) && regenSbImagesProgress['char-' + char.id]" class="asl-progress">
@@ -553,7 +553,7 @@
                         :loading="regenSbImagesForAsset.has('char-' + char.id)"
                         @click="onRegenAffectedSbImages('char-' + char.id, getCharAffectedStoryboards(char.id))"
                       >
-                        <span v-if="!regenSbImagesForAsset.has('char-' + char.id)">↻ 重新生成分镜图</span>
+                        <span v-if="!regenSbImagesForAsset.has('char-' + char.id)">{{ $t('filmCreate.regenStoryboardImages') }}</span>
                       </el-button>
                     </div>
                   </div>
@@ -570,32 +570,32 @@
                     >
                       <img v-if="hasAssetImage(char)" :src="assetImageUrl(char)" class="cover-img" alt="" />
                       <div v-else-if="char.error_msg || char.errorMsg" class="cover-placeholder error" :title="char.error_msg || char.errorMsg">{{ char.error_msg || char.errorMsg }}</div>
-                      <div v-else class="cover-placeholder">暂无图</div>
-                      <div v-if="dragOverResourceKey === 'char-' + char.id" class="asset-cover-drop-hint">松开上传</div>
+                      <div v-else class="cover-placeholder">{{ $t('filmCreate.noImage') }}</div>
+                      <div v-if="dragOverResourceKey === 'char-' + char.id" class="asset-cover-drop-hint">{{ $t('filmCreate.releaseToUpload') }}</div>
                     </div>
                     <!-- 额外参考图条 -->
                     <div v-if="parseExtraImages(char).length" class="extra-images-strip">
-                      <div v-for="ep in parseExtraImages(char)" :key="ep" class="extra-thumb" :title="'点击设为主图（悬停左上角可放大预览）'">
+                      <div v-for="ep in parseExtraImages(char)" :key="ep" class="extra-thumb" :title="$t('filmCreate.setAsMainImageTip')">
                         <img :src="localPathToUrl(ep)" alt="" @click="onSetPrimaryImage('character', char, ep)" />
-                        <button class="thumb-preview-btn" title="放大预览" @click.stop="openImagePreview(localPathToUrl(ep))">
+                        <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" @click.stop="openImagePreview(localPathToUrl(ep))">
                           <el-icon :size="10"><ZoomIn /></el-icon>
                         </button>
-                        <button class="extra-thumb-remove" title="移除" @click.stop="onRemoveExtraImage('character', char, ep)">×</button>
+                        <button class="extra-thumb-remove" :title="$t('common.remove')" @click.stop="onRemoveExtraImage('character', char, ep)">×</button>
                       </div>
                     </div>
                     <div class="asset-cover-actions">
                       <el-button type="primary" size="small" :loading="generatingCharIds.has(char.id)" @click="onGenerateCharacterImage(char)">
                         <el-icon v-if="!generatingCharIds.has(char.id)"><MagicStick /></el-icon>
-                        AI 生成
+                        {{ $t('filmCreate.aiGenerate') }}
                       </el-button>
                       <el-button type="success" size="small" :loading="uploadingResourceId === 'char-' + char.id" @click="onUploadResourceClick('character', char.id)">
                         <el-icon v-if="uploadingResourceId !== 'char-' + char.id"><Upload /></el-icon>
-                        上传
+                        {{ $t('common.upload') }}
                       </el-button>
                     </div>
                   </div>
                 </div>
-                <div v-if="characters.length === 0" class="empty-tip">暂无角色，请先「AI 生成角色」或在上一步保存剧本后提取</div>
+                <div v-if="characters.length === 0" class="empty-tip">{{ $t('filmCreate.noCharsEmptyTip') }}</div>
               </div>
             </div>
           </div>
@@ -603,43 +603,43 @@
           <!-- 道具生成 -->
           <div id="anchor-props" class="resource-block card">
             <div class="collapse-header resource-block-header" @click="propsBlockCollapsed = !propsBlockCollapsed">
-              <h3 class="resource-block-title">道具生成</h3>
+              <h3 class="resource-block-title">{{ $t('filmCreate.propsBlock') }}</h3>
               <el-icon class="collapse-icon"><ArrowUp v-if="!propsBlockCollapsed" /><ArrowDown v-else /></el-icon>
             </div>
             <div v-show="!propsBlockCollapsed" class="resource-block-body">
               <div class="asset-actions">
-                <el-button type="primary" size="small" :loading="propsExtracting" :disabled="!currentEpisodeId" @click="onExtractProps">从剧本提取道具</el-button>
-                <el-button size="small" :disabled="!dramaId" @click="showAddProp = true">添加道具</el-button>
-                <el-button size="small" @click="showPropLibrary = true">本剧道具库</el-button>
+                <el-button type="primary" size="small" :loading="propsExtracting" :disabled="!currentEpisodeId" @click="onExtractProps">{{ $t('filmCreate.extractProps') }}</el-button>
+                <el-button size="small" :disabled="!dramaId" @click="showAddProp = true">{{ $t('filmCreate.addProp') }}</el-button>
+                <el-button size="small" @click="showPropLibrary = true">{{ $t('filmCreate.dramaPropLib') }}</el-button>
               </div>
               <div class="prop-gen-mode" style="margin: 8px 0; font-size: 13px;">
-                <el-checkbox v-model="propUseQuadGrid">生成四视图道具（默认单图，纯色无缝背景）</el-checkbox>
+                <el-checkbox v-model="propUseQuadGrid">{{ $t('filmCreate.propQuadGridCheckbox') }}</el-checkbox>
               </div>
               <div class="asset-list asset-list-two">
                 <div v-for="prop in props" :key="prop.id" class="asset-item asset-item-left-right">
                   <div class="asset-info">
                     <div class="asset-name">
                       <span>{{ prop.name }}</span>
-                      <el-button type="danger" text size="small" class="btn-delete-icon" title="删除" @click="onDeleteProp(prop)">
+                      <el-button type="danger" text size="small" class="btn-delete-icon" :title="$t('common.delete')" @click="onDeleteProp(prop)">
                         <el-icon><Delete /></el-icon>
                       </el-button>
                     </div>
-                    <div class="asset-desc-full">{{ prop.description || prop.prompt || '暂无描述' }}</div>
+                    <div class="asset-desc-full">{{ prop.description || prop.prompt || $t('common.noDescription') }}</div>
                     <div class="asset-btns">
-                      <el-button size="small" @click="editProp(prop)">编辑</el-button>
+                      <el-button size="small" @click="editProp(prop)">{{ $t('common.edit') }}</el-button>
                       <el-button size="small" :loading="addingPropToLibraryId === prop.id" :disabled="!hasAssetImage(prop)" @click="onAddPropToLibrary(prop)">
-                        加入本剧库
+                        {{ $t('common.addToDramaLibShort') }}
                       </el-button>
                       <el-button size="small" :loading="addingPropToMaterialId === prop.id" :disabled="!hasAssetImage(prop)" @click="onAddPropToMaterialLibrary(prop)">
-                        加入素材库
+                        {{ $t('common.addToGlobalLibShort') }}
                       </el-button></div>
                     <div v-if="getPropAffectedStoryboards(prop.id).length" class="asset-storyboard-link">
-                      <span class="asl-label">影响的分镜：</span>
+                      <span class="asl-label">{{ $t('filmCreate.affectedStoryboards') }}</span>
                       <span
                         v-for="sb in getPropAffectedStoryboards(prop.id)"
                         :key="sb.id"
                         class="asl-chip"
-                        title="点击跳转到该分镜"
+                        :title="$t('filmCreate.jumpToStoryboardTip')"
                         @click="scrollToStoryboard(sb.id)"
                       >#{{ sb.storyboard_number }}</span>
                       <span v-if="regenSbImagesForAsset.has('prop-' + prop.id) && regenSbImagesProgress['prop-' + prop.id]" class="asl-progress">
@@ -651,7 +651,7 @@
                         :loading="regenSbImagesForAsset.has('prop-' + prop.id)"
                         @click="onRegenAffectedSbImages('prop-' + prop.id, getPropAffectedStoryboards(prop.id))"
                       >
-                        <span v-if="!regenSbImagesForAsset.has('prop-' + prop.id)">↻ 重新生成分镜图</span>
+                        <span v-if="!regenSbImagesForAsset.has('prop-' + prop.id)">{{ $t('filmCreate.regenStoryboardImages') }}</span>
                       </el-button>
                     </div>
                   </div>
@@ -668,33 +668,33 @@
                     >
                       <img v-if="hasAssetImage(prop)" :src="assetImageUrl(prop)" class="cover-img" alt="" />
                       <div v-else-if="prop.error_msg || prop.errorMsg" class="cover-placeholder error" :title="prop.error_msg || prop.errorMsg">{{ prop.error_msg || prop.errorMsg }}</div>
-                      <div v-else class="cover-placeholder">暂无图</div>
-                      <div v-if="dragOverResourceKey === 'prop-' + prop.id" class="asset-cover-drop-hint">松开上传</div>
+                      <div v-else class="cover-placeholder">{{ $t('filmCreate.noImage') }}</div>
+                      <div v-if="dragOverResourceKey === 'prop-' + prop.id" class="asset-cover-drop-hint">{{ $t('filmCreate.releaseToUpload') }}</div>
                     </div>
                     <div v-if="parseExtraImages(prop).length" class="extra-images-strip">
-                      <div v-for="ep in parseExtraImages(prop)" :key="ep" class="extra-thumb" title="点击设为主图（悬停左上角可放大预览）">
+                      <div v-for="ep in parseExtraImages(prop)" :key="ep" class="extra-thumb" :title="$t('filmCreate.setAsMainImageTip')">
                         <img :src="localPathToUrl(ep)" alt="" @click="onSetPrimaryImage('prop', prop, ep)" />
-                        <button class="thumb-preview-btn" title="放大预览" @click.stop="openImagePreview(localPathToUrl(ep))">
+                        <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" @click.stop="openImagePreview(localPathToUrl(ep))">
                           <el-icon :size="10"><ZoomIn /></el-icon>
                         </button>
-                        <button class="extra-thumb-remove" title="移除" @click.stop="onRemoveExtraImage('prop', prop, ep)">×</button>
+                        <button class="extra-thumb-remove" :title="$t('common.remove')" @click.stop="onRemoveExtraImage('prop', prop, ep)">×</button>
                       </div>
                     </div>
                     <div class="asset-cover-actions">
-                      <el-tooltip :content="propUseQuadGrid ? '四视图道具（前/侧/后/顶，纯色无缝背景）' : '单图道具（纯色无缝背景）'" placement="top">
+                      <el-tooltip :content="propUseQuadGrid ? $t('filmCreate.propQuadGridTooltip') : $t('filmCreate.propSingleTooltip')" placement="top">
                         <el-button type="primary" size="small" :loading="generatingPropIds.has(prop.id)" @click="onGeneratePropImage(prop, propUseQuadGrid)">
                           <el-icon v-if="!generatingPropIds.has(prop.id)"><MagicStick /></el-icon>
-                          AI 生成
+                          {{ $t('filmCreate.aiGenerate') }}
                         </el-button>
                       </el-tooltip>
                       <el-button type="success" size="small" :loading="uploadingResourceId === 'prop-' + prop.id" @click="onUploadResourceClick('prop', prop.id)">
                         <el-icon v-if="uploadingResourceId !== 'prop-' + prop.id"><Upload /></el-icon>
-                        上传
+                        {{ $t('common.upload') }}
                       </el-button>
                     </div>
                   </div>
                 </div>
-                <div v-if="props.length === 0" class="empty-tip">暂无道具，可从剧本提取或添加</div>
+                <div v-if="props.length === 0" class="empty-tip">{{ $t('filmCreate.noPropsEmptyTip') }}</div>
               </div>
             </div>
           </div>
@@ -702,45 +702,45 @@
           <!-- 场景生成 -->
           <div id="anchor-scenes" class="resource-block card">
             <div class="collapse-header resource-block-header" @click="scenesBlockCollapsed = !scenesBlockCollapsed">
-              <h3 class="resource-block-title">场景生成</h3>
+              <h3 class="resource-block-title">{{ $t('filmCreate.scenesBlock') }}</h3>
               <el-icon class="collapse-icon"><ArrowUp v-if="!scenesBlockCollapsed" /><ArrowDown v-else /></el-icon>
             </div>
             <div v-show="!scenesBlockCollapsed" class="resource-block-body">
               <div class="asset-actions">
                 <el-button type="primary" size="small" :loading="scenesExtracting" :disabled="!currentEpisodeId" @click="onExtractScenes">
-                  从剧本提取场景
+                  {{ $t('filmCreate.extractScenes') }}
                 </el-button>
-                <el-button size="small" :disabled="!dramaId" @click="openAddScene">添加场景</el-button>
-                <el-button size="small" @click="showSceneLibrary = true">本剧场景库</el-button>
+                <el-button size="small" :disabled="!dramaId" @click="openAddScene">{{ $t('filmCreate.addScene') }}</el-button>
+                <el-button size="small" @click="showSceneLibrary = true">{{ $t('filmCreate.dramaSceneLib') }}</el-button>
               </div>
               <div class="scene-gen-mode" style="margin: 8px 0; font-size: 13px;">
-                <el-checkbox v-model="sceneUseQuadGrid">生成四宫格场景（默认单图）</el-checkbox>
+                <el-checkbox v-model="sceneUseQuadGrid">{{ $t('filmCreate.sceneQuadGridCheckbox') }}</el-checkbox>
               </div>
               <div class="asset-list asset-list-two">
                 <div v-for="scene in scenes" :key="scene.id" class="asset-item asset-item-left-right">
                   <div class="asset-info">
                     <div class="asset-name">
                       <span>{{ scene.location }}</span>
-                      <el-button type="danger" text size="small" class="btn-delete-icon" title="删除" @click="onDeleteScene(scene)">
+                      <el-button type="danger" text size="small" class="btn-delete-icon" :title="$t('common.delete')" @click="onDeleteScene(scene)">
                         <el-icon><Delete /></el-icon>
                       </el-button>
                     </div>
-                    <div class="asset-desc-full">{{ scene.description || scene.prompt || scene.time || '暂无描述' }}</div>
+                    <div class="asset-desc-full">{{ scene.description || scene.prompt || scene.time || $t('common.noDescription') }}</div>
                     <div class="asset-btns">
-                      <el-button size="small" @click="editScene(scene)">编辑</el-button>
+                      <el-button size="small" @click="editScene(scene)">{{ $t('common.edit') }}</el-button>
                       <el-button size="small" :loading="addingSceneToLibraryId === scene.id" :disabled="!hasAssetImage(scene)" @click="onAddSceneToLibrary(scene)">
-                        加入本剧库
+                        {{ $t('common.addToDramaLibShort') }}
                       </el-button>
                       <el-button size="small" :loading="addingSceneToMaterialId === scene.id" :disabled="!hasAssetImage(scene)" @click="onAddSceneToMaterialLibrary(scene)">
-                        加入素材库
+                        {{ $t('common.addToGlobalLibShort') }}
                       </el-button></div>
                     <div v-if="getSceneAffectedStoryboards(scene.id).length" class="asset-storyboard-link">
-                      <span class="asl-label">影响的分镜：</span>
+                      <span class="asl-label">{{ $t('filmCreate.affectedStoryboards') }}</span>
                       <span
                         v-for="sb in getSceneAffectedStoryboards(scene.id)"
                         :key="sb.id"
                         class="asl-chip"
-                        title="点击跳转到该分镜"
+                        :title="$t('filmCreate.jumpToStoryboardTip')"
                         @click="scrollToStoryboard(sb.id)"
                       >#{{ sb.storyboard_number }}</span>
                       <span v-if="regenSbImagesForAsset.has('scene-' + scene.id) && regenSbImagesProgress['scene-' + scene.id]" class="asl-progress">
@@ -752,7 +752,7 @@
                         :loading="regenSbImagesForAsset.has('scene-' + scene.id)"
                         @click="onRegenAffectedSbImages('scene-' + scene.id, getSceneAffectedStoryboards(scene.id))"
                       >
-                        <span v-if="!regenSbImagesForAsset.has('scene-' + scene.id)">↻ 重新生成分镜图</span>
+                        <span v-if="!regenSbImagesForAsset.has('scene-' + scene.id)">{{ $t('filmCreate.regenStoryboardImages') }}</span>
                       </el-button>
                     </div>
                   </div>
@@ -769,33 +769,33 @@
                     >
                       <img v-if="hasAssetImage(scene)" :src="assetImageUrl(scene)" class="cover-img" alt="" />
                       <div v-else-if="scene.error_msg || scene.errorMsg" class="cover-placeholder error" :title="scene.error_msg || scene.errorMsg">{{ scene.error_msg || scene.errorMsg }}</div>
-                      <div v-else class="cover-placeholder">暂无图</div>
-                      <div v-if="dragOverResourceKey === 'scene-' + scene.id" class="asset-cover-drop-hint">松开上传</div>
+                      <div v-else class="cover-placeholder">{{ $t('filmCreate.noImage') }}</div>
+                      <div v-if="dragOverResourceKey === 'scene-' + scene.id" class="asset-cover-drop-hint">{{ $t('filmCreate.releaseToUpload') }}</div>
                     </div>
                     <div v-if="parseExtraImages(scene).length" class="extra-images-strip">
-                      <div v-for="ep in parseExtraImages(scene)" :key="ep" class="extra-thumb" title="点击设为主图（悬停左上角可放大预览）">
+                      <div v-for="ep in parseExtraImages(scene)" :key="ep" class="extra-thumb" :title="$t('filmCreate.setAsMainImageTip')">
                         <img :src="localPathToUrl(ep)" alt="" @click="onSetPrimaryImage('scene', scene, ep)" />
-                        <button class="thumb-preview-btn" title="放大预览" @click.stop="openImagePreview(localPathToUrl(ep))">
+                        <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" @click.stop="openImagePreview(localPathToUrl(ep))">
                           <el-icon :size="10"><ZoomIn /></el-icon>
                         </button>
-                        <button class="extra-thumb-remove" title="移除" @click.stop="onRemoveExtraImage('scene', scene, ep)">×</button>
+                        <button class="extra-thumb-remove" :title="$t('common.remove')" @click.stop="onRemoveExtraImage('scene', scene, ep)">×</button>
                       </div>
                     </div>
                     <div class="asset-cover-actions">
-                      <el-tooltip :content="sceneUseQuadGrid ? '四宫格场景（正/侧/俯/仰）' : '单图场景'" placement="top">
+                      <el-tooltip :content="sceneUseQuadGrid ? $t('filmCreate.sceneQuadGridTooltip') : $t('filmCreate.sceneSingleTooltip')" placement="top">
                         <el-button type="primary" size="small" :loading="generatingSceneIds.has(scene.id)" @click="onGenerateSceneImage(scene, sceneUseQuadGrid)">
                           <el-icon v-if="!generatingSceneIds.has(scene.id)"><MagicStick /></el-icon>
-                          AI 生成
+                          {{ $t('filmCreate.aiGenerate') }}
                         </el-button>
                       </el-tooltip>
                       <el-button type="success" size="small" :loading="uploadingResourceId === 'scene-' + scene.id" @click="onUploadResourceClick('scene', scene.id)">
                         <el-icon v-if="uploadingResourceId !== 'scene-' + scene.id"><Upload /></el-icon>
-                        上传
+                        {{ $t('common.upload') }}
                       </el-button>
                     </div>
                   </div>
                 </div>
-                <div v-if="scenes.length === 0" class="empty-tip">暂无场景，请从剧本提取</div>
+                <div v-if="scenes.length === 0" class="empty-tip">{{ $t('filmCreate.noScenesEmptyTip') }}</div>
               </div>
             </div>
           </div>
@@ -805,41 +805,41 @@
       <!-- 6. 分镜生成 -->
       <section id="anchor-storyboard" class="section card">
         <h2 class="section-title">
-          <span>5. 分镜生成</span>
-          <span class="step-desc">根据剧本、角色、场景自动生成分镜头脚本</span>
+          <span>{{ $t('filmCreate.storyboardStepTitle') }}</span>
+          <span class="step-desc">{{ $t('filmCreate.storyboardStepDesc') }}</span>
         </h2>
         <div class="sb-config-row">
           <label class="sb-config-item">
-            <span class="sb-config-label">分镜数量</span>
-            <el-input-number v-model="storyboardCount" :min="1" :max="200" :step="5" placeholder="自动" class="sb-config-input" />
-            <span class="sb-config-hint sb-config-hint--estimate" :title="scriptEstimateStoryboardTitle">留空由 AI 决定{{ scriptEstimateStoryboardHint }}</span>
+            <span class="sb-config-label">{{ $t('filmCreate.storyboardCount') }}</span>
+            <el-input-number v-model="storyboardCount" :min="1" :max="200" :step="5" :placeholder="$t('filmCreate.autoPlaceholder')" class="sb-config-input" />
+            <span class="sb-config-hint sb-config-hint--estimate" :title="scriptEstimateStoryboardTitle">{{ $t('filmCreate.leaveEmptyAiDecide') }}{{ scriptEstimateStoryboardHint }}</span>
           </label>
           <span class="sb-config-divider">｜</span>
           <label class="sb-config-item">
-            <span class="sb-config-label">视频总时长(秒)</span>
-            <el-input-number v-model="videoDuration" :min="10" :max="600" :step="5" placeholder="自动" class="sb-config-input" />
-            <span class="sb-config-hint sb-config-hint--estimate" :title="scriptEstimateVideoDurationTitle">留空由 AI 决定{{ scriptEstimateVideoDurationHint }}</span>
+            <span class="sb-config-label">{{ $t('filmCreate.videoTotalDuration') }}</span>
+            <el-input-number v-model="videoDuration" :min="10" :max="600" :step="5" :placeholder="$t('filmCreate.autoPlaceholder')" class="sb-config-input" />
+            <span class="sb-config-hint sb-config-hint--estimate" :title="scriptEstimateVideoDurationTitle">{{ $t('filmCreate.leaveEmptyAiDecide') }}{{ scriptEstimateVideoDurationHint }}</span>
           </label>
           <span class="sb-config-divider">｜</span>
           <label class="sb-config-item">
-            <span class="sb-config-label">序列图模式</span>
+            <span class="sb-config-label">{{ $t('filmCreate.stripMode') }}</span>
             <el-select v-model="gridMode" size="small" style="width:110px" :disabled="storyboardUseFirstLastFrame">
-              <el-option label="单张" value="single" />
-              <el-option label="四宫格" value="quad_grid" />
-              <el-option label="九宫格" value="nine_grid" />
+              <el-option :label="$t('filmCreate.modeSingle')" value="single" />
+              <el-option :label="$t('filmCreate.modeQuadGrid')" value="quad_grid" />
+              <el-option :label="$t('filmCreate.modeNineGrid')" value="nine_grid" />
             </el-select>
-            <span class="sb-config-hint">四/九宫格自动按视角拆分</span>
+            <span class="sb-config-hint">{{ $t('filmCreate.gridSplitHint') }}</span>
           </label>
         </div>
         <div class="sb-config-row sb-narration-export-row" style="margin-top:10px;flex-wrap:wrap;align-items:center;gap:12px">
           <el-checkbox v-model="storyboardUseFirstLastFrame" @change="onStoryboardUseFirstLastFrameChange">
-            首尾帧参考图（经典模式双槽；图生前先走专业帧提示词模块 first/last，再生图；视频绑定 first/last_frame_url）
+            {{ $t('filmCreate.firstLastFrameModeHint') }}
           </el-checkbox>
           <el-checkbox v-model="storyboardUniversalOmni" @change="() => saveProjectSettings(false)">
-            全能分镜模式（每镜输出多子分镜段落式 universal_segment_text，与「生成/润色全能提示词」同版式）
+            {{ $t('filmCreate.universalOmniModeHint') }}
           </el-checkbox>
           <el-checkbox v-model="storyboardIncludeNarration" @change="() => saveProjectSettings(false)">
-            生成分镜时生成解说旁白（narration，与对白分开，便于后期 TTS）
+            {{ $t('filmCreate.genNarrationHint') }}
           </el-checkbox>
           <el-button
             v-if="storyboards.length > 0"
@@ -851,7 +851,7 @@
             :loading="exportingStoryboardSheet"
             @click="onExportStoryboardSheet"
           >
-            导出分镜表excel
+            {{ $t('filmCreate.exportStoryboardExcel') }}
           </el-button>
           <el-button
             v-if="storyboards.length > 0"
@@ -862,7 +862,7 @@
             :disabled="!currentEpisodeId"
             @click="onExportNarrationSrt"
           >
-            导出解说 SRT
+            {{ $t('filmCreate.exportNarrationSrt') }}
           </el-button>
         </div>
         <div class="asset-actions sb-batch-actions">
@@ -874,10 +874,10 @@
               :disabled="!currentEpisodeId || storyboardGenerating || universalOmniPolishRunning"
               @click="onGenerateStoryboard"
             >
-              {{ storyboards.length > 0 ? '重新生成分镜' : 'AI 生成分镜' }}
+              {{ storyboards.length > 0 ? $t('filmCreate.reGenerateStoryboards') : $t('filmCreate.aiGenerateStoryboards') }}
             </el-button>
             <ElButton type="info" plain size="large" @click="onAddSingleStoryboard">
-            添加一个分镜
+            {{ $t('filmCreate.addOneStoryboard') }}
             </ElButton>
           </div>
           <template v-if="storyboards.length > 0">
@@ -890,7 +890,7 @@
                 :disabled="!currentEpisodeId || batchImageRunning || batchVideoRunning || pipelineRunning || storyboardGenerating || universalOmniPolishRunning"
                 @click="startBatchImageGeneration"
               >
-                批量生成分镜图
+                {{ $t('filmCreate.batchGenStoryboardImages') }}
               </el-button>
               <el-button
                 type="warning"
@@ -900,27 +900,27 @@
                 :disabled="!currentEpisodeId || batchImageRunning || batchVideoRunning || pipelineRunning || storyboardGenerating || universalOmniPolishRunning"
                 @click="startBatchVideoGeneration"
               >
-                批量生成分镜视频
+                {{ $t('filmCreate.batchGenStoryboardVideos') }}
               </el-button>
-              <el-button v-if="batchImageRunning" size="large" type="danger" plain @click="batchImageStopping = true">停止图片</el-button>
-              <el-button v-if="batchVideoRunning" size="large" type="danger" plain @click="batchVideoStopping = true">停止视频</el-button>
+              <el-button v-if="batchImageRunning" size="large" type="danger" plain @click="batchImageStopping = true">{{ $t('filmCreate.stopImages') }}</el-button>
+              <el-button v-if="batchVideoRunning" size="large" type="danger" plain @click="batchVideoStopping = true">{{ $t('filmCreate.stopVideos') }}</el-button>
             </div>
             <!-- 连贯帧模式 UI 暂时隐藏（保留变量与批量生成逻辑，后续可快速恢复） -->
             <div v-if="false" class="batch-video-options" style="margin-top:8px;display:flex;align-items:center;gap:8px;font-size:13px;">
               <el-checkbox v-model="videoFrameContiguity" size="small">
-                连贯帧模式（自动衔接相邻视频帧）
+                {{ $t('filmCreate.contiguityMode') }}
               </el-checkbox>
               <el-tooltip placement="top" :show-after="100">
                 <template #content>
                   <div style="max-width:320px;line-height:1.7">
-                    <div style="font-weight:600;margin-bottom:4px">连贯帧模式说明</div>
-                    <div>启用后批量视频顺序生成，每条视频的<b>末帧</b>自动截取并作为下一条视频的<b>首帧参考图</b>，减少镜头切换的跳跃感。</div>
-                    <div style="margin-top:8px;font-weight:600">⚠️ 需要模型支持图生视频（i2v）</div>
+                    <div style="font-weight:600;margin-bottom:4px">{{ $t('filmCreate.contiguityDescTitle') }}</div>
+                    <div>{{ $t('filmCreate.contiguityDescBody') }}</div>
+                    <div style="margin-top:8px;font-weight:600">{{ $t('filmCreate.contiguityRequirement') }}</div>
                     <div style="margin-top:4px">
-                      ✅ 支持：kling-video、kling-omni-video、wan2.2-kf2v-flash、wan2.6-i2v-flash<br/>
-                      ❌ 不支持（末帧将被忽略）：wan2.6-t2v、wan2.6-r2v-flash、wanx2.1-vace-plus 等纯文生视频模型
+                      {{ $t('filmCreate.contiguitySupported') }}<br/>
+                      {{ $t('filmCreate.contiguityUnsupported') }}
                     </div>
-                    <div style="margin-top:8px;color:#faad14">如当前视频模型不支持 i2v，启用此选项不会报错，但末帧衔接不会生效。</div>
+                    <div style="margin-top:8px;color:#faad14">{{ $t('filmCreate.contiguityFallbackNote') }}</div>
                   </div>
                 </template>
                 <el-icon style="color:#9ca3af;cursor:help"><QuestionFilled /></el-icon>
@@ -932,38 +932,38 @@
         <div v-if="batchImageRunning || batchVideoRunning || batchImageErrors.length || batchVideoErrors.length" class="batch-status">
           <div v-if="batchImageRunning" class="batch-progress">
             <el-icon class="is-loading"><Loading /></el-icon>
-            <span>批量生成分镜图：{{ batchImageProgress.current }}/{{ batchImageProgress.total }}</span>
-            <span v-if="batchImageProgress.failed > 0" class="batch-failed">{{ batchImageProgress.failed }} 条失败</span>
-            <span v-if="batchImageStopping" class="batch-stopping">（正在停止...）</span>
+            <span>{{ $t('filmCreate.batchGenImageProgress', { current: batchImageProgress.current, total: batchImageProgress.total }) }}</span>
+            <span v-if="batchImageProgress.failed > 0" class="batch-failed">{{ $t('filmCreate.batchFailedCount', { count: batchImageProgress.failed }) }}</span>
+            <span v-if="batchImageStopping" class="batch-stopping">{{ $t('filmCreate.batchStopping') }}</span>
           </div>
           <div v-if="batchVideoRunning" class="batch-progress">
             <el-icon class="is-loading"><Loading /></el-icon>
-            <span>批量生成分镜视频：{{ batchVideoProgress.current }}/{{ batchVideoProgress.total }}</span>
-            <span v-if="batchVideoProgress.failed > 0" class="batch-failed">{{ batchVideoProgress.failed }} 条失败</span>
-            <span v-if="batchVideoStopping" class="batch-stopping">（正在停止...）</span>
+            <span>{{ $t('filmCreate.batchGenVideoProgress', { current: batchVideoProgress.current, total: batchVideoProgress.total }) }}</span>
+            <span v-if="batchVideoProgress.failed > 0" class="batch-failed">{{ $t('filmCreate.batchFailedCount', { count: batchVideoProgress.failed }) }}</span>
+            <span v-if="batchVideoStopping" class="batch-stopping">{{ $t('filmCreate.batchStopping') }}</span>
           </div>
           <div v-if="batchImageErrors.length > 0" class="batch-error-log">
-            <div class="batch-error-title">分镜图生成失败记录：</div>
+            <div class="batch-error-title">{{ $t('filmCreate.batchImageFailedRecord') }}</div>
             <div v-for="(e, i) in batchImageErrors" :key="i" class="batch-error-line">{{ e }}</div>
           </div>
           <div v-if="batchVideoErrors.length > 0" class="batch-error-log">
-            <div class="batch-error-title">分镜视频生成失败记录：</div>
+            <div class="batch-error-title">{{ $t('filmCreate.batchVideoFailedRecord') }}</div>
             <div v-for="(e, i) in batchVideoErrors" :key="i" class="batch-error-line">{{ e }}</div>
           </div>
         </div>
         <div v-if="storyboardGenerating || universalOmniPolishRunning" class="storyboard-generating-tip">
           <el-icon class="is-loading"><Loading /></el-icon>
           <span v-if="universalOmniPolishRunning">
-            正在润色全能提示词：第 {{ universalOmniPolishProgress.current }} / {{ universalOmniPolishProgress.total }} 镜
+            {{ $t('filmCreate.polishingUniversalPrompt', { current: universalOmniPolishProgress.current, total: universalOmniPolishProgress.total }) }}
             <template v-if="universalOmniPolishProgress.label">（{{ universalOmniPolishProgress.label }}）</template>
             …
           </span>
-          <span v-else>正在分析剧本并拆解分镜，请稍候...</span>
+          <span v-else>{{ $t('filmCreate.analyzingScriptBreakdown') }}</span>
         </div>
         <div v-if="sbTruncatedWarning && !sbTruncatedDismissed && storyboards.length > 0" class="sb-truncated-warning">
           <el-icon><WarningFilled /></el-icon>
-          <span>检测到分镜可能不完整（AI 输出被截断），请确认分镜数量是否符合预期，必要时可重新生成。</span>
-          <el-button size="small" text @click="sbTruncatedDismissed = true">关闭</el-button>
+          <span>{{ $t('filmCreate.storyboardTruncatedWarning') }}</span>
+          <el-button size="small" text @click="sbTruncatedDismissed = true">{{ $t('common.close') }}</el-button>
         </div>
         <template v-if="storyboards.length > 0">
           <template v-for="(sb, i) in storyboards" :key="sb.id">
@@ -973,10 +973,10 @@
               class="segment-header"
             >
               <div class="segment-header-inner">
-                <span class="segment-index-badge">第 {{ (sb.segment_index ?? 0) + 1 }} 幕</span>
+                <span class="segment-index-badge">{{ $t('filmCreate.segmentIndexBadge', { num: (sb.segment_index ?? 0) + 1 }) }}</span>
                 <span class="segment-title-text">{{ sb.segment_title }}</span>
                 <span class="segment-shot-range">
-                  镜头 {{ i + 1 }}–{{ (() => {
+                  {{ $t('filmCreate.shotRangePrefix') }} {{ i + 1 }}–{{ (() => {
                     let end = i
                     while (end + 1 < storyboards.length && storyboards[end + 1].segment_index === sb.segment_index) end++
                     return end + 1
@@ -987,25 +987,25 @@
           <!-- 分镜控制栏（卡片外，缩进表示属于当前幕） -->
           <div class="sb-ctrl-bar">
             <span class="sb-ctrl-num">{{ i + 1 }}</span>
-            <span class="sb-ctrl-title">{{ sb.title || '未命名分镜' }}</span>
+            <span class="sb-ctrl-title">{{ sb.title || $t('filmCreate.unnamedStoryboard') }}</span>
             <el-tag v-if="sb.movement" size="small" effect="plain" type="info" class="sb-movement-tag">{{ getMovementLabel(sb.movement) }}</el-tag>
-            <el-button size="small" plain class="sb-ctrl-btn sb-ctrl-config-btn" @click="onOpenVideoParamsDialog(sb)">⚙ 分镜配置</el-button>
+            <el-button size="small" plain class="sb-ctrl-btn sb-ctrl-config-btn" @click="onOpenVideoParamsDialog(sb)">{{ $t('filmCreate.storyboardConfig') }}</el-button>
             <el-button
               size="small"
               plain
               class="sb-ctrl-btn sb-ctrl-mode-btn"
-              :title="isSbUniversalMode(sb.id) ? '切换为经典分镜（中间显示参考图）' : '切换为全能模式（中间为片段描述，经典字段保留）'"
+              :title="isSbUniversalMode(sb.id) ? $t('filmCreate.switchToClassicTip') : $t('filmCreate.switchToUniversalTip')"
               @click="onToggleSbUniversalMode(sb)"
             >
-              {{ isSbUniversalMode(sb.id) ? '经典分镜' : '全能模式' }}
+              {{ isSbUniversalMode(sb.id) ? $t('filmCreate.classicMode') : $t('filmCreate.universalMode') }}
             </el-button>
-            <el-button size="small" plain class="sb-ctrl-btn" title="在本镜头前增加一个分镜" @click="onInsertStoryboardBefore(sb)">＋ 新增</el-button>
+            <el-button size="small" plain class="sb-ctrl-btn" :title="$t('filmCreate.insertStoryboardBefore')" @click="onInsertStoryboardBefore(sb)">{{ $t('filmCreate.addShort') }}</el-button>
             <el-button
               class="sb-ctrl-delete"
               type="danger"
               text
               size="small"
-              :title="`删除分镜${i + 1}`"
+              :title="$t('filmCreate.deleteStoryboardN', { num: i + 1 })"
               @click="onDeleteSingleStoryboard(sb.id)"
             >
               <el-icon><Delete /></el-icon>
@@ -1017,7 +1017,7 @@
               <div class="sb-script-row sb-script-selects">
                 <el-select
                   :model-value="getSbCharacterIds(sb.id)"
-                  placeholder="选择角色"
+                  :placeholder="$t('filmCreate.selectCharacter')"
                   multiple
                   collapse-tags
                   collapse-tags-tooltip
@@ -1028,16 +1028,16 @@
                   <el-option
                     v-for="c in (characters || [])"
                     :key="String(c.id)"
-                    :label="c.name || '未命名'"
+                    :label="c.name || $t('common.unnamed')"
                     :value="c.id"
                   />
                   <template v-if="!(characters || []).length" #empty>
-                    <span class="sb-select-empty">请先在「角色生成」中添加角色</span>
+                    <span class="sb-select-empty">{{ $t('filmCreate.addCharFirstInTab') }}</span>
                   </template>
                 </el-select>
                 <el-select
                   v-model="sbSceneId[sb.id]"
-                  placeholder="选择场景"
+                  :placeholder="$t('filmCreate.selectScene')"
                   clearable
                   size="small"
                   class="sb-select"
@@ -1052,7 +1052,7 @@
                 </el-select>
                 <el-select
                   :model-value="getSbPropIds(sb.id)"
-                  placeholder="选择物品"
+                  :placeholder="$t('filmCreate.selectProp')"
                   multiple
                   collapse-tags
                   collapse-tags-tooltip
@@ -1063,18 +1063,18 @@
                   <el-option
                     v-for="p in (props || [])"
                     :key="String(p.id)"
-                    :label="p.name || '未命名'"
+                    :label="p.name || $t('common.unnamed')"
                     :value="p.id"
                   />
                   <template v-if="!(props || []).length" #empty>
-                    <span class="sb-select-empty">请先在「道具生成」中添加物品</span>
+                    <span class="sb-select-empty">{{ $t('filmCreate.addPropFirstInTab') }}</span>
                   </template>
                 </el-select>
               </div>
               <!-- 当前选中：场景 / 角色 / 物品缩略图 -->
               <div v-if="getSbSelectedScene(sb.id) || getSbSelectedCharacters(sb.id).length || getSbSelectedProps(sb.id).length || (characters || []).length" class="sb-selected-thumbs">
                 <div v-if="getSbSelectedScene(sb.id)" class="sb-thumb-row">
-                  <span class="sb-thumb-label">场景</span>
+                  <span class="sb-thumb-label">{{ $t('filmCreate.sceneLabel') }}</span>
                   <div class="sb-thumb-list">
                     <div
                       v-for="s in [getSbSelectedScene(sb.id)]"
@@ -1091,7 +1091,7 @@
                   </div>
                 </div>
                 <div v-if="(characters || []).length" class="sb-thumb-row">
-                  <span class="sb-thumb-label">角色</span>
+                  <span class="sb-thumb-label">{{ $t('filmCreate.characterLabel') }}</span>
                   <div class="sb-thumb-list">
                     <div
                       v-for="c in getSbSelectedCharacters(sb.id)"
@@ -1108,7 +1108,7 @@
                     <el-dropdown trigger="click" @command="(cmd) => onSbAddCharacterCommand(sb.id, cmd)">
                       <div
                         class="sb-thumb-item sb-thumb-avatar sb-thumb-add-char"
-                        title="添加角色"
+                        :title="$t('filmCreate.addCharacter')"
                         role="button"
                         @click.stop
                       >
@@ -1121,10 +1121,10 @@
                             :key="c.id"
                             :command="c.id"
                           >
-                            {{ c.name || '未命名' }}
+                            {{ c.name || $t('common.unnamed') }}
                           </el-dropdown-item>
                           <el-dropdown-item v-if="!charactersAvailableToAddToSb(sb.id).length" disabled>
-                            已全部添加或无角色
+                            {{ $t('filmCreate.allAddedOrNoChars') }}
                           </el-dropdown-item>
                         </el-dropdown-menu>
                       </template>
@@ -1132,7 +1132,7 @@
                   </div>
                 </div>
                 <div v-if="getSbSelectedProps(sb.id).length" class="sb-thumb-row">
-                  <span class="sb-thumb-label">物品</span>
+                  <span class="sb-thumb-label">{{ $t('filmCreate.propLabel') }}</span>
                   <div class="sb-thumb-list">
                     <div
                       v-for="p in getSbSelectedProps(sb.id)"
@@ -1152,32 +1152,32 @@
               <!-- 首尾帧模式下隐藏“图片提示词”入口，统一收敛到首/尾帧槽位的“查看提示词” -->
               <div v-if="!storyboardUseFirstLastFrame" class="sb-prompt-label">
                 <span class="sb-dot"></span>
-                <span>图片提示词</span>
+                <span>{{ $t('filmCreate.imagePrompt') }}</span>
               </div>
               <div v-if="!storyboardUseFirstLastFrame" class="sb-prompt-row">
-                <span class="sb-prompt-text">{{ sb.image_prompt || '暂无图片提示词' }}</span>
-                <el-button size="small" link type="primary" @click="onOpenSbPromptDialog(sb)">编辑</el-button>
+                <span class="sb-prompt-text">{{ sb.image_prompt || $t('filmCreate.noImagePrompt') }}</span>
+                <el-button size="small" link type="primary" @click="onOpenSbPromptDialog(sb)">{{ $t('common.edit') }}</el-button>
               </div>
               <template v-if="storyboardIncludeNarration || (sbNarration[sb.id] || '').trim() || (sb.narration || '').trim()">
                 <div class="sb-prompt-label">
                   <span class="sb-dot"></span>
-                  <span>解说旁白</span>
+                  <span>{{ $t('filmCreate.narrationLabel') }}</span>
                 </div>
                 <el-input
                   v-model="sbNarration[sb.id]"
                   type="textarea"
                   :rows="2"
-                  placeholder="本镜解说文案（画外音 / 纪录片式旁白，供 TTS 或导出 SRT）"
+                  :placeholder="$t('filmCreate.narrationPlaceholder')"
                   class="sb-narration-input"
                   @blur="() => onSaveSbNarrationField(sb)"
                 />
                 <div v-if="(sbNarration[sb.id] || sb.narration || '').toString().trim()" class="sb-narration-actions">
-                  <el-tooltip content="解说旁白配音（TTS）" placement="top">
+                  <el-tooltip :content="$t('filmCreate.narrationTtsTooltip')" placement="top">
                     <el-button size="small" :loading="ttsSbNarrationIds.has(sb.id)" @click="onTtsSbNarration(sb)">
-                      解说配音
+                      {{ $t('filmCreate.narrationDubbing') }}
                     </el-button>
                   </el-tooltip>
-                  <el-tooltip v-if="sbNarrationAudioRelPath(sb)" content="播放解说旁白配音" placement="top">
+                  <el-tooltip v-if="sbNarrationAudioRelPath(sb)" :content="$t('filmCreate.playNarrationDubbing')" placement="top">
                     <el-button size="small" @click="playSbNarrationTts(sb)">
                       <el-icon><VideoPlay /></el-icon>
                     </el-button>
@@ -1191,14 +1191,14 @@
                 <div class="sb-prompt-label sb-universal-label-row">
                   <div class="sb-universal-label-left">
                     <span class="sb-dot"></span>
-                    <span>片段描述</span>
+                    <span>{{ $t('filmCreate.clipExplanation') }}</span>
                     <el-tooltip placement="top" :show-after="280" :show-arrow="false" popper-class="sb-universal-tooltip-popper">
                       <template #content>
                         <div class="sb-universal-tooltip">
-                          全能生视频链路（<strong>AI 配置 · 视频</strong>：接口规范 <code>kling_omni</code> / <code>volcengine_omni</code>，或厂商「低价 Seedance2」，或勾选「确认支持全能模式」）：此处为提交主提示词；只要本框有内容，生视频时<strong>只</strong>发送这段，不会拼接下方「视频提示词」里的动作/对话/旁白。参考图顺序一般为：场景 → 角色（多张）→ 物品（<strong>不含</strong>经典分镜中间主图）；请用 <strong>@图片1</strong>、<strong>@图片2</strong>…（<strong>@图片N 后建议加半角空格</strong>）对应参考图，勿用 @姓名 指图；有场景图时 <strong>@图片1</strong> 只表环境，人物从 <strong>@图片2</strong> 起。若场景参考是<strong>四宫格/多视角拼图</strong>，仅借空间与氛围，须在文案中写明<strong>单镜头完整画幅、禁止分屏宫格</strong>，避免成片模仿拼图布局。全能提示词下拉中「生成」会按<strong>本条分镜总时长</strong>与本集剧本、镜序、邻镜信息，自动决定子分镜数 M（第2行「由以下M个分镜…」），第4行起为「分镜1：T1秒:」…多行，且各段秒数之和等于本镜时长；第3行仍为环境/参考图约束；「生成」与「润色」均为<strong>流式输出</strong>到本框；「润色」在此基础上增强。若本框留空，则退回仅用「视频提示词」。
+                          {{ $t('filmCreate.universalPromptGuide') }}
                         </div>
                       </template>
-                      <el-icon class="sb-universal-hint-icon" tabindex="0" role="img" aria-label="片段说明">
+                      <el-icon class="sb-universal-hint-icon" tabindex="0" role="img" :aria-label="$t('filmCreate.clipExplanation')">
                         <QuestionFilled />
                       </el-icon>
                     </el-tooltip>
@@ -1215,25 +1215,25 @@
                       class="sb-universal-gen-btn"
                       :loading="generatingUniversalSegmentIds.has(sb.id)"
                     >
-                      全能提示词
+                      {{ $t('filmCreate.universalPrompt') }}
                       <el-icon class="sb-universal-dd-caret"><ArrowDown /></el-icon>
                     </el-button>
                     <template #dropdown>
                       <el-dropdown-menu>
-                        <el-dropdown-item command="generate">生成全能提示词</el-dropdown-item>
-                        <el-dropdown-item command="generate-force">不查图片强制生成</el-dropdown-item>
+                        <el-dropdown-item command="generate">{{ $t('filmCreate.generateUniversalPrompt') }}</el-dropdown-item>
+                        <el-dropdown-item command="generate-force">{{ $t('filmCreate.generateUniversalPromptForce') }}</el-dropdown-item>
                         <el-dropdown-item command="polish" :disabled="!sbUniversalSegmentTrimmed(sb)">
-                          润色全能提示词
+                          {{ $t('filmCreate.polishUniversalPrompt') }}
                         </el-dropdown-item>
                         <el-dropdown-item command="polish-force" :disabled="!sbUniversalSegmentTrimmed(sb)">
-                          不查图片强制润色
+                          {{ $t('filmCreate.polishUniversalPromptForce') }}
                         </el-dropdown-item>
                         <el-dropdown-item
                           command="to-grok-video-tags"
                           divided
                           :disabled="!sbUniversalSegmentTrimmed(sb)"
                         >
-                          改为 grok视频格式
+                          {{ $t('filmCreate.toGrokVideoTags') }}
                         </el-dropdown-item>
                       </el-dropdown-menu>
                     </template>
@@ -1252,7 +1252,7 @@
                   type="textarea"
                   :rows="10"
                   :autosize="{ minRows: 10, maxRows: 22 }"
-                  placeholder="例如：@图片1 为夜景街道，@图片2 从餐厅冲出停在光斑里，低头操作手机…"
+                  :placeholder="$t('filmCreate.universalSegmentPlaceholder')"
                   class="sb-universal-textarea"
                   @blur="() => onSaveUniversalSegmentField(sb)"
                 />
@@ -1273,7 +1273,7 @@
                 <template v-if="storyboardUseFirstLastFrame">
                   <div class="sb-fl-dual">
                     <div class="sb-fl-slot">
-                      <div class="sb-fl-slot-label">首帧</div>
+                      <div class="sb-fl-slot-label">{{ $t('filmCreate.firstFrame') }}</div>
                       <div class="sb-fl-slot-body">
                         <template v-if="getSbFirstImage(sb.id)">
                           <img
@@ -1292,24 +1292,24 @@
                           />
                         </template>
                         <template v-else>
-                          <span class="sb-fl-empty">动作前静止</span>
+                          <span class="sb-fl-empty">{{ $t('filmCreate.staticBeforeAction') }}</span>
                         </template>
                       </div>
                       <div v-if="getSbFirstImage(sb.id)?.prompt" class="sb-fl-slot-prompt" :title="getSbFirstImage(sb.id).prompt">
                         {{ getSbFirstImage(sb.id).prompt }}
                       </div>
                       <div class="sb-fl-slot-actions">
-                        <el-button type="primary" size="small" :loading="generatingSbFirstImageIds.has(sb.id)" @click="onGenerateSbFrameImage(sb, 'first')">生成</el-button>
-                        <el-tooltip v-if="canUsePrevTailAsFirst(sb)" content="直接使用上一分镜的尾帧图片（高清原图）替换本首帧，画面更清晰" placement="top">
-                          <el-button size="small" :loading="usingPrevTailAsFirstIds.has(sb.id)" @click="onUsePrevTailAsFirst(sb)">上镜尾帧</el-button>
+                        <el-button type="primary" size="small" :loading="generatingSbFirstImageIds.has(sb.id)" @click="onGenerateSbFrameImage(sb, 'first')">{{ $t('common.generate') }}</el-button>
+                        <el-tooltip v-if="canUsePrevTailAsFirst(sb)" :content="$t('filmCreate.usePrevTailAsFirstTip')" placement="top">
+                          <el-button size="small" :loading="usingPrevTailAsFirstIds.has(sb.id)" @click="onUsePrevTailAsFirst(sb)">{{ $t('filmCreate.prevTailFrame') }}</el-button>
                         </el-tooltip>
-                        <el-button size="small" :loading="uploadingSbImageSlot(sb.id) === 'first'" @click="onUploadSbImageClick(sb, 'first')">上传</el-button>
-                        <el-button type="primary" link size="small" @click="showSbFramePromptPreview(sb, 'first')">查看提示词</el-button>
+                        <el-button size="small" :loading="uploadingSbImageSlot(sb.id) === 'first'" @click="onUploadSbImageClick(sb, 'first')">{{ $t('common.upload') }}</el-button>
+                        <el-button type="primary" link size="small" @click="showSbFramePromptPreview(sb, 'first')">{{ $t('filmCreate.viewPrompt') }}</el-button>
                       </div>
                     </div>
                     <div class="sb-fl-arrow" aria-hidden="true">→</div>
                     <div class="sb-fl-slot">
-                      <div class="sb-fl-slot-label">尾帧</div>
+                      <div class="sb-fl-slot-label">{{ $t('filmCreate.lastFrame') }}</div>
                       <div class="sb-fl-slot-body">
                         <template v-if="getSbLastImage(sb.id)">
                           <img
@@ -1321,29 +1321,29 @@
                           />
                         </template>
                         <template v-else>
-                          <span class="sb-fl-empty">动作后结果</span>
+                          <span class="sb-fl-empty">{{ $t('filmCreate.resultAfterAction') }}</span>
                         </template>
                       </div>
                       <div v-if="getSbLastImage(sb.id)?.prompt" class="sb-fl-slot-prompt" :title="getSbLastImage(sb.id).prompt">
                         {{ getSbLastImage(sb.id).prompt }}
                       </div>
                       <div class="sb-fl-slot-actions">
-                        <el-button type="primary" size="small" :loading="generatingSbLastImageIds.has(sb.id)" @click="onGenerateSbFrameImage(sb, 'last')">生成</el-button>
+                        <el-button type="primary" size="small" :loading="generatingSbLastImageIds.has(sb.id)" @click="onGenerateSbFrameImage(sb, 'last')">{{ $t('common.generate') }}</el-button>
                         <el-checkbox
                           v-model="lastFrameUseFirstLayoutLock"
                           class="sb-fl-first-lock-opt"
-                          title="勾选时尾帧生成会附带首帧图作构图与左右站位参考；取消后仅使用场景/角色/道具参考，便于调整出场人物"
+                          :title="$t('filmCreate.firstFramePoseTip')"
                           @change="onLastFrameLayoutLockChange"
                         >
-                          首帧站位
+                          {{ $t('filmCreate.firstFramePosition') }}
                         </el-checkbox>
-                        <el-button size="small" :loading="uploadingSbImageSlot(sb.id) === 'last'" @click="onUploadSbImageClick(sb, 'last')">上传</el-button>
-                        <el-button type="primary" link size="small" @click="showSbFramePromptPreview(sb, 'last')">查看提示词</el-button>
+                        <el-button size="small" :loading="uploadingSbImageSlot(sb.id) === 'last'" @click="onUploadSbImageClick(sb, 'last')">{{ $t('common.upload') }}</el-button>
+                        <el-button type="primary" link size="small" @click="showSbFramePromptPreview(sb, 'last')">{{ $t('filmCreate.viewPrompt') }}</el-button>
                       </div>
                     </div>
                   </div>
                   <div v-if="getStripItems(sb.id).length" class="sb-imgs-strip">
-                    <el-tooltip content="历史图：点击设为首帧或尾帧，左上角放大预览，右上角删除" placement="top" :show-arrow="false">
+                    <el-tooltip :content="$t('filmCreate.historyImagesFirstLastTip')" placement="top" :show-arrow="false">
                       <el-icon class="sb-strip-hint-icon"><InfoFilled /></el-icon>
                     </el-tooltip>
                     <div
@@ -1356,10 +1356,10 @@
                       <img :src="item.src" alt="" />
                       <span v-if="item.frameBadge" class="sb-img-thumb-label">{{ item.frameBadge }}</span>
                       <span v-else-if="item.label" class="sb-img-thumb-label">{{ item.label }}</span>
-                      <button class="thumb-preview-btn" title="放大预览" @click.stop="openImagePreview(item.src)">
+                      <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" @click.stop="openImagePreview(item.src)">
                         <el-icon :size="10"><ZoomIn /></el-icon>
                       </button>
-                      <button v-if="item.img?.id" class="extra-thumb-remove" title="删除历史图" @click.stop="onRemoveSbHistoryImage(sb.id, item.img.id)">×</button>
+                      <button v-if="item.img?.id" class="extra-thumb-remove" :title="$t('filmCreate.deleteHistoryImage')" @click.stop="onRemoveSbHistoryImage(sb.id, item.img.id)">×</button>
                     </div>
                   </div>
                 </template>
@@ -1388,60 +1388,60 @@
                     <div class="sb-image-error" :title="sb.error_msg || sb.errorMsg">{{ sb.error_msg || sb.errorMsg }}</div>
                     <el-button type="primary" size="small" class="sb-gen-btn" :loading="generatingSbImageIds.has(sb.id)" @click="onGenerateSbImage(sb)">
                       <el-icon><Refresh /></el-icon>
-                      重试
+                      {{ $t('common.retry') }}
                     </el-button>
-                    <el-button size="small" :loading="uploadingSbImageId === sb.id" @click="onUploadSbImageClick(sb)">上传</el-button>
+                    <el-button size="small" :loading="uploadingSbImageId === sb.id" @click="onUploadSbImageClick(sb)">{{ $t('common.upload') }}</el-button>
                   </template>
                   <template v-else>
                     <el-button type="primary" size="small" class="sb-gen-btn" :loading="generatingSbImageIds.has(sb.id)" @click="onGenerateSbImage(sb)">
                       <el-icon><MagicStick /></el-icon>
-                      生成分镜参考图
+                      {{ $t('filmCreate.generateStoryboardRefImage') }}
                     </el-button>
-                    <el-button size="small" :loading="uploadingSbImageId === sb.id" @click="onUploadSbImageClick(sb)">上传</el-button>
+                    <el-button size="small" :loading="uploadingSbImageId === sb.id" @click="onUploadSbImageClick(sb)">{{ $t('common.upload') }}</el-button>
                   </template>
                 </div>
                 <div v-if="getStripItems(sb.id).length" class="sb-imgs-strip">
-                  <el-tooltip content="历史图：点击设为主图，左上角放大预览，右上角删除" placement="top" :show-arrow="false">
+                  <el-tooltip :content="$t('filmCreate.historyImagesMainTip')" placement="top" :show-arrow="false">
                     <el-icon class="sb-strip-hint-icon"><InfoFilled /></el-icon>
                   </el-tooltip>
                   <div
                     v-for="item in getStripItems(sb.id)"
                     :key="item.key"
                     class="sb-img-thumb"
-                    :title="[item.label, item.prompt].filter(Boolean).join('\n\n') || '点击设为主图'"
+                    :title="[item.label, item.prompt].filter(Boolean).join('\n\n') || $t('filmCreate.clickSetAsMain')"
                     @click="onSelectStripItem(sb, item)"
                   >
                     <img :src="item.src" alt="" />
                     <span v-if="item.label" class="sb-img-thumb-label">{{ item.label }}</span>
-                    <button class="thumb-preview-btn" title="放大预览" @click.stop="openImagePreview(item.src)">
+                    <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" @click.stop="openImagePreview(item.src)">
                       <el-icon :size="10"><ZoomIn /></el-icon>
                     </button>
-                    <button v-if="item.img?.id" class="extra-thumb-remove" title="删除历史图" @click.stop="onRemoveSbHistoryImage(sb.id, item.img.id)">×</button>
+                    <button v-if="item.img?.id" class="extra-thumb-remove" :title="$t('filmCreate.deleteHistoryImage')" @click.stop="onRemoveSbHistoryImage(sb.id, item.img.id)">×</button>
                   </div>
                 </div>
                 </template>
-                <div v-if="dragOverSbId === sb.id" class="sb-image-area-drop-hint">松开上传到首帧</div>
+                <div v-if="dragOverSbId === sb.id" class="sb-image-area-drop-hint">{{ $t('filmCreate.dropUploadToFirstFrame') }}</div>
               </div>
               <div v-if="hasSbImage(sb) || storyboardUseFirstLastFrame" class="sb-image-actions">
                 <template v-if="storyboardUseFirstLastFrame">
-                  <el-button size="small" :loading="generatingSbFirstImageIds.has(sb.id) || generatingSbLastImageIds.has(sb.id)" @click="onGenerateSbFramePair(sb)">{{ hasSbFirstLastPair(sb) ? '重新生成首尾帧' : '一键生成首尾帧' }}</el-button>
-                  <el-tooltip content="高清放大仅作用于首帧" placement="top">
+                  <el-button size="small" :loading="generatingSbFirstImageIds.has(sb.id) || generatingSbLastImageIds.has(sb.id)" @click="onGenerateSbFramePair(sb)">{{ hasSbFirstLastPair(sb) ? $t('filmCreate.regenFirstLastPair') : $t('filmCreate.oneClickFirstLastPair') }}</el-button>
+                  <el-tooltip :content="$t('filmCreate.upscaleFirstFrameTip')" placement="top">
                     <el-button size="small" :loading="upscalingSbIds.has(sb.id)" :disabled="!getSbLocalImage(sb)" @click="onUpscaleSbImage(sb)">
-                      <el-icon><ZoomIn /></el-icon>超分(首帧)
+                      <el-icon><ZoomIn /></el-icon>{{ $t('filmCreate.upscaleFirstFrame') }}
                     </el-button>
                   </el-tooltip>
                 </template>
                 <template v-else>
-                <el-button size="small" :loading="generatingSbImageIds.has(sb.id)" @click="onGenerateSbImage(sb)">重新生成</el-button>
-                <el-button size="small" :loading="uploadingSbImageId === sb.id" @click="onUploadSbImageClick(sb)">上传</el-button>
-                <el-tooltip content="高清放大（2x超分辨率）" placement="top">
+                <el-button size="small" :loading="generatingSbImageIds.has(sb.id)" @click="onGenerateSbImage(sb)">{{ $t('common.regenerate') }}</el-button>
+                <el-button size="small" :loading="uploadingSbImageId === sb.id" @click="onUploadSbImageClick(sb)">{{ $t('common.upload') }}</el-button>
+                <el-tooltip :content="$t('filmCreate.upscale2xTip')" placement="top">
                   <el-button
                     size="small"
                     :loading="upscalingSbIds.has(sb.id)"
                     :disabled="!getSbLocalImage(sb)"
                     @click="onUpscaleSbImage(sb)"
                   >
-                    <el-icon><ZoomIn /></el-icon>超分
+                    <el-icon><ZoomIn /></el-icon>{{ $t('filmCreate.upscale') }}
                   </el-button>
                 </el-tooltip>
                 </template>
@@ -1462,9 +1462,9 @@
                 <div
                   v-else
                   class="sb-video-error"
-                  :title="getSbVideoError(sb.id) || '视频地址无效'"
+                  :title="getSbVideoError(sb.id) || $t('filmCreate.videoUrlInvalid')"
                 >
-                  <span>{{ getSbVideoError(sb.id) || '视频地址无效，请重新生成' }}</span>
+                  <span>{{ getSbVideoError(sb.id) || $t('filmCreate.videoUrlInvalidRegen') }}</span>
                   <el-button
                     v-if="getSbResumableFailedVideo(sb.id)"
                     type="warning"
@@ -1474,18 +1474,18 @@
                     :loading="isSbVideoGenerating(sb.id)"
                     @click="onResumeSbVideoPoll(sb)"
                   >
-                    继续查询
+                    {{ $t('filmCreate.continueQuery') }}
                   </el-button>
                 </div>
                 <span v-if="isSbVideoGenerating(sb.id)" class="sb-video-regenerating-overlay">
                   <el-icon class="is-loading"><Loading /></el-icon>
-                  正在重新生成...
+                  {{ $t('filmCreate.regeneratingVideo') }}
                 </span>
               </div>
               <div v-else class="sb-video-area sb-video-placeholder">
                 <span v-if="isSbVideoGenerating(sb.id)" class="sb-video-generating-text">
                   <el-icon class="is-loading"><Loading /></el-icon>
-                  正在生成视频...
+                  {{ $t('filmCreate.generatingVideoText') }}
                 </span>
                 <template v-else>
                   <div v-if="getSbVideoError(sb.id)" class="sb-video-error">
@@ -1499,7 +1499,7 @@
                       :loading="isSbVideoGenerating(sb.id)"
                       @click="onResumeSbVideoPoll(sb)"
                     >
-                      继续查询
+                      {{ $t('filmCreate.continueQuery') }}
                     </el-button>
                   </div>
                   <el-button
@@ -1510,20 +1510,20 @@
                     :disabled="!sbCanSubmitVideo(sb) || isSbVideoGenerating(sb.id)"
                     @click="onGenerateSbVideo(sb)"
                   >
-                    生成分镜视频
+                    {{ $t('filmCreate.generateVideo') }}
                   </el-button>
                 </template>
               </div>
               <!-- 视频历史条：有多条历史时显示，点击可切换 -->
               <div v-if="getVideoStripItems(sb.id).length" class="sb-videos-strip">
-                <el-tooltip content="历史视频：点击可切换为当前视频" placement="top" :show-arrow="false">
+                <el-tooltip :content="$t('filmCreate.historyVideoTip')" placement="top" :show-arrow="false">
                   <el-icon class="sb-strip-hint-icon"><InfoFilled /></el-icon>
                 </el-tooltip>
                 <div
                   v-for="item in getVideoStripItems(sb.id)"
                   :key="item.key"
                   class="sb-video-thumb"
-                  :title="`${item.label}（点击切换）`"
+                  :title="$t('filmCreate.clickToSwitchVideo', { label: item.label })"
                   @click="onSelectSbMainVideo(sb, item.video)"
                 >
                   <video :src="item.src" preload="metadata" class="sb-video-thumb-player" />
@@ -1531,16 +1531,16 @@
                 </div>
               </div>
               <div v-if="getSbVideo(sb.id)" class="sb-video-actions">
-                <el-button size="small" :loading="isSbVideoGenerating(sb.id)" :disabled="!sbCanSubmitVideo(sb) || isSbVideoGenerating(sb.id)" @click="onGenerateSbVideo(sb)">重新生成</el-button>
-                <el-tooltip v-if="getNextStoryboard(sb.id)" content="提取本视频尾帧，设为下一个分镜的首帧" placement="top">
-                  <el-button size="small" :loading="linkingTailFrameIds.has(sb.id)" @click="onLinkTailFrameToNext(sb)">尾帧衔接</el-button>
+                <el-button size="small" :loading="isSbVideoGenerating(sb.id)" :disabled="!sbCanSubmitVideo(sb) || isSbVideoGenerating(sb.id)" @click="onGenerateSbVideo(sb)">{{ $t('common.regenerate') }}</el-button>
+                <el-tooltip v-if="getNextStoryboard(sb.id)" :content="$t('filmCreate.linkTailFrameToNextTip')" placement="top">
+                  <el-button size="small" :loading="linkingTailFrameIds.has(sb.id)" @click="onLinkTailFrameToNext(sb)">{{ $t('filmCreate.linkTailFrame') }}</el-button>
                 </el-tooltip>
-                <el-tooltip v-if="sb.dialogue" content="对白配音（TTS）" placement="top">
+                <el-tooltip v-if="sb.dialogue" :content="$t('filmCreate.dialogueTtsTip')" placement="top">
                   <el-button size="small" :loading="ttsSbIds.has(sb.id)" @click="onTtsSbDialogue(sb)">
-                    对白配音
+                    {{ $t('filmCreate.dialogueDubbing') }}
                   </el-button>
                 </el-tooltip>
-                <el-tooltip v-if="sb.dialogue && sbDialogueAudioRelPath(sb)" content="播放对白配音" placement="top">
+                <el-tooltip v-if="sb.dialogue && sbDialogueAudioRelPath(sb)" :content="$t('filmCreate.playDialogueDubbing')" placement="top">
                   <el-button size="small" @click="playSbDialogueTts(sb)">
                     <el-icon><VideoPlay /></el-icon>
                   </el-button>
@@ -1548,11 +1548,11 @@
               </div>
               <div class="sb-video-prompt-label">
                 <span class="sb-dot"></span>
-                <span>视频提示词</span>
+                <span>{{ $t('filmCreate.videoPrompt') }}</span>
               </div>
               <div class="sb-video-params-bar">
-                <span class="sb-video-prompt-text sb-video-prompt-text--preview">{{ sb.video_prompt || '暂无视频提示词（在「视频配置」保存后自动生成）' }}</span>
-                <el-button size="small" link type="primary" @click="onOpenSbPromptDialog(sb)">手工编辑</el-button>
+                <span class="sb-video-prompt-text sb-video-prompt-text--preview">{{ sb.video_prompt || $t('filmCreate.noVideoPromptPlaceholder') }}</span>
+                <el-button size="small" link type="primary" @click="onOpenSbPromptDialog(sb)">{{ $t('filmCreate.manualEdit') }}</el-button>
               </div>
             </div>
           </div>
@@ -1562,19 +1562,19 @@
         <div v-if="storyboardGenerating || universalOmniPolishRunning" class="sb-generating-tip">
           <span class="sb-gen-dot" /><span class="sb-gen-dot" /><span class="sb-gen-dot" />
           <span v-if="universalOmniPolishRunning" class="sb-gen-text">
-            全能片段润色中 {{ universalOmniPolishProgress.current }}/{{ universalOmniPolishProgress.total }}
+            {{ $t('filmCreate.universalPolishingProgress', { current: universalOmniPolishProgress.current, total: universalOmniPolishProgress.total }) }}
             <template v-if="universalOmniPolishProgress.label"> · {{ universalOmniPolishProgress.label }}</template>
           </span>
-          <span v-else class="sb-gen-text">分镜持续生成中，客官稍等片刻…</span>
+          <span v-else class="sb-gen-text">{{ $t('filmCreate.storyboardGeneratingWait') }}</span>
         </div>
-        <div v-else-if="storyboards.length === 0" class="empty-tip">请先生成分镜</div>
+        <div v-else-if="storyboards.length === 0" class="empty-tip">{{ $t('filmCreate.pleaseGenStoryboardsFirst') }}</div>
       </section>
 
       <!-- 7. 视频配置 + AI 模型配置 -->
       <section class="section card">
-        <h2 class="section-title">视频配置</h2>
+        <h2 class="section-title">{{ $t('filmCreate.videoConfigTitle') }}</h2>
         <div class="config-grid">
-          <el-form-item label="分辨率">
+          <el-form-item :label="$t('filmCreate.resolution')">
             <el-select v-model="videoResolution" style="width: 160px">
               <el-option label="480p" value="480p" />
               <el-option label="720p" value="720p" />
@@ -1599,25 +1599,25 @@
             </el-select>
           </el-form-item>
           -->
-          <el-form-item label="字幕">
+          <el-form-item :label="$t('filmCreate.subtitle')">
             <div class="video-option-row">
               <el-switch v-model="videoSubtitle" />
-              <span v-if="videoSubtitle" class="video-option-hint">开启后，合成整集时会检测解说旁白：若有文案则自动生成 SRT、按分镜时长合成旁白语音（过长加速 / 过短补静音）、与成片对齐后烧录字幕并混音。</span>
+              <span v-if="videoSubtitle" class="video-option-hint">{{ $t('filmCreate.subtitleHint') }}</span>
             </div>
           </el-form-item>
-          <el-form-item label="对白烧录">
+          <el-form-item :label="$t('filmCreate.burnDialogue')">
             <div class="video-option-row">
               <el-switch v-model="videoBurnDialogue" />
-              <span v-if="videoBurnDialogue" class="video-option-hint">开启后，将把各镜「配音」生成的对白 TTS 按分镜时长对齐并混入整集成片（无对白音频的分镜为静音）。可与「字幕」旁白同时开启，两条音轨会叠混。</span>
+              <span v-if="videoBurnDialogue" class="video-option-hint">{{ $t('filmCreate.burnDialogueHint') }}</span>
             </div>
           </el-form-item>
-          <el-form-item label="水印">
+          <el-form-item :label="$t('filmCreate.watermark')">
             <div class="video-option-row">
               <el-switch v-model="videoWatermark" />
               <el-input
                 v-if="videoWatermark"
                 v-model="videoWatermarkText"
-                placeholder="右下角水印文字"
+                :placeholder="$t('filmCreate.watermarkPlaceholder')"
                 maxlength="200"
                 show-word-limit
                 clearable
@@ -1626,12 +1626,12 @@
             </div>
           </el-form-item>
         </div>
-        <p class="config-tip">文本/图片/视频使用的模型以「<el-link type="primary" underline="never" @click="showAiConfigDialog = true">AI 配置</el-link>」中设为默认的为准。</p>
+        <p class="config-tip">{{ $t('filmCreate.aiConfigTipPrefix') }}<el-link type="primary" underline="never" @click="showAiConfigDialog = true">{{ $t('routes.aiConfig') }}</el-link>{{ $t('filmCreate.aiConfigTipSuffix') }}</p>
       </section>
 
       <!-- 8. 合成视频 -->
       <section id="anchor-video" class="section card">
-        <h2 class="section-title">合成视频</h2>
+        <h2 class="section-title">{{ $t('filmCreate.composeVideoTitle') }}</h2>
         <el-button
           type="primary"
           size="large"
@@ -1639,20 +1639,20 @@
           :disabled="!currentEpisodeId || storyboards.length === 0 || videoStatus === 'generating'"
           @click="onGenerateVideo"
         >
-          合成视频
+          {{ $t('filmCreate.composeVideoBtn') }}
         </el-button>
         <div v-if="videoStatus === 'generating'" class="video-progress">
           <el-progress :percentage="videoProgress" :status="videoProgress >= 100 ? 'success' : undefined" />
-          <p>视频生成中...</p>
+          <p>{{ $t('filmCreate.videoGenerating') }}</p>
         </div>
         <div v-if="videoStatus === 'done'" class="video-done">
-          <el-alert type="success" title="视频生成完成" show-icon />
+          <el-alert type="success" :title="$t('filmCreate.videoGenComplete')" show-icon />
         </div>
         <div v-else-if="videoStatus === 'error'" class="video-error">
           <el-alert type="error" :title="videoErrorMsg" show-icon />
         </div>
         <div v-if="currentEpisodeVideoUrl" class="video-preview-wrap">
-          <p class="video-preview-label">本集合成视频预览</p>
+          <p class="video-preview-label">{{ $t('filmCreate.mergedVideoPreview') }}</p>
           <video
             :src="currentEpisodeVideoUrl"
             controls
@@ -1664,36 +1664,36 @@
     </main>
 
     <!-- 添加道具弹窗 -->
-    <el-dialog v-model="showAddProp" title="添加道具" width="600px" @close="() => { addPropForm = { name: '', type: '', description: '', prompt: '' }; addPropAddRefImage = null }">
+    <el-dialog v-model="showAddProp" :title="$t('filmCreate.addProp')" width="600px" @close="() => { addPropForm = { name: '', type: '', description: '', prompt: '' }; addPropAddRefImage = null }">
       <el-form label-width="90px">
-        <el-form-item label="参考图">
+        <el-form-item :label="$t('filmCreate.refImage')">
           <div class="ref-image-zone">
             <div class="ref-image-box" @click="addPropAddRefFileInput?.click()" @drop.prevent="onRefImageDrop2('addProp', $event)" @dragover.prevent>
               <img v-if="addPropAddRefImage" :src="addPropAddRefImage.dataUrl" class="ref-preview-img" />
-              <div v-else class="ref-upload-hint"><span class="ref-upload-icon">🖼</span><span>点击或拖入参考图</span></div>
+              <div v-else class="ref-upload-hint"><span class="ref-upload-icon">🖼</span><span>{{ $t('filmCreate.clickOrDragRefImage') }}</span></div>
             </div>
             <div v-if="addPropAddRefImage" class="ref-actions">
-              <el-button type="primary" size="small" :loading="extractingPropAddDesc" @click="doExtractFromRef2('addProp')">提取特征描述</el-button>
-              <el-button size="small" @click="addPropAddRefImage = null">移除</el-button>
+              <el-button type="primary" size="small" :loading="extractingPropAddDesc" @click="doExtractFromRef2('addProp')">{{ $t('filmCreate.extractFeatures') }}</el-button>
+              <el-button size="small" @click="addPropAddRefImage = null">{{ $t('common.remove') }}</el-button>
             </div>
           </div>
         </el-form-item>
-        <el-form-item label="名称" required>
-          <el-input v-model="addPropForm.name" placeholder="道具名称" />
+        <el-form-item :label="$t('common.name')" required>
+          <el-input v-model="addPropForm.name" :placeholder="$t('filmCreate.propNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="类型">
-          <el-input v-model="addPropForm.type" placeholder="如：物品、建筑" />
+        <el-form-item :label="$t('filmCreate.propType')">
+          <el-input v-model="addPropForm.type" :placeholder="$t('filmCreate.propTypePlaceholder')" />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="addPropForm.description" type="textarea" :rows="3" placeholder="描述" />
+        <el-form-item :label="$t('common.description')">
+          <el-input v-model="addPropForm.description" type="textarea" :rows="3" :placeholder="$t('common.description')" />
         </el-form-item>
-        <el-form-item label="图生提示词">
-          <el-input v-model="addPropForm.prompt" type="textarea" :rows="2" placeholder="用于 AI 生成图片的提示词" />
+        <el-form-item :label="$t('filmCreate.imageToImagePrompt')">
+          <el-input v-model="addPropForm.prompt" type="textarea" :rows="2" :placeholder="$t('filmCreate.propPromptPlaceholder')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAddProp = false">取消</el-button>
-        <el-button type="primary" :loading="addPropSaving" :disabled="!addPropForm.name.trim()" @click="submitAddProp">确定</el-button>
+        <el-button @click="showAddProp = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="addPropSaving" :disabled="!addPropForm.name.trim()" @click="submitAddProp">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
@@ -1704,10 +1704,10 @@
     <input ref="addPropAddRefFileInput" type="file" accept="image/*" style="display:none" @change="onRefImageFileChange2('addProp', $event)" />
 
     <!-- 添加/编辑角色弹窗 -->
-    <el-dialog v-model="showEditCharacter" :title="editCharacterForm?.id ? '编辑角色' : '添加角色'" width="75%" @close="onCloseCharDialog">
+    <el-dialog v-model="showEditCharacter" :title="editCharacterForm?.id ? $t('filmCreate.editCharacter') : $t('filmCreate.addCharacter')" width="75%" @close="onCloseCharDialog">
       <el-form v-if="editCharacterForm" label-width="90px">
         <!-- 参考图上传区（新增/编辑均显示） -->
-        <el-form-item label="参考图">
+        <el-form-item :label="$t('filmCreate.refImage')">
           <div class="ref-image-zone">
             <div class="ref-image-box" @click="addCharRefFileInput?.click()" @drop.prevent="onRefImageDrop('character', $event)" @dragover.prevent>
               <!-- 优先：刚上传的新参考图 -->
@@ -1720,71 +1720,71 @@
               <img v-else-if="editCharacterForm.id && (editCharacterForm.image_url || editCharacterForm.local_path)"
                 :src="assetImageUrl(editCharacterForm)"
                 class="ref-preview-img" style="opacity:0.5" />
-              <div v-else class="ref-upload-hint"><span class="ref-upload-icon">🖼</span><span>点击或拖入参考图</span></div>
+              <div v-else class="ref-upload-hint"><span class="ref-upload-icon">🖼</span><span>{{ $t('filmCreate.clickOrDragRefImage') }}</span></div>
             </div>
             <div v-if="addCharRefImage" class="ref-actions">
-              <el-button type="primary" size="small" :loading="extractingCharAppearance" @click="doExtractFromRef('character')">提取特征描述</el-button>
-              <el-button size="small" @click="addCharRefImage = null">移除</el-button>
+              <el-button type="primary" size="small" :loading="extractingCharAppearance" @click="doExtractFromRef('character')">{{ $t('filmCreate.extractFeatures') }}</el-button>
+              <el-button size="small" @click="addCharRefImage = null">{{ $t('common.remove') }}</el-button>
             </div>
             <div v-else-if="editCharacterForm.ref_image" class="ref-actions">
-              <el-button type="primary" size="small" :loading="extractingCharAppearance" @click="doExtractCharFromImage">从参考图提取描述</el-button>
-              <el-button size="small" @click="clearCharRefImage">移除参考图</el-button>
+              <el-button type="primary" size="small" :loading="extractingCharAppearance" @click="doExtractCharFromImage">{{ $t('filmCreate.extractDescFromRef') }}</el-button>
+              <el-button size="small" @click="clearCharRefImage">{{ $t('filmCreate.removeRefImage') }}</el-button>
             </div>
             <div v-else-if="editCharacterForm.id && (editCharacterForm.image_url || editCharacterForm.local_path) && !editCharacterForm.appearance" class="ref-actions">
-              <el-button size="small" :loading="extractingCharAppearance" @click="doExtractCharFromImage">从主图提取描述</el-button>
+              <el-button size="small" :loading="extractingCharAppearance" @click="doExtractCharFromImage">{{ $t('filmCreate.extractDescFromMain') }}</el-button>
             </div>
           </div>
         </el-form-item>
-        <el-form-item label="名称" required>
-          <el-input v-model="editCharacterForm.name" placeholder="角色名称" />
+        <el-form-item :label="$t('common.name')" required>
+          <el-input v-model="editCharacterForm.name" :placeholder="$t('filmCreate.charNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="身份/定位">
-          <el-select v-model="editCharacterForm.role" placeholder="请选择角色类型" style="width:200px">
-            <el-option value="main" label="主角" />
-            <el-option value="supporting" label="配角" />
-            <el-option value="minor" label="次要角色" />
+        <el-form-item :label="$t('filmCreate.charRoleLabel')">
+          <el-select v-model="editCharacterForm.role" :placeholder="$t('filmCreate.selectCharRolePlaceholder')" style="width:200px">
+            <el-option value="main" :label="$t('filmCreate.roleMainOption')" />
+            <el-option value="supporting" :label="$t('filmCreate.roleSupportingOption')" />
+            <el-option value="minor" :label="$t('filmCreate.roleMinorOption')" />
           </el-select>
         </el-form-item>
-        <el-form-item label="外貌描述">
-          <el-input v-model="editCharacterForm.appearance" type="textarea" :autosize="{ minRows: 4, maxRows: 10 }" placeholder="用于 AI 生成图像的外貌描述，尽量详细" />
+        <el-form-item :label="$t('filmCreate.appearanceDesc')">
+          <el-input v-model="editCharacterForm.appearance" type="textarea" :autosize="{ minRows: 4, maxRows: 10 }" :placeholder="$t('filmCreate.charAppearanceDetailPlaceholder')" />
         </el-form-item>
-        <el-form-item label="简介">
-          <el-input v-model="editCharacterForm.description" type="textarea" :autosize="{ minRows: 3, maxRows: 8 }" placeholder="角色背景简介，供剧本生成参考" />
+        <el-form-item :label="$t('filmCreate.intro')">
+          <el-input v-model="editCharacterForm.description" type="textarea" :autosize="{ minRows: 3, maxRows: 8 }" :placeholder="$t('filmCreate.charIntroPlaceholder')" />
         </el-form-item>
         <el-form-item v-if="editCharacterForm.id">
           <template #label>
-            <span style="font-size:12px;line-height:1.4;white-space:normal;word-break:break-all;display:inline-block;width:90px">图生提示词</span>
+            <span style="font-size:12px;line-height:1.4;white-space:normal;word-break:break-all;display:inline-block;width:90px">{{ $t('filmCreate.imageToImagePrompt') }}</span>
           </template>
           <div style="width:100%">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:12px;color:#909399">AI 润色后的最终提示词，生成四视图图片时直接使用；可手动修改</span>
+              <span style="font-size:12px;color:#909399">{{ $t('filmCreate.charPromptTip') }}</span>
               <el-button
                 size="small"
                 :loading="editCharacterPromptGenerating"
                 @click="doGenerateCharacterPrompt"
-              >重新生成提示词</el-button>
+              >{{ $t('filmCreate.regenPrompt') }}</el-button>
             </div>
             <el-input
               v-model="editCharacterForm.polished_prompt"
               type="textarea"
               :autosize="{ minRows: 5, maxRows: 16 }"
-              :placeholder="editCharacterPromptGenerating ? 'AI 正在生成提示词，请稍候…' : '点击「重新生成提示词」由 AI 自动生成，或直接在此输入'"
+              :placeholder="editCharacterPromptGenerating ? $t('filmCreate.generatingPromptWait') : $t('filmCreate.regenPromptOrInputPlaceholder')"
               :disabled="editCharacterPromptGenerating"
               style="font-size:12px"
             />
           </div>
         </el-form-item>
         <!-- P0-2: 视觉锚点（identity_anchors） -->
-        <el-form-item v-if="editCharacterForm.id" label="视觉锚点">
+        <el-form-item v-if="editCharacterForm.id" :label="$t('filmCreate.visualAnchors')">
           <div style="width:100%">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:12px;color:#909399">AI 从外貌描述提炼的6层视觉特征，用于保持生成图片角色一致性</span>
+              <span style="font-size:12px;color:#909399">{{ $t('filmCreate.visualAnchorsTip') }}</span>
               <el-button
                 size="small"
                 :loading="extractingAnchors"
                 :disabled="!editCharacterForm.appearance"
                 @click="extractIdentityAnchors"
-              >提炼视觉锚点</el-button>
+              >{{ $t('filmCreate.extractVisualAnchors') }}</el-button>
             </div>
             <el-input
               v-if="editCharacterForm.identity_anchors"
@@ -1795,69 +1795,69 @@
               :rows="4"
               readonly
               style="font-size:11px;font-family:monospace"
-              placeholder="点击「提炼视觉锚点」生成"
+              :placeholder="$t('filmCreate.extractVisualAnchorsPlaceholder')"
             />
-            <div v-else style="font-size:12px;color:#c0c4cc;padding:4px 0">暂无锚点，点击「提炼视觉锚点」自动提炼</div>
+            <div v-else style="font-size:12px;color:#c0c4cc;padding:4px 0">{{ $t('filmCreate.noAnchorsTip') }}</div>
           </div>
         </el-form-item>
         <!-- P1-3: 多阶段造型（stages） -->
-        <el-form-item v-if="editCharacterForm.id" label="多阶段造型">
+        <el-form-item v-if="editCharacterForm.id" :label="$t('filmCreate.multiStageLooks')">
           <div style="width:100%">
             <div style="font-size:12px;color:#909399;margin-bottom:6px">
-              不同集次的角色造型变化，格式：JSON 数组 [{"episode_range":[1,3],"appearance":"..."}]
+              {{ $t('filmCreate.multiStageLooksTip') }}
             </div>
             <el-input
               v-model="editCharacterForm.stages"
               type="textarea"
               :rows="4"
-              placeholder='例：[{"episode_range":[1,5],"appearance":"白衣少年"},{"episode_range":[6,10],"appearance":"黑衣武者"}]'
+              :placeholder="$t('filmCreate.multiStageLooksPlaceholder')"
               style="font-size:12px;font-family:monospace"
             />
           </div>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditCharacter = false">取消</el-button>
-        <el-button type="primary" :loading="editCharacterSaving" :disabled="!editCharacterForm?.name?.trim()" @click="submitEditCharacter">{{ editCharacterForm?.id ? '保存' : '添加' }}</el-button>
+        <el-button @click="showEditCharacter = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="editCharacterSaving" :disabled="!editCharacterForm?.name?.trim()" @click="submitEditCharacter">{{ editCharacterForm?.id ? $t('common.save') : $t('common.add') }}</el-button>
       </template>
     </el-dialog>
 
     <el-dialog
       v-model="showCharSd2Cert"
-      title="SD2 认证详情"
+      :title="$t('filmCreate.sd2CertDetails')"
       width="min(720px, 92vw)"
       destroy-on-close
       class="sd2-cert-dialog"
     >
       <template v-if="charSd2CertPayload">
         <el-descriptions :column="1" border size="small" class="sd2-cert-desc">
-          <el-descriptions-item label="素材 ID">
+          <el-descriptions-item :label="$t('filmCreate.assetId')">
             <span class="sd2-cert-value">{{ charSd2CertPayload.hub_asset_id || '—' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="asset_url">
             <code class="sd2-cert-value">{{ charSd2CertPayload.asset_url || '—' }}</code>
           </el-descriptions-item>
-          <el-descriptions-item label="状态">
+          <el-descriptions-item :label="$t('common.status')">
             <span class="sd2-cert-value">{{ charSd2CertPayload.status || '—' }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="注册图片 URL">
+          <el-descriptions-item :label="$t('filmCreate.registeredImageUrl')">
             <span class="sd2-cert-value">{{ charSd2CertPayload.source_image_url || '—' }}</span>
           </el-descriptions-item>
-          <el-descriptions-item v-if="charSd2CertPayload.sd2_provider" label="认证提供方">
+          <el-descriptions-item v-if="charSd2CertPayload.sd2_provider" :label="$t('filmCreate.certProvider')">
             <span class="sd2-cert-value">{{ charSd2CertPayload.sd2_provider }}</span>
           </el-descriptions-item>
         </el-descriptions>
       </template>
       <template #footer>
-        <el-button @click="showCharSd2Cert = false">关闭</el-button>
+        <el-button @click="showCharSd2Cert = false">{{ $t('common.close') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 编辑道具弹窗 -->
-    <el-dialog v-model="showEditProp" :title="editPropForm?.id ? '编辑道具' : '添加道具'" width="75%" @close="onClosePropDialog">
+    <el-dialog v-model="showEditProp" :title="editPropForm?.id ? $t('filmCreate.editProp') : $t('filmCreate.addProp')" width="75%" @close="onClosePropDialog">
       <el-form v-if="editPropForm" label-width="90px">
         <!-- 参考图上传区（新增/编辑均显示） -->
-        <el-form-item label="参考图">
+        <el-form-item :label="$t('filmCreate.refImage')">
           <div class="ref-image-zone">
             <div class="ref-image-box" @click="addPropRefFileInput?.click()" @drop.prevent="onRefImageDrop('prop', $event)" @dragover.prevent>
               <img v-if="addPropRefImage" :src="addPropRefImage.dataUrl" class="ref-preview-img" />
@@ -1866,57 +1866,57 @@
                 class="ref-preview-img" />
               <img v-else-if="editPropForm.id && (editPropForm.image_url || editPropForm.local_path)"
                 :src="assetImageUrl(editPropForm)" class="ref-preview-img" style="opacity:0.5" />
-              <div v-else class="ref-upload-hint"><span class="ref-upload-icon">🖼</span><span>点击或拖入参考图</span></div>
+              <div v-else class="ref-upload-hint"><span class="ref-upload-icon">🖼</span><span>{{ $t('filmCreate.clickOrDragRefImage') }}</span></div>
             </div>
             <div v-if="addPropRefImage" class="ref-actions">
-              <el-button type="primary" size="small" :loading="extractingPropDesc" @click="doExtractFromRef('prop')">提取特征描述</el-button>
-              <el-button size="small" @click="addPropRefImage = null">移除</el-button>
+              <el-button type="primary" size="small" :loading="extractingPropDesc" @click="doExtractFromRef('prop')">{{ $t('filmCreate.extractFeatures') }}</el-button>
+              <el-button size="small" @click="addPropRefImage = null">{{ $t('common.remove') }}</el-button>
             </div>
             <div v-else-if="editPropForm.ref_image" class="ref-actions">
-              <el-button type="primary" size="small" :loading="extractingPropDesc" @click="doExtractPropFromImage">从参考图提取描述</el-button>
-              <el-button size="small" @click="clearPropRefImage">移除参考图</el-button>
+              <el-button type="primary" size="small" :loading="extractingPropDesc" @click="doExtractPropFromImage">{{ $t('filmCreate.extractDescFromRef') }}</el-button>
+              <el-button size="small" @click="clearPropRefImage">{{ $t('filmCreate.removeRefImage') }}</el-button>
             </div>
             <div v-else-if="editPropForm.id && (editPropForm.image_url || editPropForm.local_path) && !editPropForm.description" class="ref-actions">
-              <el-button size="small" :loading="extractingPropDesc" @click="doExtractPropFromImage">从主图提取描述</el-button>
+              <el-button size="small" :loading="extractingPropDesc" @click="doExtractPropFromImage">{{ $t('filmCreate.extractDescFromMain') }}</el-button>
             </div>
           </div>
         </el-form-item>
-        <el-form-item label="名称" required>
-          <el-input v-model="editPropForm.name" placeholder="道具名称" />
+        <el-form-item :label="$t('common.name')" required>
+          <el-input v-model="editPropForm.name" :placeholder="$t('filmCreate.propNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="类型">
-          <el-input v-model="editPropForm.type" placeholder="如：物品、建筑" />
+        <el-form-item :label="$t('filmCreate.propType')">
+          <el-input v-model="editPropForm.type" :placeholder="$t('filmCreate.propTypePlaceholder')" />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="editPropForm.description" type="textarea" :autosize="{ minRows: 3, maxRows: 8 }" placeholder="道具描述" />
+        <el-form-item :label="$t('common.description')">
+          <el-input v-model="editPropForm.description" type="textarea" :autosize="{ minRows: 3, maxRows: 8 }" :placeholder="$t('filmCreate.propDescPlaceholder')" />
         </el-form-item>
-        <el-form-item label="图生提示词">
+        <el-form-item :label="$t('filmCreate.imageToImagePrompt')">
           <div style="width:100%">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:12px;color:#909399">AI 润色后的图片提示词，生成图片时直接使用；可手动修改</span>
-              <el-button size="small" :loading="editPropPromptGenerating" @click="doGeneratePropPrompt">重新生成提示词</el-button>
+              <span style="font-size:12px;color:#909399">{{ $t('filmCreate.propPromptTip') }}</span>
+              <el-button size="small" :loading="editPropPromptGenerating" @click="doGeneratePropPrompt">{{ $t('filmCreate.regenPrompt') }}</el-button>
             </div>
             <el-input
               v-model="editPropForm.prompt"
               type="textarea"
               :autosize="{ minRows: 5, maxRows: 16 }"
-              :placeholder="editPropPromptGenerating ? 'AI 正在生成提示词，请稍候…' : '点击「重新生成提示词」由 AI 自动生成，或直接在此输入'"
+              :placeholder="editPropPromptGenerating ? $t('filmCreate.generatingPromptWait') : $t('filmCreate.regenPromptOrInputPlaceholder')"
               :disabled="editPropPromptGenerating"
             />
           </div>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditProp = false">取消</el-button>
-        <el-button type="primary" :loading="editPropSaving" :disabled="!editPropForm?.name?.trim()" @click="submitEditProp">保存</el-button>
+        <el-button @click="showEditProp = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="editPropSaving" :disabled="!editPropForm?.name?.trim()" @click="submitEditProp">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 添加/编辑场景弹窗 -->
-    <el-dialog v-model="showEditScene" :title="editSceneForm?.id ? '编辑场景' : '添加场景'" width="75%" @close="onCloseSceneDialog">
+    <el-dialog v-model="showEditScene" :title="editSceneForm?.id ? $t('filmCreate.editScene') : $t('filmCreate.addScene')" width="75%" @close="onCloseSceneDialog">
       <el-form v-if="editSceneForm" label-width="90px">
         <!-- 参考图上传区（新增/编辑均显示） -->
-        <el-form-item label="参考图">
+        <el-form-item :label="$t('filmCreate.refImage')">
           <div class="ref-image-zone">
             <div class="ref-image-box" @click="addSceneRefFileInput?.click()" @drop.prevent="onRefImageDrop('scene', $event)" @dragover.prevent>
               <img v-if="addSceneRefImage" :src="addSceneRefImage.dataUrl" class="ref-preview-img" />
@@ -1925,62 +1925,62 @@
                 class="ref-preview-img" />
               <img v-else-if="editSceneForm.id && (editSceneForm.image_url || editSceneForm.local_path)"
                 :src="assetImageUrl(editSceneForm)" class="ref-preview-img" style="opacity:0.5" />
-              <div v-else class="ref-upload-hint"><span class="ref-upload-icon">🖼</span><span>点击或拖入参考图</span></div>
+              <div v-else class="ref-upload-hint"><span class="ref-upload-icon">🖼</span><span>{{ $t('filmCreate.clickOrDragRefImage') }}</span></div>
             </div>
             <div v-if="addSceneRefImage" class="ref-actions">
-              <el-button type="primary" size="small" :loading="extractingSceneDesc" @click="doExtractFromRef('scene')">提取特征描述</el-button>
-              <el-button size="small" @click="addSceneRefImage = null">移除</el-button>
+              <el-button type="primary" size="small" :loading="extractingSceneDesc" @click="doExtractFromRef('scene')">{{ $t('filmCreate.extractFeatures') }}</el-button>
+              <el-button size="small" @click="addSceneRefImage = null">{{ $t('common.remove') }}</el-button>
             </div>
             <div v-else-if="editSceneForm.ref_image" class="ref-actions">
-              <el-button type="primary" size="small" :loading="extractingSceneDesc" @click="doExtractSceneFromImage">从参考图提取描述</el-button>
-              <el-button size="small" @click="clearSceneRefImage">移除参考图</el-button>
+              <el-button type="primary" size="small" :loading="extractingSceneDesc" @click="doExtractSceneFromImage">{{ $t('filmCreate.extractDescFromRef') }}</el-button>
+              <el-button size="small" @click="clearSceneRefImage">{{ $t('filmCreate.removeRefImage') }}</el-button>
             </div>
             <div v-else-if="editSceneForm.id && (editSceneForm.image_url || editSceneForm.local_path) && !editSceneForm.prompt" class="ref-actions">
-              <el-button size="small" :loading="extractingSceneDesc" @click="doExtractSceneFromImage">从主图提取描述</el-button>
+              <el-button size="small" :loading="extractingSceneDesc" @click="doExtractSceneFromImage">{{ $t('filmCreate.extractDescFromMain') }}</el-button>
             </div>
           </div>
         </el-form-item>
-        <el-form-item label="地点" required>
-          <el-input v-model="editSceneForm.location" placeholder="如：森林、教室" />
+        <el-form-item :label="$t('filmCreate.locationLabel')" required>
+          <el-input v-model="editSceneForm.location" :placeholder="$t('filmCreate.locationPlaceholder')" />
         </el-form-item>
-        <el-form-item label="时间">
-          <el-input v-model="editSceneForm.time" placeholder="如：白天、傍晚" />
+        <el-form-item :label="$t('filmCreate.timeLabel')">
+          <el-input v-model="editSceneForm.time" :placeholder="$t('filmCreate.timePlaceholder')" />
         </el-form-item>
-        <el-form-item label="场景描述">
-          <el-input v-model="editSceneForm.prompt" type="textarea" :autosize="{ minRows: 3, maxRows: 8 }" placeholder="场景的简要描述，供 AI 生成四视图时参考" />
+        <el-form-item :label="$t('filmCreate.sceneDescLabel')">
+          <el-input v-model="editSceneForm.prompt" type="textarea" :autosize="{ minRows: 3, maxRows: 8 }" :placeholder="$t('filmCreate.sceneDescPlaceholder')" />
         </el-form-item>
         <el-form-item v-if="editSceneForm.id">
           <template #label>
-            <span style="font-size:12px;line-height:1.4;white-space:normal;word-break:break-all;display:inline-block;width:90px">单图提示词</span>
+            <span style="font-size:12px;line-height:1.4;white-space:normal;word-break:break-all;display:inline-block;width:90px">{{ $t('filmCreate.singleImagePrompt') }}</span>
           </template>
           <div style="width:100%">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:12px;color:#909399">单图场景的完整图片提示词（不含四宫格布局），生图时直接使用；可手动修改</span>
-              <el-button size="small" :loading="editScenePromptGenerating" @click="doGenerateSceneSinglePrompt">重新生成提示词</el-button>
+              <span style="font-size:12px;color:#909399">{{ $t('filmCreate.singleImagePromptTip') }}</span>
+              <el-button size="small" :loading="editScenePromptGenerating" @click="doGenerateSceneSinglePrompt">{{ $t('filmCreate.regenPrompt') }}</el-button>
             </div>
             <el-input
               v-model="editSceneForm.polished_prompt_single"
               type="textarea"
               :autosize="{ minRows: 5, maxRows: 16 }"
-              placeholder="单图场景提示词，点击场景列表的「AI 生成」按钮（不勾选四宫格）后会自动生成"
+              :placeholder="$t('filmCreate.singleScenePromptPlaceholder')"
               style="font-size:12px"
             />
           </div>
         </el-form-item>
         <el-form-item v-if="editSceneForm.id">
           <template #label>
-            <span style="font-size:12px;line-height:1.4;white-space:normal;word-break:break-all;display:inline-block;width:90px">四视图提示词</span>
+            <span style="font-size:12px;line-height:1.4;white-space:normal;word-break:break-all;display:inline-block;width:90px">{{ $t('filmCreate.quadViewPrompt') }}</span>
           </template>
           <div style="width:100%">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:12px;color:#909399">AI 生成的完整四视图图片提示词，生图时直接使用；可手动修改</span>
-              <el-button size="small" :loading="editScenePromptGenerating" @click="doGenerateScenePrompt">重新生成提示词</el-button>
+              <span style="font-size:12px;color:#909399">{{ $t('filmCreate.quadViewPromptTip') }}</span>
+              <el-button size="small" :loading="editScenePromptGenerating" @click="doGenerateScenePrompt">{{ $t('filmCreate.regenPrompt') }}</el-button>
             </div>
             <el-input
               v-model="editSceneForm.polished_prompt"
               type="textarea"
               :autosize="{ minRows: 5, maxRows: 16 }"
-              :placeholder="editScenePromptGenerating ? 'AI 正在生成四视图提示词，请稍候…' : '点击「重新生成提示词」由 AI 自动生成，或直接在此输入'"
+              :placeholder="editScenePromptGenerating ? $t('filmCreate.generatingQuadPromptWait') : $t('filmCreate.regenPromptOrInputPlaceholder')"
               :disabled="editScenePromptGenerating"
               style="font-size:12px"
             />
@@ -1988,35 +1988,35 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditScene = false">取消</el-button>
-        <el-button type="primary" :loading="editSceneSaving" :disabled="!editSceneForm?.location?.trim()" @click="submitEditScene">{{ editSceneForm?.id ? '保存' : '添加' }}</el-button>
+        <el-button @click="showEditScene = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="editSceneSaving" :disabled="!editSceneForm?.location?.trim()" @click="submitEditScene">{{ editSceneForm?.id ? $t('common.save') : $t('common.add') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 角色资源库（本剧库 / 本剧全部角色 / 团队库） -->
-    <el-dialog v-model="showCharLibrary" title="角色资源库" width="720px" destroy-on-close class="library-dialog" @open="onCharLibraryDialogOpen">
+    <el-dialog v-model="showCharLibrary" :title="$t('filmCreate.charLibTitle')" width="720px" destroy-on-close class="library-dialog" @open="onCharLibraryDialogOpen">
       <el-tabs v-model="charLibraryTab" class="char-library-tabs" @tab-change="onCharLibraryTabChange">
-        <el-tab-pane label="本剧角色库" name="library">
+        <el-tab-pane :label="$t('filmCreate.dramaCharLibTab')" name="library">
           <div class="library-toolbar">
-            <el-input v-model="charLibraryKeyword" placeholder="搜索名称或描述" clearable style="width: 200px" @input="debouncedLoadCharLibrary()" />
+            <el-input v-model="charLibraryKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable style="width: 200px" @input="debouncedLoadCharLibrary()" />
           </div>
           <div v-loading="charLibraryLoading" class="library-list">
             <div v-for="item in charLibraryList" :key="'lib-' + item.id" class="library-item">
               <div class="library-item-cover" @click="openImagePreview(assetImageUrl(item))">
                 <img v-if="item.image_url || item.local_path" :src="assetImageUrl(item)" alt="" />
-                <span v-else class="library-item-placeholder">暂无图</span>
+                <span v-else class="library-item-placeholder">{{ $t('library.noImage') }}</span>
               </div>
               <div class="library-item-info">
-                <div class="library-item-name">{{ item.name || '未命名' }}</div>
+                <div class="library-item-name">{{ item.name || $t('library.unnamed') }}</div>
                 <div class="library-item-desc">{{ (item.description || '').slice(0, 60) }}{{ (item.description || '').length > 60 ? '…' : '' }}</div>
                 <div class="library-item-actions">
-                  <el-button size="small" type="primary" :loading="isCharAddToEpisodeLoading('library', item.id)" :disabled="!currentEpisodeId" @click="onAddCharFromLibrary(item)">加入本集</el-button>
-                  <el-button size="small" @click="openEditCharLibrary(item)">编辑</el-button>
-                  <el-button size="small" type="danger" plain @click="onDeleteCharLibrary(item)">删除</el-button>
+                  <el-button size="small" type="primary" :loading="isCharAddToEpisodeLoading('library', item.id)" :disabled="!currentEpisodeId" @click="onAddCharFromLibrary(item)">{{ $t('filmCreate.addToEpisode') }}</el-button>
+                  <el-button size="small" @click="openEditCharLibrary(item)">{{ $t('common.edit') }}</el-button>
+                  <el-button size="small" type="danger" plain @click="onDeleteCharLibrary(item)">{{ $t('common.delete') }}</el-button>
                 </div>
               </div>
             </div>
-            <div v-if="!charLibraryLoading && charLibraryList.length === 0" class="library-empty">暂无本剧角色库记录，可将本剧角色「加入本剧库」后在此查看</div>
+            <div v-if="!charLibraryLoading && charLibraryList.length === 0" class="library-empty">{{ $t('filmCreate.emptyDramaCharLib') }}</div>
           </div>
           <div class="library-pagination">
             <el-pagination
@@ -2031,28 +2031,28 @@
           </div>
         </el-tab-pane>
 
-        <el-tab-pane label="本剧所有角色" name="drama">
+        <el-tab-pane :label="$t('filmCreate.dramaAllCharTab')" name="drama">
           <div class="library-toolbar">
-            <el-input v-model="dramaAllCharKeyword" placeholder="搜索名称或描述" clearable style="width: 200px" @input="debouncedLoadDramaAllCharList()" />
+            <el-input v-model="dramaAllCharKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable style="width: 200px" @input="debouncedLoadDramaAllCharList()" />
           </div>
           <div v-loading="dramaAllCharLoading" class="library-list">
             <div v-for="item in dramaAllCharList" :key="'drama-' + item.id" class="library-item">
               <div class="library-item-cover" @click="openImagePreview(assetImageUrl(item))">
                 <img v-if="item.image_url || item.local_path" :src="assetImageUrl(item)" alt="" />
-                <span v-else class="library-item-placeholder">暂无图</span>
+                <span v-else class="library-item-placeholder">{{ $t('library.noImage') }}</span>
               </div>
               <div class="library-item-info">
                 <div class="library-item-name">
-                  {{ item.name || '未命名' }}
+                  {{ item.name || $t('library.unnamed') }}
                   <el-tag v-if="item.role" size="small" type="info" style="margin-left: 6px">{{ charRoleLabel(item.role) }}</el-tag>
                 </div>
                 <div class="library-item-desc">{{ (item.description || item.appearance || '').slice(0, 60) }}{{ (item.description || item.appearance || '').length > 60 ? '…' : '' }}</div>
                 <div class="library-item-actions">
-                  <el-button size="small" type="primary" :loading="isCharAddToEpisodeLoading('drama', item.id)" :disabled="!currentEpisodeId" @click="onAddDramaCharToEpisode(item)">加入本集</el-button>
+                  <el-button size="small" type="primary" :loading="isCharAddToEpisodeLoading('drama', item.id)" :disabled="!currentEpisodeId" @click="onAddDramaCharToEpisode(item)">{{ $t('filmCreate.addToEpisode') }}</el-button>
                 </div>
               </div>
             </div>
-            <div v-if="!dramaAllCharLoading && dramaAllCharList.length === 0" class="library-empty">本剧暂无制作角色，请先在角色面板创建</div>
+            <div v-if="!dramaAllCharLoading && dramaAllCharList.length === 0" class="library-empty">{{ $t('filmCreate.emptyDramaAllChar') }}</div>
           </div>
           <div class="library-pagination">
             <el-pagination
@@ -2069,79 +2069,79 @@
 
       </el-tabs>
       <template #footer>
-        <el-button @click="showCharLibrary = false">关闭</el-button>
+        <el-button @click="showCharLibrary = false">{{ $t('common.close') }}</el-button>
       </template>
     </el-dialog>
     <!-- 编辑公共角色 -->
-    <el-dialog v-model="showEditCharLibrary" title="编辑公共角色" width="440px" @close="editCharLibraryForm = null">
+    <el-dialog v-model="showEditCharLibrary" :title="$t('filmCreate.editPublicChar')" width="440px" @close="editCharLibraryForm = null">
       <el-form v-if="editCharLibraryForm" label-width="80px">
-        <el-form-item label="名称">
-          <el-input v-model="editCharLibraryForm.name" placeholder="角色名称" />
+        <el-form-item :label="$t('common.name')">
+          <el-input v-model="editCharLibraryForm.name" :placeholder="$t('filmCreate.charNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="分类">
-          <el-input v-model="editCharLibraryForm.category" placeholder="可选" />
+        <el-form-item :label="$t('filmCreate.categoryLabel')">
+          <el-input v-model="editCharLibraryForm.category" :placeholder="$t('filmCreate.optionalPlaceholder')" />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="editCharLibraryForm.description" type="textarea" :rows="3" placeholder="可选" />
+        <el-form-item :label="$t('common.description')">
+          <el-input v-model="editCharLibraryForm.description" type="textarea" :rows="3" :placeholder="$t('filmCreate.optionalPlaceholder')" />
         </el-form-item>
-        <el-form-item label="标签">
-          <el-input v-model="editCharLibraryForm.tags" placeholder="可选，逗号分隔" />
+        <el-form-item :label="$t('filmCreate.tagsLabel')">
+          <el-input v-model="editCharLibraryForm.tags" :placeholder="$t('filmCreate.tagsPlaceholder')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditCharLibrary = false">取消</el-button>
-        <el-button type="primary" :loading="editCharLibrarySaving" @click="submitEditCharLibrary">保存</el-button>
+        <el-button @click="showEditCharLibrary = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="editCharLibrarySaving" @click="submitEditCharLibrary">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 道具资源库 -->
-    <el-dialog v-model="showPropLibrary" title="道具资源库" width="720px" destroy-on-close class="library-dialog" @open="onPropLibraryDialogOpen">
+    <el-dialog v-model="showPropLibrary" :title="$t('filmCreate.propLibTitle')" width="720px" destroy-on-close class="library-dialog" @open="onPropLibraryDialogOpen">
       <el-tabs v-model="propLibraryTab" class="char-library-tabs" @tab-change="onPropLibraryTabChange">
-        <el-tab-pane label="本剧道具库" name="library">
+        <el-tab-pane :label="$t('filmCreate.dramaPropLibTab')" name="library">
           <div class="library-toolbar">
-            <el-input v-model="propLibraryKeyword" placeholder="搜索名称或描述" clearable style="width: 200px" @input="debouncedLoadPropLibrary()" />
+            <el-input v-model="propLibraryKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable style="width: 200px" @input="debouncedLoadPropLibrary()" />
           </div>
           <div v-loading="propLibraryLoading" class="library-list">
             <div v-for="item in propLibraryList" :key="'plib-' + item.id" class="library-item">
               <div class="library-item-cover" @click="openImagePreview(assetImageUrl(item))">
                 <img v-if="item.image_url || item.local_path" :src="assetImageUrl(item)" alt="" />
-                <span v-else class="library-item-placeholder">暂无图</span>
+                <span v-else class="library-item-placeholder">{{ $t('library.noImage') }}</span>
               </div>
               <div class="library-item-info">
-                <div class="library-item-name">{{ item.name || '未命名' }}</div>
+                <div class="library-item-name">{{ item.name || $t('library.unnamed') }}</div>
                 <div class="library-item-desc">{{ (item.description || item.prompt || '').slice(0, 60) }}{{ (item.description || item.prompt || '').length > 60 ? '…' : '' }}</div>
                 <div class="library-item-actions">
-                  <el-button size="small" type="primary" :loading="isPropAddToEpisodeLoading('library', item.id)" :disabled="!currentEpisodeId" @click="onAddPropFromLibrary(item)">加入本集</el-button>
-                  <el-button size="small" @click="openEditPropLibrary(item)">编辑</el-button>
-                  <el-button size="small" type="danger" plain @click="onDeletePropLibrary(item)">删除</el-button>
+                  <el-button size="small" type="primary" :loading="isPropAddToEpisodeLoading('library', item.id)" :disabled="!currentEpisodeId" @click="onAddPropFromLibrary(item)">{{ $t('filmCreate.addToEpisode') }}</el-button>
+                  <el-button size="small" @click="openEditPropLibrary(item)">{{ $t('common.edit') }}</el-button>
+                  <el-button size="small" type="danger" plain @click="onDeletePropLibrary(item)">{{ $t('common.delete') }}</el-button>
                 </div>
               </div>
             </div>
-            <div v-if="!propLibraryLoading && propLibraryList.length === 0" class="library-empty">暂无本剧道具库记录，可将本剧道具「加入本剧库」后在此查看</div>
+            <div v-if="!propLibraryLoading && propLibraryList.length === 0" class="library-empty">{{ $t('filmCreate.emptyDramaPropLib') }}</div>
           </div>
           <div class="library-pagination">
             <el-pagination v-model:current-page="propLibraryPage" v-model:page-size="propLibraryPageSize" :total="propLibraryTotal" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next" @current-change="loadPropLibraryList" @size-change="loadPropLibraryList" />
           </div>
         </el-tab-pane>
-        <el-tab-pane label="本剧所有道具" name="drama">
+        <el-tab-pane :label="$t('filmCreate.dramaAllPropTab')" name="drama">
           <div class="library-toolbar">
-            <el-input v-model="dramaAllPropKeyword" placeholder="搜索名称或描述" clearable style="width: 200px" @input="debouncedLoadDramaAllPropList()" />
+            <el-input v-model="dramaAllPropKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable style="width: 200px" @input="debouncedLoadDramaAllPropList()" />
           </div>
           <div v-loading="dramaAllPropLoading" class="library-list">
             <div v-for="item in dramaAllPropList" :key="'pdr-' + item.id" class="library-item">
               <div class="library-item-cover" @click="openImagePreview(assetImageUrl(item))">
                 <img v-if="item.image_url || item.local_path" :src="assetImageUrl(item)" alt="" />
-                <span v-else class="library-item-placeholder">暂无图</span>
+                <span v-else class="library-item-placeholder">{{ $t('library.noImage') }}</span>
               </div>
               <div class="library-item-info">
-                <div class="library-item-name">{{ item.name || '未命名' }}</div>
+                <div class="library-item-name">{{ item.name || $t('library.unnamed') }}</div>
                 <div class="library-item-desc">{{ (item.description || item.prompt || '').slice(0, 60) }}{{ (item.description || item.prompt || '').length > 60 ? '…' : '' }}</div>
                 <div class="library-item-actions">
-                  <el-button size="small" type="primary" :loading="isPropAddToEpisodeLoading('drama', item.id)" :disabled="!currentEpisodeId" @click="onAddDramaPropToEpisode(item)">加入本集</el-button>
+                  <el-button size="small" type="primary" :loading="isPropAddToEpisodeLoading('drama', item.id)" :disabled="!currentEpisodeId" @click="onAddDramaPropToEpisode(item)">{{ $t('filmCreate.addToEpisode') }}</el-button>
                 </div>
               </div>
             </div>
-            <div v-if="!dramaAllPropLoading && dramaAllPropList.length === 0" class="library-empty">本剧暂无制作道具，请先在道具面板创建</div>
+            <div v-if="!dramaAllPropLoading && dramaAllPropList.length === 0" class="library-empty">{{ $t('filmCreate.emptyDramaAllProp') }}</div>
           </div>
           <div class="library-pagination">
             <el-pagination v-model:current-page="dramaAllPropPage" v-model:page-size="dramaAllPropPageSize" :total="dramaAllPropTotal" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next" @current-change="loadDramaAllPropList" @size-change="loadDramaAllPropList" />
@@ -2149,79 +2149,79 @@
         </el-tab-pane>
       </el-tabs>
       <template #footer>
-        <el-button @click="showPropLibrary = false">关闭</el-button>
+        <el-button @click="showPropLibrary = false">{{ $t('common.close') }}</el-button>
       </template>
     </el-dialog>
     <!-- 编辑公共道具 -->
-    <el-dialog v-model="showEditPropLibrary" title="编辑公共道具" width="440px" @close="editPropLibraryForm = null">
+    <el-dialog v-model="showEditPropLibrary" :title="$t('filmCreate.editPublicProp')" width="440px" @close="editPropLibraryForm = null">
       <el-form v-if="editPropLibraryForm" label-width="80px">
-        <el-form-item label="名称">
-          <el-input v-model="editPropLibraryForm.name" placeholder="道具名称" />
+        <el-form-item :label="$t('common.name')">
+          <el-input v-model="editPropLibraryForm.name" :placeholder="$t('filmCreate.propNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="分类">
-          <el-input v-model="editPropLibraryForm.category" placeholder="可选" />
+        <el-form-item :label="$t('filmCreate.categoryLabel')">
+          <el-input v-model="editPropLibraryForm.category" :placeholder="$t('filmCreate.optionalPlaceholder')" />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="editPropLibraryForm.description" type="textarea" :rows="3" placeholder="可选" />
+        <el-form-item :label="$t('common.description')">
+          <el-input v-model="editPropLibraryForm.description" type="textarea" :rows="3" :placeholder="$t('filmCreate.optionalPlaceholder')" />
         </el-form-item>
-        <el-form-item label="标签">
-          <el-input v-model="editPropLibraryForm.tags" placeholder="可选，逗号分隔" />
+        <el-form-item :label="$t('filmCreate.tagsLabel')">
+          <el-input v-model="editPropLibraryForm.tags" :placeholder="$t('filmCreate.tagsPlaceholder')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditPropLibrary = false">取消</el-button>
-        <el-button type="primary" :loading="editPropLibrarySaving" @click="submitEditPropLibrary">保存</el-button>
+        <el-button @click="showEditPropLibrary = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="editPropLibrarySaving" @click="submitEditPropLibrary">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 场景资源库 -->
-    <el-dialog v-model="showSceneLibrary" title="场景资源库" width="720px" destroy-on-close class="library-dialog" @open="onSceneLibraryDialogOpen">
+    <el-dialog v-model="showSceneLibrary" :title="$t('filmCreate.sceneLibTitle')" width="720px" destroy-on-close class="library-dialog" @open="onSceneLibraryDialogOpen">
       <el-tabs v-model="sceneLibraryTab" class="char-library-tabs" @tab-change="onSceneLibraryTabChange">
-        <el-tab-pane label="本剧场景库" name="library">
+        <el-tab-pane :label="$t('filmCreate.dramaSceneLibTab')" name="library">
           <div class="library-toolbar">
-            <el-input v-model="sceneLibraryKeyword" placeholder="搜索地点或描述" clearable style="width: 200px" @input="debouncedLoadSceneLibrary()" />
+            <el-input v-model="sceneLibraryKeyword" :placeholder="$t('filmCreate.searchLocationOrDesc')" clearable style="width: 200px" @input="debouncedLoadSceneLibrary()" />
           </div>
           <div v-loading="sceneLibraryLoading" class="library-list">
             <div v-for="item in sceneLibraryList" :key="'slib-' + item.id" class="library-item">
               <div class="library-item-cover" @click="openImagePreview(assetImageUrl(item))">
                 <img v-if="item.image_url || item.local_path" :src="assetImageUrl(item)" alt="" />
-                <span v-else class="library-item-placeholder">暂无图</span>
+                <span v-else class="library-item-placeholder">{{ $t('library.noImage') }}</span>
               </div>
               <div class="library-item-info">
-                <div class="library-item-name">{{ item.location || item.time || '未命名' }}</div>
+                <div class="library-item-name">{{ item.location || item.time || $t('library.unnamed') }}</div>
                 <div class="library-item-desc">{{ (item.description || item.prompt || '').slice(0, 60) }}{{ (item.description || item.prompt || '').length > 60 ? '…' : '' }}</div>
                 <div class="library-item-actions">
-                  <el-button size="small" type="primary" :loading="isSceneAddToEpisodeLoading('library', item.id)" :disabled="!currentEpisodeId" @click="onAddSceneFromLibrary(item)">加入本集</el-button>
-                  <el-button size="small" @click="openEditSceneLibrary(item)">编辑</el-button>
-                  <el-button size="small" type="danger" plain @click="onDeleteSceneLibrary(item)">删除</el-button>
+                  <el-button size="small" type="primary" :loading="isSceneAddToEpisodeLoading('library', item.id)" :disabled="!currentEpisodeId" @click="onAddSceneFromLibrary(item)">{{ $t('filmCreate.addToEpisode') }}</el-button>
+                  <el-button size="small" @click="openEditSceneLibrary(item)">{{ $t('common.edit') }}</el-button>
+                  <el-button size="small" type="danger" plain @click="onDeleteSceneLibrary(item)">{{ $t('common.delete') }}</el-button>
                 </div>
               </div>
             </div>
-            <div v-if="!sceneLibraryLoading && sceneLibraryList.length === 0" class="library-empty">暂无本剧场景库记录，可将本剧场景「加入本剧库」后在此查看</div>
+            <div v-if="!sceneLibraryLoading && sceneLibraryList.length === 0" class="library-empty">{{ $t('filmCreate.emptyDramaSceneLib') }}</div>
           </div>
           <div class="library-pagination">
             <el-pagination v-model:current-page="sceneLibraryPage" v-model:page-size="sceneLibraryPageSize" :total="sceneLibraryTotal" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next" @current-change="loadSceneLibraryList" @size-change="loadSceneLibraryList" />
           </div>
         </el-tab-pane>
-        <el-tab-pane label="本剧所有场景" name="drama">
+        <el-tab-pane :label="$t('filmCreate.dramaAllSceneTab')" name="drama">
           <div class="library-toolbar">
-            <el-input v-model="dramaAllSceneKeyword" placeholder="搜索地点或描述" clearable style="width: 200px" @input="debouncedLoadDramaAllSceneList()" />
+            <el-input v-model="dramaAllSceneKeyword" :placeholder="$t('filmCreate.searchLocationOrDesc')" clearable style="width: 200px" @input="debouncedLoadDramaAllSceneList()" />
           </div>
           <div v-loading="dramaAllSceneLoading" class="library-list">
             <div v-for="item in dramaAllSceneList" :key="'sdr-' + item.id" class="library-item">
               <div class="library-item-cover" @click="openImagePreview(assetImageUrl(item))">
                 <img v-if="item.image_url || item.local_path" :src="assetImageUrl(item)" alt="" />
-                <span v-else class="library-item-placeholder">暂无图</span>
+                <span v-else class="library-item-placeholder">{{ $t('library.noImage') }}</span>
               </div>
               <div class="library-item-info">
-                <div class="library-item-name">{{ item.location || '未命名' }}<span v-if="item.time" class="library-item-sub"> · {{ item.time }}</span></div>
+                <div class="library-item-name">{{ item.location || $t('library.unnamed') }}<span v-if="item.time" class="library-item-sub"> · {{ item.time }}</span></div>
                 <div class="library-item-desc">{{ (item.description || item.prompt || '').slice(0, 60) }}{{ (item.description || item.prompt || '').length > 60 ? '…' : '' }}</div>
                 <div class="library-item-actions">
-                  <el-button size="small" type="primary" :loading="isSceneAddToEpisodeLoading('drama', item.id)" :disabled="!currentEpisodeId" @click="onAddDramaSceneToEpisode(item)">加入本集</el-button>
+                  <el-button size="small" type="primary" :loading="isSceneAddToEpisodeLoading('drama', item.id)" :disabled="!currentEpisodeId" @click="onAddDramaSceneToEpisode(item)">{{ $t('filmCreate.addToEpisode') }}</el-button>
                 </div>
               </div>
             </div>
-            <div v-if="!dramaAllSceneLoading && dramaAllSceneList.length === 0" class="library-empty">本剧暂无制作场景，请先在场景面板创建</div>
+            <div v-if="!dramaAllSceneLoading && dramaAllSceneList.length === 0" class="library-empty">{{ $t('filmCreate.emptyDramaAllScene') }}</div>
           </div>
           <div class="library-pagination">
             <el-pagination v-model:current-page="dramaAllScenePage" v-model:page-size="dramaAllScenePageSize" :total="dramaAllSceneTotal" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next" @current-change="loadDramaAllSceneList" @size-change="loadDramaAllSceneList" />
@@ -2229,241 +2229,241 @@
         </el-tab-pane>
       </el-tabs>
       <template #footer>
-        <el-button @click="showSceneLibrary = false">关闭</el-button>
+        <el-button @click="showSceneLibrary = false">{{ $t('common.close') }}</el-button>
       </template>
     </el-dialog>
     <!-- 编辑公共场景 -->
-    <el-dialog v-model="showEditSceneLibrary" title="编辑公共场景" width="440px" @close="editSceneLibraryForm = null">
+    <el-dialog v-model="showEditSceneLibrary" :title="$t('filmCreate.editPublicScene')" width="440px" @close="editSceneLibraryForm = null">
       <el-form v-if="editSceneLibraryForm" label-width="80px">
-        <el-form-item label="地点">
-          <el-input v-model="editSceneLibraryForm.location" placeholder="场景地点" />
+        <el-form-item :label="$t('filmCreate.locationLabel')">
+          <el-input v-model="editSceneLibraryForm.location" :placeholder="$t('filmCreate.sceneLocationPlaceholder')" />
         </el-form-item>
-        <el-form-item label="时间">
-          <el-input v-model="editSceneLibraryForm.time" placeholder="如：浅色/夜晚" />
+        <el-form-item :label="$t('filmCreate.timeLabel')">
+          <el-input v-model="editSceneLibraryForm.time" :placeholder="$t('filmCreate.timeSubPlaceholder')" />
         </el-form-item>
-        <el-form-item label="分类">
-          <el-input v-model="editSceneLibraryForm.category" placeholder="可选" />
+        <el-form-item :label="$t('filmCreate.categoryLabel')">
+          <el-input v-model="editSceneLibraryForm.category" :placeholder="$t('filmCreate.optionalPlaceholder')" />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="editSceneLibraryForm.description" type="textarea" :rows="3" placeholder="可选" />
+        <el-form-item :label="$t('common.description')">
+          <el-input v-model="editSceneLibraryForm.description" type="textarea" :rows="3" :placeholder="$t('filmCreate.optionalPlaceholder')" />
         </el-form-item>
-        <el-form-item label="标签">
-          <el-input v-model="editSceneLibraryForm.tags" placeholder="可选，逗号分隔" />
+        <el-form-item :label="$t('filmCreate.tagsLabel')">
+          <el-input v-model="editSceneLibraryForm.tags" :placeholder="$t('filmCreate.tagsPlaceholder')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showEditSceneLibrary = false">取消</el-button>
-        <el-button type="primary" :loading="editSceneLibrarySaving" @click="submitEditSceneLibrary">保存</el-button>
+        <el-button @click="showEditSceneLibrary = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="editSceneLibrarySaving" @click="submitEditSceneLibrary">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 分镜提示词编辑弹窗 -->
     <el-dialog
       v-model="showSbPromptDialog"
-      :title="`分镜 ${sbPromptTarget?.storyboard_number ?? ''} · 编辑提示词`"
+      :title="$t('filmCreate.editPromptDialogTitle', { num: sbPromptTarget?.storyboard_number ?? '' })"
       width="700px"
       @close="sbPromptTarget = null"
     >
       <el-form v-if="sbPromptTarget" label-width="0" class="sb-prompt-dialog-form">
         <!-- 图片区 -->
-        <div class="sb-prompt-section-title">🖼 图片提示词</div>
+        <div class="sb-prompt-section-title">{{ $t('filmCreate.imagePromptSectionTitle') }}</div>
         <el-form-item label="">
           <div style="width:100%">
-            <div style="font-size:12px; color:#6b7280; margin-bottom:4px;">原始提示词（分镜生成时写入，仅供参考）</div>
+            <div style="font-size:12px; color:#6b7280; margin-bottom:4px;">{{ $t('filmCreate.originalPromptHint') }}</div>
             <el-input
               v-model="sbPromptImageText"
               type="textarea"
               :rows="4"
-              placeholder="分镜生成时由 AI 写入的原始描述"
+              :placeholder="$t('filmCreate.originalPromptPlaceholder')"
             />
           </div>
         </el-form-item>
         <el-form-item label="">
           <div style="width:100%">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-              <span style="font-size:12px; color:#6b7280;">通用优化提示词（仅更新本字段，不影响首尾帧/关键帧专用提示词）</span>
+              <span style="font-size:12px; color:#6b7280;">{{ $t('filmCreate.polishedPromptHint') }}</span>
               <el-button
                 size="small"
                 type="warning"
                 plain
                 :loading="sbPromptPolishing"
                 @click="onPolishSbPrompt"
-              >{{ sbPromptPolishedText ? '重新生成' : '立即生成' }}</el-button>
+              >{{ sbPromptPolishedText ? $t('filmCreate.regenNow') : $t('filmCreate.genNow') }}</el-button>
             </div>
             <el-input
               v-model="sbPromptPolishedText"
               type="textarea"
               :rows="5"
-              placeholder="点击「立即生成」润色通用优化提示词（仅更新本字段，不影响首尾帧专用提示词）"
+              :placeholder="$t('filmCreate.polishedPromptPlaceholder')"
             />
           </div>
         </el-form-item>
         <!-- 视频区 -->
-        <div class="sb-prompt-section-title" style="margin-top:12px;">🎬 视频提示词</div>
+        <div class="sb-prompt-section-title" style="margin-top:12px;">{{ $t('filmCreate.videoPromptSectionTitle') }}</div>
         <el-form-item label="">
           <el-input
             v-model="sbPromptVideoText"
             type="textarea"
             :rows="12"
-            placeholder="视频生成提示词（可选，留空则由系统自动生成）"
+            :placeholder="$t('filmCreate.videoPromptPlaceholder')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showSbPromptDialog = false">取消</el-button>
-        <el-button type="primary" :loading="sbPromptSaving" @click="onSaveSbPromptDialog">保存</el-button>
+        <el-button @click="showSbPromptDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="sbPromptSaving" @click="onSaveSbPromptDialog">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 首尾帧提示词编辑器（显示最终发给AI的完整提示词，支持编辑保存） -->
     <el-dialog
       v-model="showFramePromptEditor"
-      :title="`${editingFramePromptSlot === 'last' ? '尾帧' : '首帧'}图生提示词 · 编辑`"
+      :title="$t('filmCreate.framePromptEditorTitle', { slot: editingFramePromptSlot === 'last' ? $t('filmCreate.lastFrame') : $t('filmCreate.firstFrame') })"
       width="720px"
       destroy-on-close
     >
       <div class="frame-prompt-editor-body">
         <div class="frame-prompt-editor-hint">
-          此提示词将直接发给AI生成首/尾帧图片。支持编辑后保存，保存后点击「生成」即可使用新提示词。
+          {{ $t('filmCreate.framePromptEditorHint') }}
         </div>
 
         <!-- 空间布局锚点（生成分镜时 AI 输出的最高优先级站位合同） -->
         <div v-if="editingFramePromptSb?.layout_description" class="frame-layout-anchor">
-          <div class="frame-layout-anchor-label">本分镜空间布局锚点（首尾帧强制一致合同，最高优先级）</div>
+          <div class="frame-layout-anchor-label">{{ $t('filmCreate.frameLayoutAnchorLabel') }}</div>
           <div class="frame-layout-anchor-text">{{ editingFramePromptSb.layout_description }}</div>
-          <div class="frame-layout-anchor-note">首帧必须严格按此生成初始站位；尾帧必须在完全相同的左右位置、距离、构图下仅演化姿态/表情/结果。</div>
+          <div class="frame-layout-anchor-note">{{ $t('filmCreate.frameLayoutAnchorNote') }}</div>
         </div>
 
         <el-input
           v-model="editingFramePromptText"
           type="textarea"
           :rows="14"
-          placeholder="在此编辑最终发给AI生图的完整提示词..."
+          :placeholder="$t('filmCreate.framePromptEditorPlaceholder')"
           class="frame-prompt-editor-textarea"
         />
       </div>
       <template #footer>
-        <el-button @click="showFramePromptEditor = false">关闭</el-button>
-        <el-button :loading="editingFramePromptRegenerating" @click="regenerateEditingFramePrompt">重新生成</el-button>
-        <el-button type="primary" :loading="editingFramePromptSaving" @click="saveEditingFramePrompt">保存</el-button>
+        <el-button @click="showFramePromptEditor = false">{{ $t('common.close') }}</el-button>
+        <el-button :loading="editingFramePromptRegenerating" @click="regenerateEditingFramePrompt">{{ $t('filmCreate.regenNow') }}</el-button>
+        <el-button type="primary" :loading="editingFramePromptSaving" @click="saveEditingFramePrompt">{{ $t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 分镜视频参数编辑弹窗 -->
     <el-dialog
       v-model="showVideoParamsDialog"
-      :title="`分镜 ${videoParamsTarget?.storyboard_number ?? ''} · 视频参数`"
+      :title="$t('filmCreate.videoParamsDialogTitle', { num: videoParamsTarget?.storyboard_number ?? '' })"
       width="860px"
       destroy-on-close
       @close="onVideoParamsDialogClosed"
     >
       <el-form v-if="videoParamsTarget" label-width="115px" size="small" class="vp-dialog-form">
-        <el-form-item label="创作模式">
+        <el-form-item :label="$t('filmCreate.creationMode')">
           <el-radio-group
             :model-value="sbCreationMode[videoParamsTarget.id] === 'universal' ? 'universal' : 'classic'"
             size="small"
             @change="(v) => setSbCreationModeId(videoParamsTarget.id, v)"
           >
-            <el-radio-button value="classic">经典分镜</el-radio-button>
-            <el-radio-button value="universal">全能模式</el-radio-button>
+            <el-radio-button value="classic">{{ $t('filmCreate.classicMode') }}</el-radio-button>
+            <el-radio-button value="universal">{{ $t('filmCreate.universalMode') }}</el-radio-button>
           </el-radio-group>
-          <div class="vp-mode-hint">全能模式：中间为片段描述；生视频时使用 <strong>AI 配置里当前启用的视频</strong>（接口规范 <code>kling_omni</code> / <code>volcengine_omni</code>，或「低价 Seedance2」，或勾选「确认支持全能模式」）并合并场景/角色/道具等参考图（不含经典分镜主图）。经典字段保留，可随时切回。</div>
+          <div class="vp-mode-hint">{{ $t('filmCreate.vpModeHint') }}</div>
         </el-form-item>
         <el-row :gutter="12">
           <el-col :span="12">
-            <el-form-item label="标题">
-              <el-input v-model="sbTitle[videoParamsTarget.id]" placeholder="镜头标题" />
+            <el-form-item :label="$t('filmCreate.titleLabel')">
+              <el-input v-model="sbTitle[videoParamsTarget.id]" :placeholder="$t('filmCreate.shotTitlePlaceholder')" />
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="地点">
-              <el-input v-model="sbLocation[videoParamsTarget.id]" placeholder="场景地点" />
+            <el-form-item :label="$t('filmCreate.locationLabel')">
+              <el-input v-model="sbLocation[videoParamsTarget.id]" :placeholder="$t('filmCreate.sceneLocationPlaceholder')" />
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="时间">
-              <el-input v-model="sbTime[videoParamsTarget.id]" placeholder="清晨/午后" />
+            <el-form-item :label="$t('filmCreate.timeLabel')">
+              <el-input v-model="sbTime[videoParamsTarget.id]" :placeholder="$t('filmCreate.timeOfDayPlaceholder')" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="12">
           <el-col :span="6">
-            <el-form-item label="时长(秒)">
+            <el-form-item :label="$t('filmCreate.durationSecondsLabel')">
               <el-input-number v-model="sbDuration[videoParamsTarget.id]" :min="1" :max="60" style="width:100%" />
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="景别">
-              <el-select v-model="sbShotType[videoParamsTarget.id]" placeholder="景别" style="width:100%">
-                <el-option label="大远景" value="大远景" />
-                <el-option label="远景" value="远景" />
-                <el-option label="中景" value="中景" />
-                <el-option label="近景" value="近景" />
-                <el-option label="特写" value="特写" />
+            <el-form-item :label="$t('filmCreate.shotTypeLabel')">
+              <el-select v-model="sbShotType[videoParamsTarget.id]" :placeholder="$t('filmCreate.shotTypeLabel')" style="width:100%">
+                <el-option :label="$t('filmCreate.shotExtremeWide')" value="大远景" /><!-- i18n-scan-ignore: DB enum value -->
+                <el-option :label="$t('filmCreate.shotWide')" value="远景" /><!-- i18n-scan-ignore: DB enum value -->
+                <el-option :label="$t('filmCreate.shotMedium')" value="中景" /><!-- i18n-scan-ignore: DB enum value -->
+                <el-option :label="$t('filmCreate.shotClose')" value="近景" /><!-- i18n-scan-ignore: DB enum value -->
+                <el-option :label="$t('filmCreate.shotCloseUp')" value="特写" /><!-- i18n-scan-ignore: DB enum value -->
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="运镜">
-              <el-select v-model="sbMovement[videoParamsTarget.id]" placeholder="运镜（推荐动态）" style="width:100%" clearable filterable>
-                <el-option-group label="基础运镜">
-                  <el-option label="固定（少用）" value="static" />
-                  <el-option label="推镜" value="push" />
-                  <el-option label="拉镜" value="pull" />
-                  <el-option label="横摇（左/右）" value="pan" />
-                  <el-option label="纵摇（上/下）" value="tilt" />
-                  <el-option label="跟镜/跟踪" value="tracking" />
-                  <el-option label="升镜（吊臂上升）" value="crane_up" />
-                  <el-option label="降镜（吊臂下降）" value="crane_dn" />
-                  <el-option label="环绕/轨道" value="orbit" />
-                  <el-option label="手持/晃动" value="handheld" />
+            <el-form-item :label="$t('filmCreate.movementLabel')">
+              <el-select v-model="sbMovement[videoParamsTarget.id]" :placeholder="$t('filmCreate.movementPlaceholder')" style="width:100%" clearable filterable>
+                <el-option-group :label="$t('filmCreate.movementGroupBasic')">
+                  <el-option :label="$t('filmCreate.movementStatic')" value="static" />
+                  <el-option :label="$t('filmCreate.movementPush')" value="push" />
+                  <el-option :label="$t('filmCreate.movementPull')" value="pull" />
+                  <el-option :label="$t('filmCreate.movementPan')" value="pan" />
+                  <el-option :label="$t('filmCreate.movementTilt')" value="tilt" />
+                  <el-option :label="$t('filmCreate.movementTracking')" value="tracking" />
+                  <el-option :label="$t('filmCreate.movementCraneUp')" value="crane_up" />
+                  <el-option :label="$t('filmCreate.movementCraneDn')" value="crane_dn" />
+                  <el-option :label="$t('filmCreate.movementOrbit')" value="orbit" />
+                  <el-option :label="$t('filmCreate.movementHandheld')" value="handheld" />
                 </el-option-group>
-                <el-option-group label="进阶运镜">
-                  <el-option label="变焦（zoom in/out）" value="zoom" />
-                  <el-option label="旋转/滚镜（roll）" value="roll" />
-                  <el-option label="甩镜/急摇" value="whip_pan" />
-                  <el-option label="螺旋上升/下降" value="spiral" />
+                <el-option-group :label="$t('filmCreate.movementGroupAdvanced')">
+                  <el-option :label="$t('filmCreate.movementZoom')" value="zoom" />
+                  <el-option :label="$t('filmCreate.movementRoll')" value="roll" />
+                  <el-option :label="$t('filmCreate.movementWhipPan')" value="whip_pan" />
+                  <el-option :label="$t('filmCreate.movementSpiral')" value="spiral" />
                 </el-option-group>
-                <el-option-group label="电影化组合镜头">
-                  <el-option label="希区柯克镜头（推+变焦）" value="hitchcock_zoom" />
-                  <el-option label="子弹时间（环绕+升格）" value="bullet_time" />
-                  <el-option label="荷兰角+运镜" value="dutch_angle_move" />
-                  <el-option label="推轨复合（dolly+track）" value="dolly_track" />
-                  <el-option label="升格环绕（slow-mo orbit）" value="slowmo_orbit" />
+                <el-option-group :label="$t('filmCreate.movementGroupCinematic')">
+                  <el-option :label="$t('filmCreate.movementHitchcockZoom')" value="hitchcock_zoom" />
+                  <el-option :label="$t('filmCreate.movementBulletTime')" value="bullet_time" />
+                  <el-option :label="$t('filmCreate.movementDutchAngleMove')" value="dutch_angle_move" />
+                  <el-option :label="$t('filmCreate.movementDollyTrack')" value="dolly_track" />
+                  <el-option :label="$t('filmCreate.movementSlowmoOrbit')" value="slowmo_orbit" />
                 </el-option-group>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="氛围">
-              <el-input v-model="sbAtmosphere[videoParamsTarget.id]" placeholder="氛围/情绪" />
+            <el-form-item :label="$t('filmCreate.atmosphereLabel')">
+              <el-input v-model="sbAtmosphere[videoParamsTarget.id]" :placeholder="$t('filmCreate.atmospherePlaceholder')" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="12">
           <el-col :span="8">
-            <el-form-item label="镜头视角">
+            <el-form-item :label="$t('filmCreate.cameraAngleLabel')">
               <div style="display:flex;gap:4px;flex-wrap:wrap">
-                <el-select v-model="sbAngleS[videoParamsTarget.id]" placeholder="景别" style="width:76px">
-                  <el-option label="特写" value="close_up" />
-                  <el-option label="中景" value="medium" />
-                  <el-option label="远景" value="wide" />
+                <el-select v-model="sbAngleS[videoParamsTarget.id]" :placeholder="$t('filmCreate.shotTypeLabel')" style="width:76px">
+                  <el-option :label="$t('filmCreate.shotCloseUp')" value="close_up" />
+                  <el-option :label="$t('filmCreate.shotMedium')" value="medium" />
+                  <el-option :label="$t('filmCreate.shotWide')" value="wide" />
                 </el-select>
-                <el-select v-model="sbAngleV[videoParamsTarget.id]" placeholder="俯仰" style="width:86px">
-                  <el-option label="平视" value="eye_level" />
-                  <el-option label="低角仰拍" value="low" />
-                  <el-option label="高角俯拍" value="high" />
-                  <el-option label="虫眼仰视" value="worm" />
+                <el-select v-model="sbAngleV[videoParamsTarget.id]" :placeholder="$t('filmCreate.anglePitch')" style="width:86px">
+                  <el-option :label="$t('filmCreate.angleEyeLevel')" value="eye_level" />
+                  <el-option :label="$t('filmCreate.angleLow')" value="low" />
+                  <el-option :label="$t('filmCreate.angleHigh')" value="high" />
+                  <el-option :label="$t('filmCreate.angleWorm')" value="worm" />
                 </el-select>
-                <el-select v-model="sbAngleH[videoParamsTarget.id]" placeholder="方向" style="width:80px">
-                  <el-option label="正面" value="front" />
-                  <el-option label="前左45°" value="front_left" />
-                  <el-option label="左侧" value="left" />
-                  <el-option label="后左135°" value="back_left" />
-                  <el-option label="背面" value="back" />
-                  <el-option label="后右135°" value="back_right" />
-                  <el-option label="右侧" value="right" />
-                  <el-option label="前右45°" value="front_right" />
+                <el-select v-model="sbAngleH[videoParamsTarget.id]" :placeholder="$t('filmCreate.angleDirection')" style="width:80px">
+                  <el-option :label="$t('filmCreate.angleFront')" value="front" />
+                  <el-option :label="$t('filmCreate.angleFrontLeft')" value="front_left" />
+                  <el-option :label="$t('filmCreate.angleLeft')" value="left" />
+                  <el-option :label="$t('filmCreate.angleBackLeft')" value="back_left" />
+                  <el-option :label="$t('filmCreate.angleBack')" value="back" />
+                  <el-option :label="$t('filmCreate.angleBackRight')" value="back_right" />
+                  <el-option :label="$t('filmCreate.angleRight')" value="right" />
+                  <el-option :label="$t('filmCreate.angleFrontRight')" value="front_right" />
                 </el-select>
                 <span v-if="sbAngleS[videoParamsTarget.id] && sbAngleV[videoParamsTarget.id] && sbAngleH[videoParamsTarget.id]"
                       style="font-size:11px;color:#6b7280;background:#f3f4f6;padding:2px 6px;border-radius:4px;white-space:nowrap">
@@ -2473,43 +2473,43 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="灯光">
-              <el-select v-model="sbLighting[videoParamsTarget.id]" placeholder="灯光风格" style="width:100%" clearable>
-                <el-option label="自然光" value="natural" />
-                <el-option label="顺光" value="front" />
-                <el-option label="侧光" value="side" />
-                <el-option label="逆光" value="backlit" />
-                <el-option label="顶光" value="top" />
-                <el-option label="底光" value="under" />
-                <el-option label="柔光" value="soft" />
-                <el-option label="戏剧光" value="dramatic" />
-                <el-option label="黄金时段" value="golden_hour" />
-                <el-option label="蓝调时刻" value="blue_hour" />
-                <el-option label="夜景" value="night" />
-                <el-option label="霓虹" value="neon" />
+            <el-form-item :label="$t('filmCreate.lightingLabel')">
+              <el-select v-model="sbLighting[videoParamsTarget.id]" :placeholder="$t('filmCreate.lightingPlaceholder')" style="width:100%" clearable>
+                <el-option :label="$t('filmCreate.lightNatural')" value="natural" />
+                <el-option :label="$t('filmCreate.lightFront')" value="front" />
+                <el-option :label="$t('filmCreate.lightSide')" value="side" />
+                <el-option :label="$t('filmCreate.lightBacklit')" value="backlit" />
+                <el-option :label="$t('filmCreate.lightTop')" value="top" />
+                <el-option :label="$t('filmCreate.lightUnder')" value="under" />
+                <el-option :label="$t('filmCreate.lightSoft')" value="soft" />
+                <el-option :label="$t('filmCreate.lightDramatic')" value="dramatic" />
+                <el-option :label="$t('filmCreate.lightGoldenHour')" value="golden_hour" />
+                <el-option :label="$t('filmCreate.lightBlueHour')" value="blue_hour" />
+                <el-option :label="$t('filmCreate.lightNight')" value="night" />
+                <el-option :label="$t('filmCreate.lightNeon')" value="neon" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="景深">
-              <el-select v-model="sbDof[videoParamsTarget.id]" placeholder="景深" style="width:100%" clearable>
-                <el-option label="极浅景深" value="extreme_shallow" />
-                <el-option label="浅景深" value="shallow" />
-                <el-option label="中景深" value="medium" />
-                <el-option label="深景深（全焦）" value="deep" />
+            <el-form-item :label="$t('filmCreate.dofLabel')">
+              <el-select v-model="sbDof[videoParamsTarget.id]" :placeholder="$t('filmCreate.dofPlaceholder')" style="width:100%" clearable>
+                <el-option :label="$t('filmCreate.dofExtremeShallow')" value="extreme_shallow" />
+                <el-option :label="$t('filmCreate.dofShallow')" value="shallow" />
+                <el-option :label="$t('filmCreate.dofMedium')" value="medium" />
+                <el-option :label="$t('filmCreate.dofDeep')" value="deep" />
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
 
         <!-- 空间布局锚点：生成分镜时 AI 输出的最高优先级人物站位合同（首尾帧强制一致核心） -->
-        <el-form-item label="空间布局锚点（首尾帧人物站位合同）">
+        <el-form-item :label="$t('filmCreate.spatialLayoutAnchorLabel')">
           <div style="display:flex; gap:8px; align-items:flex-start; width:100%">
             <el-input
               v-model="sbLayoutDescription[videoParamsTarget.id]"
               type="textarea"
               :rows="3"
-              placeholder="例如：女主站画面左三分之一正对镜头，男主站右后侧侧身看向女主，中景，双人构图，平衡稳定"
+              :placeholder="$t('filmCreate.spatialLayoutAnchorPlaceholder')"
               style="flex:1"
             />
             <el-button
@@ -2518,27 +2518,27 @@
               @click="onRegenerateLayoutDescription(videoParamsTarget)"
               style="margin-top:4px; white-space:nowrap"
             >
-              AI 重新生成/优化
+              {{ $t('filmCreate.aiRegenOrOptimize') }}
             </el-button>
           </div>
           <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35">
-            最高优先级空间合同（用于首尾帧站位锁定）。AI 可参考上下分镜一键重新生成/优化，点击右侧按钮触发。
+            {{ $t('filmCreate.spatialLayoutAnchorNote') }}
           </div>
         </el-form-item>
 
-        <el-form-item label="动作">
-          <el-input v-model="sbAction[videoParamsTarget.id]" type="textarea" :rows="2" placeholder="动作描述" />
+        <el-form-item :label="$t('filmCreate.actionLabel')">
+          <el-input v-model="sbAction[videoParamsTarget.id]" type="textarea" :rows="2" :placeholder="$t('filmCreate.actionDescPlaceholder')" />
         </el-form-item>
-        <el-form-item label="对白">
-          <el-input v-model="sbDialogue[videoParamsTarget.id]" type="textarea" :rows="2" placeholder="角色对白" />
+        <el-form-item :label="$t('filmCreate.dialogueLabel')">
+          <el-input v-model="sbDialogue[videoParamsTarget.id]" type="textarea" :rows="2" :placeholder="$t('filmCreate.dialoguePlaceholder')" />
         </el-form-item>
-        <el-form-item label="解说旁白">
-          <el-input v-model="sbNarration[videoParamsTarget.id]" type="textarea" :rows="2" class="sb-narration-input" placeholder="画外解说 / 纪录片式旁白（与对白分开）" />
+        <el-form-item :label="$t('filmCreate.narrationLabel')">
+          <el-input v-model="sbNarration[videoParamsTarget.id]" type="textarea" :rows="2" class="sb-narration-input" :placeholder="$t('filmCreate.narrationFieldPlaceholder')" />
         </el-form-item>
-        <el-form-item v-if="canSplitSbByAudio(videoParamsTarget)" label="多角色对白">
+        <el-form-item v-if="canSplitSbByAudio(videoParamsTarget)" :label="$t('filmCreate.multiRoleDialogue')">
           <div class="sb-split-audio-row">
             <p class="sb-split-audio-tip">
-              本镜含多句对白或「对白+旁白」，Seedance 同镜易串音。可拆成多条分镜（每条仅一人说话或仅旁白），再分别生视频。
+              {{ $t('filmCreate.multiRoleDialogueHint') }}
             </p>
             <el-button
               type="warning"
@@ -2546,15 +2546,15 @@
               :loading="splitByAudioLoading"
               @click="onSplitSbByAudio(videoParamsTarget)"
             >
-              按对白拆镜
+              {{ $t('filmCreate.splitShotByDialogue') }}
             </el-button>
           </div>
         </el-form-item>
-        <el-form-item label="画面结果">
-          <el-input v-model="sbResult[videoParamsTarget.id]" type="textarea" :rows="2" placeholder="动作完成后的画面结果" />
+        <el-form-item :label="$t('filmCreate.resultLabel')">
+          <el-input v-model="sbResult[videoParamsTarget.id]" type="textarea" :rows="2" :placeholder="$t('filmCreate.resultPlaceholder')" />
         </el-form-item>
-        <el-form-item label="视频提示词">
-          <div class="vp-video-prompt-hint">保存后将根据上方字段，由系统按最新规则自动生成（含角色音色锚点）。</div>
+        <el-form-item :label="$t('filmCreate.videoPrompt')">
+          <div class="vp-video-prompt-hint">{{ $t('filmCreate.videoPromptAutoGenerateHint') }}</div>
           <el-input
             v-if="videoParamsTarget?.video_prompt"
             :model-value="videoParamsTarget.video_prompt"
@@ -2566,25 +2566,25 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showVideoParamsDialog = false">取消</el-button>
-        <el-button type="primary" :loading="videoParamsSaving" @click="onSaveVideoParams">保存并更新</el-button>
+        <el-button @click="showVideoParamsDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="videoParamsSaving" @click="onSaveVideoParams">{{ $t('filmCreate.saveAndUpdate') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- P1-2: 导入小说弹窗 -->
-    <el-dialog v-model="showNovelImport" title="导入小说/长文" width="600px" @close="novelImportReset">
+    <el-dialog v-model="showNovelImport" :title="$t('filmCreate.novelImportTitle')" width="600px" @close="novelImportReset">
       <div class="novel-import-dialog">
-        <p style="color:#6b7280;font-size:13px;margin-bottom:12px">支持粘贴小说文本或上传 txt 文件，AI 自动识别章节并转换为剧本集数</p>
+        <p style="color:#6b7280;font-size:13px;margin-bottom:12px">{{ $t('filmCreate.novelImportDesc') }}</p>
         <el-tabs v-model="novelImportMode">
-          <el-tab-pane label="粘贴文本" name="text">
+          <el-tab-pane :label="$t('filmCreate.pasteTextTab')" name="text">
             <el-input
               v-model="novelText"
               type="textarea"
               :rows="10"
-              placeholder="粘贴小说正文，AI 会自动识别章节..."
+              :placeholder="$t('filmCreate.pasteNovelPlaceholder')"
             />
           </el-tab-pane>
-          <el-tab-pane label="上传文件" name="file">
+          <el-tab-pane :label="$t('filmCreate.uploadFileTab')" name="file">
             <el-upload
               drag
               :auto-upload="false"
@@ -2593,27 +2593,27 @@
               :show-file-list="false"
             >
               <el-icon class="el-icon--upload"><DocumentAdd /></el-icon>
-              <div class="el-upload__text">拖拽 .txt / .md 文件到此处，或<em>点击上传</em></div>
+              <div class="el-upload__text">{{ $t('filmCreate.dragFileHint') }}<em>{{ $t('filmCreate.clickToUpload') }}</em></div>
             </el-upload>
-            <div v-if="novelFileName" style="margin-top:8px;font-size:13px;color:#409eff">已选择：{{ novelFileName }}</div>
+            <div v-if="novelFileName" style="margin-top:8px;font-size:13px;color:#409eff">{{ $t('filmCreate.selectedFilePrefix') }}{{ novelFileName }}</div>
           </el-tab-pane>
         </el-tabs>
         <div class="novel-import-options" style="margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:6px;font-size:13px">
-            <span>最多导入集数：</span>
+            <span>{{ $t('filmCreate.maxImportEpisodes') }}</span>
             <el-input-number v-model="novelMaxChapters" :min="1" :max="20" size="small" style="width:100px" />
           </div>
-          <el-checkbox v-model="novelAiSummarize" size="small">AI 转换为剧本格式（会消耗 Token）</el-checkbox>
+          <el-checkbox v-model="novelAiSummarize" size="small">{{ $t('filmCreate.aiConvertToScriptFormat') }}</el-checkbox>
         </div>
       </div>
       <template #footer>
-        <el-button @click="showNovelImport = false">取消</el-button>
-        <el-button type="primary" :loading="novelImporting" @click="onImportNovel">开始导入</el-button>
+        <el-button @click="showNovelImport = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="novelImporting" @click="onImportNovel">{{ $t('filmCreate.startImport') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- AI 配置弹窗（不跳转，避免本页内容丢失） -->
-    <el-dialog v-model="showAiConfigDialog" title="AI 配置" width="90%" destroy-on-close class="ai-config-dialog">
+    <el-dialog v-model="showAiConfigDialog" :title="$t('routes.aiConfig')" width="90%" destroy-on-close class="ai-config-dialog">
       <AIConfigContent v-if="showAiConfigDialog" />
     </el-dialog>
 
@@ -3102,40 +3102,40 @@ const allActiveTaskItems = computed(() => {
     seen.add(id)
     items.push(item)
   }
-  for (const t of genStore.getAllRunningTasks()) {
+  for (const tTask of genStore.getAllRunningTasks()) {
     addItem({
-      id: `gen:${t.key || t.taskId || t.label}`,
-      label: t.label || '任务进行中...',
+      id: `gen:${tTask.key || tTask.taskId || tTask.label}`,
+      label: tTask.label || t('filmCreate.taskRunning'),
       kind: 'genStore',
-      task: t,
+      task: tTask,
     })
   }
   if (pipelineRunning.value) {
     const step = pipelineCurrentStep.value
     addItem({
       id: 'pipeline',
-      label: step ? step.replace(/^\[步骤 \d+\/\d+\] /, '') : '一键全流程运行中...',
+      label: step ? step.replace(/^\[步骤 \d+\/\d+\] /, '') : t('filmCreate.pipelineRunningEllipsis'), // i18n-scan-ignore: regex
       kind: 'pipeline',
     })
   }
-  if (isStoryGenRunning.value && !genStore.getAllRunningTasks().some((t) => t.resourceType === GEN_RESOURCE.GENERATE_STORY)) {
-    addItem({ id: 'story-gen-local', label: '生成剧本...', kind: 'storyGenLocal' })
+  if (isStoryGenRunning.value && !genStore.getAllRunningTasks().some((tTask) => tTask.resourceType === GEN_RESOURCE.GENERATE_STORY)) {
+    addItem({ id: 'story-gen-local', label: t('filmCreate.storyGenEllipsis'), kind: 'storyGenLocal' })
   }
   if (universalOmniPolishRunning.value) {
     const p = universalOmniPolishProgress.value
     addItem({
       id: 'universal-omni-polish',
-      label: `润色全能分镜 ${p.current}/${p.total}${p.label ? ' ' + p.label : ''}`,
+      label: t('filmCreate.polishOmniProgress', { current: p.current, total: p.total, label: p.label ? ' ' + p.label : '' }),
       kind: 'universalOmniPolish',
     })
   }
   if (batchImageRunning.value) {
-    addItem({ id: 'batch-image', label: '批量生成分镜图...', kind: 'batchImage' })
+    addItem({ id: 'batch-image', label: t('filmCreate.batchImageEllipsis'), kind: 'batchImage' })
   }
   if (batchVideoRunning.value) {
     const p = batchVideoProgress.value
     const suffix = p?.total ? ` ${p.current}/${p.total}` : ''
-    addItem({ id: 'batch-video', label: `批量生成分镜视频${suffix}...`, kind: 'batchVideo' })
+    addItem({ id: 'batch-video', label: t('filmCreate.batchVideoEllipsis', { suffix }), kind: 'batchVideo' })
   }
   return items
 })
@@ -3147,44 +3147,44 @@ async function cancelActiveTask(item) {
   try {
     if (item.kind === 'genStore' && item.task) {
       await genStore.cancelTask(item.task)
-      ElMessage.success('任务已取消')
+      ElMessage.success(t('filmCreate.taskCancelled'))
       return
     }
     if (item.kind === 'pipeline') {
       pipelineAbortRequested.value = true
       pipelineRunning.value = false
       pipelinePaused.value = false
-      for (const t of genStore.getAllRunningTasks()) {
-        if (t.taskId) await genStore.cancelTask(t)
+      for (const tTask of genStore.getAllRunningTasks()) {
+        if (tTask.taskId) await genStore.cancelTask(tTask)
       }
-      ElMessage.success('已停止全流程')
+      ElMessage.success(t('filmCreate.pipelineStopped'))
       return
     }
     if (item.kind === 'storyGenLocal') {
       storyGenerating.value = false
       scriptGenerating.value = false
-      const storyTask = genStore.getAllRunningTasks().find((t) => t.resourceType === GEN_RESOURCE.GENERATE_STORY)
+      const storyTask = genStore.getAllRunningTasks().find((tTask) => tTask.resourceType === GEN_RESOURCE.GENERATE_STORY)
       if (storyTask) await genStore.cancelTask(storyTask)
-      ElMessage.success('已取消剧本生成')
+      ElMessage.success(t('filmCreate.storyGenCancelled'))
       return
     }
     if (item.kind === 'universalOmniPolish') {
       universalOmniPolishAbort.value = true
-      ElMessage.success('正在停止润色...')
+      ElMessage.success(t('filmCreate.stoppingPolish'))
       return
     }
     if (item.kind === 'batchImage') {
       batchImageStopping.value = true
-      ElMessage.info('正在停止批量生图...')
+      ElMessage.info(t('filmCreate.stoppingBatchImage'))
       return
     }
     if (item.kind === 'batchVideo') {
       batchVideoStopping.value = true
-      ElMessage.info('正在停止批量生视频...')
+      ElMessage.info(t('filmCreate.stoppingBatchVideo'))
       return
     }
   } catch (e) {
-    ElMessage.error(e?.message || '取消失败')
+    ElMessage.error(e?.message || t('filmCreate.cancelFailed'))
   }
 }
 const sbCharacterIds = ref({})  // sbId -> number[] 多选角色
@@ -3342,28 +3342,28 @@ const scriptStoryboardEstimate = computed(() => {
 const scriptEstimateVideoDurationHint = computed(() => {
   const e = scriptStoryboardEstimate.value
   if (!e) return ''
-  return `（约 ${e.sec}s）`
+  return `(${t('filmCreate.approxSec', { sec: e.sec })})`
 })
 
 const scriptEstimateVideoDurationTitle = computed(() => {
   const e = scriptStoryboardEstimate.value
   if (!e) return ''
-  return `按当前剧本文本约 ${e.len} 个字符（含标点；常见汉字在浏览器里一字一算，并非按 UTF-8 字节翻倍）、短剧公式 round(10+(字符/600)×60) 粗估总时长约 ${e.sec} 秒；未填输入框时该值会作为约束传给生成接口。仅供参考`
+  return t('filmCreate.estVideoDurationTitle', { len: e.len, sec: e.sec })
 })
 
 const scriptEstimateStoryboardHint = computed(() => {
   const e = scriptStoryboardEstimate.value
   if (!e) return ''
   if (e.range && e.range.min !== e.range.max) {
-    return `（约 ${e.locked} 镜，参考 ${e.range.min}–${e.range.max}）`
+    return `(${t('filmCreate.approxShotsRange', { locked: e.locked, min: e.range.min, max: e.range.max })})`
   }
-  return `（约 ${e.locked} 镜）`
+  return `(${t('filmCreate.approxShots', { locked: e.locked })})`
 })
 
 const scriptEstimateStoryboardTitle = computed(() => {
   const e = scriptStoryboardEstimate.value
   if (!e) return ''
-  return `按估算时长 ${e.sec}s ÷ 项目「每段 ${e.clip} 秒」四舍五入粗估约 ${e.locked} 镜；旁注区间为 ±1 镜供参考。切换「X秒/段」会同步改变本估算。`
+  return t('filmCreate.estStoryboardTitle', { sec: e.sec, clip: e.clip, locked: e.locked })
 })
 
 function scriptTextTrimmedForEstimate() {
@@ -3475,10 +3475,10 @@ async function doExtractFromRef(type) {
       const res = await uploadAPI.extractDescriptionFromImage('character', refImage.dataUrl, name)
       if (res?.description && editCharacterForm.value) {
         editCharacterForm.value.appearance = res.description
-        ElMessage.success('已从参考图提取外貌描述')
+        ElMessage.success(t('filmCreate.msgAppearanceExtracted'))
       }
     } catch (e) {
-      ElMessage.error(e.message || '提取失败，请检查 AI 配置中是否有支持视觉的模型')
+      ElMessage.error(e.message || t('filmCreate.msgVisionModelMissing'))
     } finally {
       extractingCharAppearance.value = false
     }
@@ -3491,10 +3491,10 @@ async function doExtractFromRef(type) {
       const res = await uploadAPI.extractDescriptionFromImage('prop', refImage.dataUrl, name)
       if (res?.description && editPropForm.value) {
         editPropForm.value.description = res.description
-        ElMessage.success('已从参考图提取特征描述')
+        ElMessage.success(t('filmCreate.msgFeatureDescExtracted'))
       }
     } catch (e) {
-      ElMessage.error(e.message || '提取失败，请检查 AI 配置中是否有支持视觉的模型')
+      ElMessage.error(e.message || t('filmCreate.msgVisionModelMissing'))
     } finally {
       extractingPropDesc.value = false
     }
@@ -3507,10 +3507,10 @@ async function doExtractFromRef(type) {
       const res = await uploadAPI.extractDescriptionFromImage('scene', refImage.dataUrl, name)
       if (res?.description && editSceneForm.value) {
         editSceneForm.value.description = res.description
-        ElMessage.success('已从参考图提取场景描述')
+        ElMessage.success(t('filmCreate.msgSceneDescExtracted'))
       }
     } catch (e) {
-      ElMessage.error(e.message || '提取失败，请检查 AI 配置中是否有支持视觉的模型')
+      ElMessage.error(e.message || t('filmCreate.msgVisionModelMissing'))
     } finally {
       extractingSceneDesc.value = false
     }
@@ -3621,7 +3621,7 @@ function sbMainVideoPlayerKey(sbId) {
 function onStoryboardUseFirstLastFrameChange() {
   if (storyboardUseFirstLastFrame.value && gridMode.value !== 'single') {
     gridMode.value = 'single'
-    ElMessage.info('首尾帧模式已开启，序列图已切换为单张')
+    ElMessage.info(t('filmCreate.firstLastFrameSingleGridTip'))
   }
   saveProjectSettings(false)
 }
@@ -3780,7 +3780,7 @@ function getVideoStripItems(storyboardId) {
       key: `vid-${v.id}`,
       video: v,
       src: assetVideoUrl(v),
-      label: `历史${idx + 2}`,
+      label: t('filmCreate.videoHistoryItem', { num: idx + 2 }),
     }))
 }
 /** 选中某条历史视频为当前视频，并持久化到分镜记录供合成视频使用 */
@@ -3789,7 +3789,7 @@ function onSelectSbMainVideo(sb, video) {
   storyboardsAPI.update(sb.id, {
     video_url: video.video_url || null,
     local_path: video.local_path || undefined,
-  }).catch(e => console.warn('[主视频] 保存后端失败', e))
+  }).catch(e => console.warn('[mainVideo] save failed', e))
 }
 /** 取该分镜最近一次视频生成的错误信息（从 API 返回的记录或本地即时错误） */
 function getSbVideoError(storyboardId) {
@@ -3864,7 +3864,8 @@ function buildSbGenMeta(sb, resourceType, labelPrefix) {
   const num = sb?.storyboard_number ?? sb?.id
   const epNum = store.currentEpisode?.episode_number
   const dramaTitle = store.drama?.title || ''
-  const epLabel = dramaTitle ? `${dramaTitle} · 第${epNum ?? ''}集` : `第${epNum ?? ''}集`
+  const epText = t('filmCreate.episodeNum', { num: epNum ?? '' })
+  const epLabel = dramaTitle ? `${dramaTitle} · ${epText}` : epText
   return {
     dramaId: dramaId.value,
     episodeId: currentEpisodeId.value,
@@ -3905,7 +3906,7 @@ async function recoverAndSyncEpisodeTasks(epId) {
       },
       onEpisodeMergeFailed: (err) => {
         store.setVideoStatus('error', did, eid)
-        videoErrorMsg.value = err || '视频生成失败'
+        videoErrorMsg.value = err || t('filmCreate.videoGenFailed')
       },
     },
   })
@@ -3996,7 +3997,7 @@ function getStripItems(storyboardId) {
       type: 'img',
       img,
       label: quadPanelLabel(img.frame_type),
-      frameBadge: img.frame_type === 'storyboard_first' ? '首' : img.frame_type === 'storyboard_last' ? '尾' : null,
+      frameBadge: img.frame_type === 'storyboard_first' ? t('filmCreate.badgeFirst') : img.frame_type === 'storyboard_last' ? t('filmCreate.badgeLast') : null,
       prompt: img.prompt || '',
     }))
 }
@@ -4004,9 +4005,9 @@ function getStripItems(storyboardId) {
 function stripItemTitle(sbId, item) {
   const lines = [item.label, item.prompt].filter(Boolean)
   if (storyboardUseFirstLastFrame.value) {
-    lines.unshift('点击：设为首帧或尾帧')
+    lines.unshift(t('filmCreate.clickSetFirstLastFrame'))
   } else {
-    lines.unshift('点击设为主图')
+    lines.unshift(t('filmCreate.clickSetMainImage'))
   }
   return lines.join('\n\n')
 }
@@ -4017,18 +4018,18 @@ async function onStripItemClick(sb, item) {
     return
   }
   try {
-    await ElMessageBox.confirm('将此图绑定到哪个槽位？', '设置参考帧', {
-      confirmButtonText: '设为首帧',
-      cancelButtonText: '设为尾帧',
+    await ElMessageBox.confirm(t('filmCreate.bindFrameConfirmMsg'), t('filmCreate.bindFrameConfirmTitle'), {
+      confirmButtonText: t('filmCreate.setAsFirstFrame'),
+      cancelButtonText: t('filmCreate.setAsLastFrame'),
       distinguishCancelAndClose: true,
       type: 'info',
     })
     onSelectSbFrameImage(sb, item.img, 'first')
-    ElMessage.success('已设为首帧')
+    ElMessage.success(t('filmCreate.setAsFirstFrameSuccess'))
   } catch (action) {
     if (action === 'cancel') {
       onSelectSbFrameImage(sb, item.img, 'last')
-      ElMessage.success('已设为尾帧')
+      ElMessage.success(t('filmCreate.setAsLastFrameSuccess'))
     }
   }
 }
@@ -4036,10 +4037,19 @@ async function onStripItemClick(sb, item) {
 /** 宫格子图位置标签 */
 function quadPanelLabel(frameType) {
   const map = {
-    quad_panel_0: '左上', quad_panel_1: '右上', quad_panel_2: '左下', quad_panel_3: '右下',
-    nine_panel_0: '左上', nine_panel_1: '中上', nine_panel_2: '右上',
-    nine_panel_3: '左中', nine_panel_4: '中间', nine_panel_5: '右中',
-    nine_panel_6: '左下', nine_panel_7: '中下', nine_panel_8: '右下',
+    quad_panel_0: t('filmCreate.quad_topLeft'),
+    quad_panel_1: t('filmCreate.quad_topRight'),
+    quad_panel_2: t('filmCreate.quad_bottomLeft'),
+    quad_panel_3: t('filmCreate.quad_bottomRight'),
+    nine_panel_0: t('filmCreate.nine_topLeft'),
+    nine_panel_1: t('filmCreate.nine_topCenter'),
+    nine_panel_2: t('filmCreate.nine_topRight'),
+    nine_panel_3: t('filmCreate.nine_centerLeft'),
+    nine_panel_4: t('filmCreate.nine_center'),
+    nine_panel_5: t('filmCreate.nine_centerRight'),
+    nine_panel_6: t('filmCreate.nine_bottomLeft'),
+    nine_panel_7: t('filmCreate.nine_bottomCenter'),
+    nine_panel_8: t('filmCreate.nine_bottomRight'),
   }
   return map[frameType] || null
 }
@@ -4093,7 +4103,7 @@ function onSelectSbFrameImage(sb, img, slot) {
     patch.first_frame_image_id = img.id
   }
 
-  storyboardsAPI.update(sb.id, patch).catch((e) => console.warn('[参考帧] 保存失败', e))
+  storyboardsAPI.update(sb.id, patch).catch((e) => console.warn('[refFrame] save failed', e))
 }
 
 /** 选定某张 API 图为主图（持久化到后端） */
@@ -4105,18 +4115,18 @@ function onSelectSbMainImage(sb, img) {
 async function onRemoveSbHistoryImage(storyboardId, imageGenId) {
   if (!storyboardId || !imageGenId) return
   try {
-    await ElMessageBox.confirm('确定删除这张历史参考图？此操作不可恢复。', '删除历史图', {
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('filmCreate.confirmDeleteHistoryImage'), t('filmCreate.deleteHistoryImageTitle'), {
+      confirmButtonText: t('common.delete'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning',
       distinguishCancelAndClose: true,
     })
     await imagesAPI.delete(imageGenId)
     await loadSingleStoryboardMedia(storyboardId)
-    ElMessage.success('历史图已删除')
+    ElMessage.success(t('filmCreate.historyImageDeleted'))
   } catch (err) {
     if (err !== 'cancel' && err !== 'close') {
-      ElMessage.error(err?.message || '删除失败')
+      ElMessage.error(err?.message || t('filmCreate.msgDeleteFailed'))
     }
   }
 }
@@ -4149,7 +4159,7 @@ function buildLastFrameImagePrompt(sbId) {
   if (atmosphere) parts.push(atmosphere)
   const style = getSelectedStylePromptZh() || getSelectedStylePrompt() || ''
   if (style) parts.push(style)
-  parts.push('尾帧静止画面，展示动作完成后的最终状态与情绪余韵')
+  parts.push(t('filmCreate.lastFrameStillPrompt'))
   return parts.join('，')
 }
 
@@ -4176,17 +4186,17 @@ async function ensureProfessionalFramePrompt(sb, slot, { forceRegenerate = false
   }
   try {
     const genRes = await storyboardsAPI.generateFramePrompt(sb.id, { frame_type: frameType })
-    if (!genRes?.task_id) throw new Error('帧提示词任务未创建')
+    if (!genRes?.task_id) throw new Error(t('filmCreate.framePromptTaskNotCreated'))
     const pollRes = await pollTask(genRes.task_id)
     if (pollRes?.status !== 'completed') {
-      throw new Error(pollRes?.error || '帧提示词生成失败')
+      throw new Error(pollRes?.error || t('filmCreate.framePromptGenFailed'))
     }
     const fromTask = pollRes.result?.response?.single_frame?.prompt
     if (fromTask && String(fromTask).trim()) return String(fromTask).trim()
     const cached2 = await getCachedFramePromptFromDb(sb.id, slot)
     if (cached2) return cached2
   } catch (e) {
-    console.warn('[首尾帧] 专业帧提示词生成失败，使用拼接回退', e?.message)
+    console.warn('[firstLastFrame] frame prompt gen failed, fallback to concat', e?.message)
   }
   return slot === 'last' ? buildLastFrameImagePrompt(sb.id) : buildFirstFrameImagePrompt(sb.id)
 }
@@ -4214,17 +4224,17 @@ async function saveEditingFramePrompt() {
   if (!sb?.id || !slot) return
   const text = (editingFramePromptText.value || '').trim()
   if (!text) {
-    ElMessage.warning('提示词不能为空')
+    ElMessage.warning(t('filmCreate.promptEmptyWarning'))
     return
   }
   editingFramePromptSaving.value = true
   try {
     const frameType = slot === 'last' ? 'last' : 'first'
     await storyboardsAPI.saveFramePrompt(sb.id, frameType, { prompt: text })
-    ElMessage.success('提示词已保存，后续生成将使用此版本')
+    ElMessage.success(t('filmCreate.promptSavedFutureGenTip'))
     showFramePromptEditor.value = false
   } catch (e) {
-    ElMessage.error(e.message || '保存失败')
+    ElMessage.error(e.message || t('filmCreate.msgSaveFailed'))
   } finally {
     editingFramePromptSaving.value = false
   }
@@ -4237,12 +4247,12 @@ async function regenerateEditingFramePrompt() {
   if (!sb?.id || !slot) return
   editingFramePromptRegenerating.value = true
   try {
-    ElMessage.info('正在重新生成专业帧提示词…')
+    ElMessage.info(t('filmCreate.regeneratingFramePrompt'))
     const fresh = await ensureProfessionalFramePrompt(sb, slot, { forceRegenerate: true })
     editingFramePromptText.value = fresh || ''
-    ElMessage.success('已重新生成，可编辑后保存')
+    ElMessage.success(t('filmCreate.framePromptRegeneratedTip'))
   } catch (e) {
-    ElMessage.error(e.message || '生成失败')
+    ElMessage.error(e.message || t('filmCreate.generationFailed'))
   } finally {
     editingFramePromptRegenerating.value = false
   }
@@ -4258,7 +4268,7 @@ async function onGenerateSbFrameImage(sb, slot) {
   const meta = buildSbGenMeta(
     sb,
     isLast ? GEN_RESOURCE.SB_LAST_IMAGE : GEN_RESOURCE.SB_FIRST_IMAGE,
-    isLast ? '尾帧' : '首帧'
+    isLast ? t('filmCreate.lastFrame') : t('filmCreate.firstFrame')
   )
   sb.errorMsg = ''
   sb.error_msg = ''
@@ -4286,7 +4296,7 @@ async function onGenerateSbFrameImage(sb, slot) {
     try {
       await storyboardsAPI.update(sb.id, { character_ids: Array.isArray(idsToSave) ? idsToSave : [] })
     } catch (e) {
-      ElMessage.warning('保存分镜角色失败')
+      ElMessage.warning(t('filmCreate.saveSbCharFailed'))
       return
     }
     // 尾帧可选附带首帧作构图/站位参考（「首帧站位」勾选时；后端亦会按 use_first_frame_layout_lock 兜底）
@@ -4312,11 +4322,11 @@ async function onGenerateSbFrameImage(sb, slot) {
       reference_images: refImagesForCreate,
       use_first_frame_layout_lock: isLast ? !!lastFrameUseFirstLayoutLock.value : undefined,
     })
-    ElMessage.success(isLast ? '尾帧生成任务已提交' : '首帧生成任务已提交')
+    ElMessage.success(isLast ? t('filmCreate.lastFrameTaskSubmitted') : t('filmCreate.firstFrameTaskSubmitted'))
     if (res?.task_id) {
       const pollRes = await pollTask(res.task_id, () => loadSingleStoryboardMedia(sb.id), meta)
       if (pollRes?.status === 'failed') {
-        sb.errorMsg = pollRes.error || '生成失败'
+        sb.errorMsg = pollRes.error || t('filmCreate.generationFailed')
       } else {
         await loadDrama()
         restoreSelectionsFromBackend()
@@ -4344,8 +4354,8 @@ async function onGenerateSbFrameImage(sb, slot) {
       }
     }
   } catch (e) {
-    sb.errorMsg = e.message || '生成失败'
-    ElMessage.error(e.message || '生成失败')
+    sb.errorMsg = e.message || t('filmCreate.generationFailed')
+    ElMessage.error(e.message || t('filmCreate.generationFailed'))
   } finally {
     loadingSet.delete(sb.id)
     genStore.markDone(meta)
@@ -4367,7 +4377,7 @@ async function onGenerateSbImage(sb) {
   if (!dramaId.value || !sb?.id) return
   sb.errorMsg = ''
   sb.error_msg = ''
-  const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_IMAGE, '分镜图')
+  const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_IMAGE, t('filmCreate.storyboardImage'))
   generatingSbImageIds.add(sb.id)
   genStore.markRunning(meta)
   try {
@@ -4381,8 +4391,8 @@ async function onGenerateSbImage(sb) {
     try {
       await storyboardsAPI.update(sb.id, { character_ids: Array.isArray(idsToSave) ? idsToSave : [] })
     } catch (e) {
-      console.warn('[分镜图] 保存角色勾选失败', e)
-      ElMessage.warning('保存分镜角色失败，请稍后重试')
+      console.warn('[sbImage] save character check failed', e)
+      ElMessage.warning(t('filmCreate.saveSbCharFailedRetry'))
       return
     }
     const res = await imagesAPI.create({
@@ -4394,21 +4404,21 @@ async function onGenerateSbImage(sb) {
       frame_type: gridMode.value !== 'single' ? gridMode.value : undefined,
       aspect_ratio: projectAspectRatio.value || '16:9',
     })
-    ElMessage.success('分镜图生成任务已提交')
+    ElMessage.success(t('filmCreate.sbImageTaskSubmitted'))
     if (res?.task_id) {
       const pollRes = await pollTask(res.task_id, () => loadSingleStoryboardMedia(sb.id), meta)
       if (pollRes?.status === 'failed') {
-        sb.errorMsg = pollRes.error || '生成失败'
+        sb.errorMsg = pollRes.error || t('filmCreate.generationFailed')
       } else {
-        ElMessage.success('分镜图生成完成')
+        ElMessage.success(t('filmCreate.sbImageGenDone'))
       }
     } else {
       await loadSingleStoryboardMedia(sb.id)
     }
   } catch (e) {
     console.error(e)
-    sb.errorMsg = e.message || '生成失败'
-    ElMessage.error(e.message || '生成失败')
+    sb.errorMsg = e.message || t('filmCreate.generationFailed')
+    ElMessage.error(e.message || t('filmCreate.generationFailed'))
   } finally {
     generatingSbImageIds.delete(sb.id)
     genStore.markDone(meta)
@@ -4441,7 +4451,7 @@ async function doUploadSbImage(sbId, file, slot = 'first') {
     const url = res?.url || res?.path
     const localPath = res?.local_path
     if (!url && !localPath) {
-      ElMessage.error('上传未返回地址')
+      ElMessage.error(t('filmCreate.uploadNoUrlReturned'))
       return
     }
     const uploaded = await imagesAPI.upload({
@@ -4451,7 +4461,7 @@ async function doUploadSbImage(sbId, file, slot = 'first') {
       local_path: localPath || undefined,
       frame_type: storyboardUseFirstLastFrame.value ? frameTypeForSlot(useSlot) : undefined,
     })
-    ElMessage.success(useSlot === 'last' ? '尾帧上传成功' : '首帧上传成功')
+    ElMessage.success(useSlot === 'last' ? t('filmCreate.lastFrameUploadSuccess') : t('filmCreate.firstFrameUploadSuccess'))
     if (uploaded?.id) {
       const sb = (store.storyboards || []).find((b) => b.id === sbId)
       if (sb) onSelectSbFrameImage(sb, uploaded, useSlot)
@@ -4462,7 +4472,7 @@ async function doUploadSbImage(sbId, file, slot = 'first') {
     await loadSingleStoryboardMedia(sbId)
     restoreSelectionsFromBackend()
   } catch (e) {
-    ElMessage.error(e.message || '上传失败')
+    ElMessage.error(e.message || t('filmCreate.uploadFailed'))
   } finally {
     uploadingSbImageId.value = null
     const next = { ...sbImageUploadSlotById.value }
@@ -4574,7 +4584,7 @@ function onEpisodeSelect(epId) {
   if (!ep) return
   store.setCurrentEpisode(ep)
   store.setScriptContent(ep.script_content || '')
-  scriptTitle.value = ep.title || '第' + (ep.episode_number || 0) + '集'
+  scriptTitle.value = ep.title || t('filmCreate.episodeNum', { num: ep.episode_number || 0 })
   syncStoryboardStateFromEpisode(ep)
   loadStoryboardMedia()
   recoverAndSyncEpisodeTasks(epId)
@@ -4616,7 +4626,7 @@ async function loadDrama() {
     store.setCurrentEpisode(ep)
     if (ep) {
       store.setScriptContent(ep.script_content || '')
-      scriptTitle.value = ep.title || '第' + (ep.episode_number || 0) + '集'
+      scriptTitle.value = ep.title || t('filmCreate.episodeNum', { num: ep.episode_number || 0 })
       selectedEpisodeId.value = ep.id
     } else {
       store.setScriptContent('')
@@ -4627,7 +4637,7 @@ async function loadDrama() {
     await loadStoryboardMedia()
     await recoverAndSyncEpisodeTasks(ep?.id)
   } catch (e) {
-    ElMessage.error(e.message || '加载失败')
+    ElMessage.error(e.message || t('filmCreate.loadFailed'))
   }
 }
 
@@ -4641,28 +4651,28 @@ function getSbCharacterIds(sbId) {
 /** 运镜值的简短中文标签（用于分镜控制栏显示） */
 function getMovementLabel(m) {
   if (!m) return ''
-  const map = {
-    static: '固定',
-    push: '推镜',
-    pull: '拉镜',
-    pan: '横摇',
-    tilt: '纵摇',
-    tracking: '跟镜',
-    crane_up: '升镜',
-    crane_dn: '降镜',
-    orbit: '环绕',
-    handheld: '手持',
-    zoom: '变焦',
-    roll: '旋转',
-    whip_pan: '甩镜',
-    spiral: '螺旋',
-    hitchcock_zoom: '希区柯克',
-    bullet_time: '子弹时间',
-    dutch_angle_move: '荷兰角',
-    dolly_track: '推轨',
-    slowmo_orbit: '升格环绕'
+  const movementMap = {
+    static: () => t('filmCreate.movements.static'),
+    push: () => t('filmCreate.movements.push'),
+    pull: () => t('filmCreate.movements.pull'),
+    pan: () => t('filmCreate.movements.pan'),
+    tilt: () => t('filmCreate.movements.tilt'),
+    tracking: () => t('filmCreate.movements.tracking'),
+    crane_up: () => t('filmCreate.movements.crane_up'),
+    crane_dn: () => t('filmCreate.movements.crane_dn'),
+    orbit: () => t('filmCreate.movements.orbit'),
+    handheld: () => t('filmCreate.movements.handheld'),
+    zoom: () => t('filmCreate.movements.zoom'),
+    roll: () => t('filmCreate.movements.roll'),
+    whip_pan: () => t('filmCreate.movements.whip_pan'),
+    spiral: () => t('filmCreate.movements.spiral'),
+    hitchcock_zoom: () => t('filmCreate.movements.hitchcock_zoom'),
+    bullet_time: () => t('filmCreate.movements.bullet_time'),
+    dutch_angle_move: () => t('filmCreate.movements.dutch_angle_move'),
+    dolly_track: () => t('filmCreate.movements.dolly_track'),
+    slowmo_orbit: () => t('filmCreate.movements.slowmo_orbit'),
   }
-  return map[m] || m
+  return movementMap[m] ? movementMap[m]() : m
 }
 
 function setSbCharacterIds(sbId, v) {
@@ -4733,7 +4743,7 @@ async function onStoryboardCharacterChange(sbId) {
     await storyboardsAPI.update(sbId, { character_ids: ids })
     // 首/尾帧提示词保留（含用户手动保存版）；图生时后端会按当前勾选做 sanitize
   } catch (e) {
-    console.warn('[分镜] 保存角色失败', e)
+    console.warn('[storyboard] save character failed', e)
   }
 }
 
@@ -4803,9 +4813,12 @@ async function onRegenAffectedSbImages(assetKey, affectedBoards) {
   if (!affectedBoards.length || regenSbImagesForAsset.has(assetKey)) return
   try {
     await ElMessageBox.confirm(
-      `将为 ${affectedBoards.length} 个关联分镜重新生成图片（#${affectedBoards.map((s) => s.storyboard_number).join('、#')}），原有图片将被覆盖，是否继续？`,
-      '重新生成关联分镜图',
-      { confirmButtonText: '确认生成', cancelButtonText: '取消', type: 'warning' }
+      t('filmCreate.regenAffectedImagesConfirm', {
+        count: affectedBoards.length,
+        boards: affectedBoards.map((s) => s.storyboard_number).join(', #'),
+      }),
+      t('filmCreate.regenAffectedImagesTitle'),
+      { confirmButtonText: t('filmCreate.confirmGenerate'), cancelButtonText: t('common.cancel'), type: 'warning' }
     )
   } catch {
     return
@@ -4843,9 +4856,9 @@ async function onRegenAffectedSbImages(assetKey, affectedBoards) {
             const tick = async () => {
               attempts++
               try {
-                const t = await taskAPI.get(res.task_id)
-                if (t.status === 'completed') { await loadSingleStoryboardMedia(sb.id); return resolve({ status: 'completed' }) }
-                if (t.status === 'failed') return resolve({ status: 'failed', error: t.error || '任务失败' })
+                const task = await taskAPI.get(res.task_id)
+                if (task.status === 'completed') { await loadSingleStoryboardMedia(sb.id); return resolve({ status: 'completed' }) }
+                if (task.status === 'failed') return resolve({ status: 'failed', error: task.error || t('filmCreate.taskFailed') })
               } catch (_) {}
               if (attempts < maxAttempts) setTimeout(tick, 2000)
               else resolve({ status: 'timeout' })
@@ -4864,8 +4877,8 @@ async function onRegenAffectedSbImages(assetKey, affectedBoards) {
       }
       if (i < affectedBoards.length - 1) await new Promise((r) => setTimeout(r, 500))
     }
-    if (failed === 0) ElMessage.success(`已重新生成 ${affectedBoards.length} 张关联分镜图`)
-    else ElMessage.warning(`完成，${failed}/${affectedBoards.length} 条失败`)
+    if (failed === 0) ElMessage.success(t('filmCreate.regenAffectedImagesSuccess', { count: affectedBoards.length }))
+    else ElMessage.warning(t('filmCreate.regenAffectedImagesPartial', { failed, total: affectedBoards.length }))
   } finally {
     regenSbImagesForAsset.delete(assetKey)
     if (regenSbImagesProgress.value) delete regenSbImagesProgress.value[assetKey]
@@ -4885,7 +4898,7 @@ async function saveScriptToBackend(content) {
   const toPayload = (list) =>
     list.map((e, i) => ({
       episode_number: i + 1,
-      title: (e.title && String(e.title).trim()) || '第' + (i + 1) + '集',
+      title: (e.title && String(e.title).trim()) || t('filmCreate.episodeNum', { num: i + 1 }),
       script_content: e.script_content ?? '',
       description: null,
       duration: 0,
@@ -4895,7 +4908,7 @@ async function saveScriptToBackend(content) {
   const curEp = store.currentEpisode
   if (!dramaId) {
     const drama = await dramaAPI.create({
-      title: scriptTitle.value || '新故事',
+      title: scriptTitle.value || t('filmCreate.newStoryTitle'),
       description: storyInput.value?.trim() || trimmed.slice(0, 200),
       genre: storyType.value || undefined,
       style: generationStyle.value || undefined,
@@ -4914,7 +4927,7 @@ async function saveScriptToBackend(content) {
       : [
           {
             episode_number: 1,
-            title: scriptTitle.value || first.title || '第1集',
+            title: scriptTitle.value || first.title || t('filmCreate.episodeNum', { num: 1 }),
             script_content: first.script_content || trimmed,
           },
         ]
@@ -4924,7 +4937,7 @@ async function saveScriptToBackend(content) {
       router.replace('/film/' + dramaId)
     }
     if (multiFromMarkers) {
-      ElMessage.success(`已按「第N集/章/节」拆分为 ${episodes.length} 集`)
+      ElMessage.success(t('filmCreate.splitIntoEpisodesSuccess', { count: episodes.length }))
     }
     return { created: true }
   }
@@ -4945,7 +4958,7 @@ async function saveScriptToBackend(content) {
       }).catch(() => {})
     }
     await loadDrama()
-    ElMessage.success(`已按「第N集/章/节」拆分为 ${payload.length} 集`)
+    ElMessage.success(t('filmCreate.splitIntoEpisodesSuccess', { count: payload.length }))
     return { created: false, splitEpisodes: true }
   }
   const episodes = store.drama?.episodes || []
@@ -4959,7 +4972,7 @@ async function saveScriptToBackend(content) {
     return {
       episode_number: num,
       title: isCurrent
-        ? scriptTitle.value || singleTitle || '第' + num + '集'
+        ? scriptTitle.value || singleTitle || t('filmCreate.episodeNum', { num })
         : ep.title || '',
       script_content: isCurrent ? (parsed.episodes.length === 1 && singleTitle ? singleBody : trimmed) : (ep.script_content || ''),
       description: ep.description,
@@ -4967,7 +4980,7 @@ async function saveScriptToBackend(content) {
     }
   })
   if (updated.length === 0) {
-    updated.push({ episode_number: 1, title: scriptTitle.value || '第1集', script_content: trimmed })
+    updated.push({ episode_number: 1, title: scriptTitle.value || t('filmCreate.episodeNum', { num: 1 }), script_content: trimmed })
   }
   await dramaAPI.saveEpisodes(dramaId, updated)
   if (storyInput.value?.trim()) {
@@ -5074,16 +5087,16 @@ async function onPickScriptFromDialog(sourceId) {
   const targetId = store.dramaId ?? targetFromRoute ?? null
 
   if (targetId != null && Number(targetId) === srcNum) {
-    ElMessage.info('当前打开的就是该项目')
+    ElMessage.info(t('filmCreate.currentProjectAlreadyOpened'))
     return
   }
 
   if (targetId != null) {
     try {
       await ElMessageBox.confirm(
-        '将把所选剧本的「故事梗概」与「各集剧本正文」写入当前工程。不会导入角色、场景、分镜与视频。若源剧本集数更少，多出来的分集将从本工程移除（原分镜可能失效）。是否继续？',
-        '导入剧本到当前工程',
-        { type: 'warning', confirmButtonText: '导入', cancelButtonText: '取消' }
+        t('filmCreate.importScriptConfirmMsg'),
+        t('filmCreate.importScriptConfirmTitle'),
+        { type: 'warning', confirmButtonText: t('common.import'), cancelButtonText: t('common.cancel') }
       )
     } catch {
       return
@@ -5107,10 +5120,10 @@ async function onPickScriptFromDialog(sourceId) {
 
     if (!targetId) {
       if (episodesPayload.length === 0 && !summary) {
-        ElMessage.warning('所选剧本没有可导入的梗概或分集正文')
+        ElMessage.warning(t('filmCreate.noSummaryOrEpisodesToImport'))
         return
       }
-      const title = (src.title || '新故事').toString().trim() || '新故事'
+      const title = (src.title || t('filmCreate.newStoryTitle')).toString().trim() || t('filmCreate.newStoryTitle')
       const created = await dramaAPI.create({
         title,
         description: summary || undefined,
@@ -5126,7 +5139,7 @@ async function onPickScriptFromDialog(sourceId) {
       }
       showSelectScriptDialog.value = false
       router.replace('/film/' + workId)
-      ElMessage.success('已根据所选剧本创建项目并导入梗概与正文')
+      ElMessage.success(t('filmCreate.createdAndImportedSuccess'))
       scriptWorkbenchMode.value = 'select'
       return
     }
@@ -5137,16 +5150,16 @@ async function onPickScriptFromDialog(sourceId) {
     if (episodesPayload.length > 0) {
       await dramaAPI.saveEpisodes(targetId, episodesPayload)
     } else if (!summary) {
-      ElMessage.warning('所选剧本没有可导入的梗概或分集正文')
+      ElMessage.warning(t('filmCreate.noSummaryOrEpisodesToImport'))
       return
     }
 
     showSelectScriptDialog.value = false
     await loadDrama()
-    ElMessage.success('已导入故事梗概与剧本（当前工程未切换）')
+    ElMessage.success(t('filmCreate.importedScriptSuccessNoSwitch'))
     scriptWorkbenchMode.value = 'select'
   } catch (e) {
-    ElMessage.error(e.message || '导入失败')
+    ElMessage.error(e.message || t('filmCreate.importFailed'))
   } finally {
     selectScriptImporting.value = false
   }
@@ -5183,7 +5196,7 @@ function onNovelFileChange(file) {
 async function onImportNovel() {
   const text = novelImportMode.value === 'file' ? novelFileContent.value : novelText.value
   if (!text?.trim()) {
-    ElMessage.warning('请输入或上传小说内容')
+    ElMessage.warning(t('filmCreate.enterNovelContentWarning'))
     return
   }
   novelImporting.value = true
@@ -5195,7 +5208,7 @@ async function onImportNovel() {
     } else {
       formData.append('text', text)
     }
-    formData.append('title', scriptTitle.value || '导入小说')
+    formData.append('title', scriptTitle.value || t('filmCreate.importNovelTitle'))
     formData.append('max_chapters', String(novelMaxChapters.value))
     formData.append('ai_summarize', String(novelAiSummarize.value))
     const { default: axios } = await import('axios')
@@ -5205,7 +5218,7 @@ async function onImportNovel() {
     })
     let chapters = res.data?.data?.chapters || res.data?.chapters || []
     if (!chapters.length) {
-      ElMessage.warning('未能识别到章节内容')
+      ElMessage.warning(t('filmCreate.noChapterRecognized'))
       return
     }
     // 若后端只识别出 1 章，但正文里有多处「第N集」行首标题，用前端规则再拆（与保存剧本一致）
@@ -5220,7 +5233,7 @@ async function onImportNovel() {
     }
     const toEpisodeRow = (ch, i) => ({
       episode_number: i + 1,
-      title: (ch.title && String(ch.title).trim()) || '第' + (i + 1) + '集',
+      title: (ch.title && String(ch.title).trim()) || t('filmCreate.episodeNum', { num: i + 1 }),
       script_content: String(ch.script ?? ch.content ?? '').trimEnd(),
       description: null,
       duration: 0,
@@ -5232,19 +5245,19 @@ async function onImportNovel() {
     if (store.dramaId && rows.length >= 2) {
       await dramaAPI.saveEpisodes(store.dramaId, rows)
       await loadDrama()
-      ElMessage.success(`已导入并拆分为 ${rows.length} 集`)
+      ElMessage.success(t('filmCreate.importedAndSplitEpisodesSuccess', { count: rows.length }))
     } else {
       store.setScriptContent(plainScript || rows[0]?.script_content || '')
       ElMessage.success(
         rows.length >= 2
-          ? `已导入 ${rows.length} 个章节（保存剧本时将写入多集）`
-          : `成功导入 ${rows.length} 个章节，请继续编辑剧本`
+          ? t('filmCreate.importedChaptersCount', { count: rows.length })
+          : t('filmCreate.importedChaptersSuccess', { count: rows.length })
       )
     }
     showNovelImport.value = false
     novelImportReset()
   } catch (e) {
-    ElMessage.error(e.message || '导入失败')
+    ElMessage.error(e.message || t('filmCreate.importFailed'))
   } finally {
     novelImporting.value = false
   }
@@ -5254,22 +5267,22 @@ async function onGenerateScript() {
   trackFilmCreateAction('save_script_click')
   const content = (scriptContent.value ?? store.scriptContent ?? '').toString().trim()
   if (!content) {
-    ElMessage.warning('请先在「故事生成」中点击 AI 生成，或手动输入剧本内容')
+    ElMessage.warning(t('filmCreate.generateOrInputScriptFirst'))
     return
   }
   scriptGenerating.value = true
   try {
     const result = await saveScriptToBackend(content)
     if (result?.created) {
-      ElMessage.success('项目已创建，剧本已保存')
+      ElMessage.success(t('filmCreate.projectCreatedScriptSaved'))
     } else {
-      ElMessage.success('剧本已保存')
+      ElMessage.success(t('filmCreate.scriptSaved'))
     }
     trackFilmCreateAction('save_script_complete', {
       extra: { created_project: !!result?.created },
     })
   } catch (e) {
-    ElMessage.error(e.message || '保存失败')
+    ElMessage.error(e.message || t('common.saveFailed'))
   } finally {
     scriptGenerating.value = false
   }
@@ -5283,14 +5296,14 @@ async function onAddEpisode() {
     : 1
   const updated = list.map((ep, i) => ({
     episode_number: ep.episode_number ?? i + 1,
-    title: ep.title || '第' + (ep.episode_number ?? i + 1) + '集',
+    title: ep.title || t('filmCreate.episodeNum', { num: ep.episode_number ?? i + 1 }),
     script_content: ep.script_content || '',
     description: ep.description,
     duration: ep.duration
   }))
   updated.push({
     episode_number: nextNum,
-    title: '第' + nextNum + '集',
+    title: t('filmCreate.episodeNum', { num: nextNum }),
     script_content: '',
     description: null,
     duration: 0
@@ -5299,9 +5312,9 @@ async function onAddEpisode() {
     await dramaAPI.saveEpisodes(store.dramaId, updated)
     savedCurrentEpisodeNumber.value = nextNum
     await loadDrama()
-    ElMessage.success('已添加第' + nextNum + '集')
+    ElMessage.success(t('filmCreate.addedEpisodeSuccess', { num: nextNum }))
   } catch (e) {
-    ElMessage.error(e.message || '添加失败')
+    ElMessage.error(e.message || t('filmCreate.msgAddFailed'))
   }
 }
 
@@ -5344,7 +5357,7 @@ async function doUploadResourceImage(type, id, file) {
     const data = res?.data ?? res
     const uploadedLocalPath = data?.local_path || data?.path || null
     const url = data?.url || uploadedLocalPath
-    if (!url) { ElMessage.error('上传未返回地址'); return }
+    if (!url) { ElMessage.error(t('filmCreate.uploadNoUrlReturned')); return }
 
     const current = findResource(type, id)
     const hasPrimary = !!(current?.local_path || current?.image_url)
@@ -5373,9 +5386,9 @@ async function doUploadResourceImage(type, id, file) {
       }
     }
     await loadDrama()
-    ElMessage.success('上传成功')
+    ElMessage.success(t('filmCreate.uploadSuccess'))
   } catch (e) {
-    ElMessage.error(e.message || '上传失败')
+    ElMessage.error(e.message || t('filmCreate.uploadFailed'))
   } finally {
     uploadingResourceId.value = null
   }
@@ -5398,7 +5411,7 @@ async function onSetPrimaryImage(type, item, extraPath) {
     }
     await loadDrama()
   } catch (e) {
-    ElMessage.error(e.message || '操作失败')
+    ElMessage.error(e.message || t('filmCreate.operationFailed'))
   }
 }
 
@@ -5416,7 +5429,7 @@ async function onRemoveExtraImage(type, item, extraPath) {
     }
     await loadDrama()
   } catch (e) {
-    ElMessage.error(e.message || '删除失败')
+    ElMessage.error(e.message || t('filmCreate.deleteFailed'))
   }
 }
 
@@ -5516,10 +5529,10 @@ async function onUpscaleSbImage(sb) {
   upscalingSbIds.add(sb.id)
   try {
     await storyboardsAPI.upscale(sb.id)
-    ElMessage.success('超分完成，图片已更新为高清版本')
+    ElMessage.success(t('filmCreate.upscaleSuccess'))
     await loadSingleStoryboardMedia(sb.id)
   } catch (e) {
-    ElMessage.error(e.message || '超分辨率失败')
+    ElMessage.error(e.message || t('filmCreate.upscaleFailed'))
   } finally {
     upscalingSbIds.delete(sb.id)
   }
@@ -5562,11 +5575,11 @@ function playSbTtsFromRel(rel) {
       if (sbTtsPreviewAudio === a) sbTtsPreviewAudio = null
     })
     a.play().catch(() => {
-      ElMessage.warning('无法播放音频，请检查文件是否存在')
+      ElMessage.warning(t('filmCreate.audioFileNotFoundWarning'))
       if (sbTtsPreviewAudio === a) sbTtsPreviewAudio = null
     })
   } catch (_) {
-    ElMessage.warning('无法播放音频')
+    ElMessage.warning(t('filmCreate.cannotPlayAudioWarning'))
   }
 }
 
@@ -5582,7 +5595,7 @@ function playSbNarrationTts(sb) {
 async function onTtsSbDialogue(sb) {
   if (!sb?.id || ttsSbIds.has(sb.id)) return
   if (!sb.dialogue?.trim()) {
-    ElMessage.warning('该分镜没有对白内容')
+    ElMessage.warning(t('filmCreate.noDialogueWarning'))
     return
   }
   ttsSbIds.add(sb.id)
@@ -5595,15 +5608,15 @@ async function onTtsSbDialogue(sb) {
     const data = await res.json()
     const businessOk = data.success === true || Number(data.code) === 200
     if (!res.ok || !businessOk) {
-      throw new Error(data.error?.message || data.message || '配音失败')
+      throw new Error(data.error?.message || data.message || t('filmCreate.dubbingFailed'))
     }
     if (data.data?.local_path) {
       sbDialogueAudioPaths.value = { ...sbDialogueAudioPaths.value, [sb.id]: data.data.local_path }
       sb.audio_local_path = data.data.local_path
-      ElMessage.success('配音已生成')
+      ElMessage.success(t('filmCreate.dubbingGenerated'))
     }
   } catch (e) {
-    ElMessage.error(e.message || 'TTS 配音失败')
+    ElMessage.error(e.message || t('filmCreate.dubbingFailed'))
   } finally {
     ttsSbIds.delete(sb.id)
   }
@@ -5614,7 +5627,7 @@ async function onTtsSbNarration(sb) {
   if (!sb?.id || ttsSbNarrationIds.has(sb.id)) return
   const text = ((sbNarration.value[sb.id] ?? sb.narration) || '').toString().trim()
   if (!text) {
-    ElMessage.warning('该分镜没有解说旁白内容')
+    ElMessage.warning(t('filmCreate.noNarrationWarning'))
     return
   }
   ttsSbNarrationIds.add(sb.id)
@@ -5627,15 +5640,15 @@ async function onTtsSbNarration(sb) {
     const data = await res.json()
     const businessOk = data.success === true || Number(data.code) === 200
     if (!res.ok || !businessOk) {
-      throw new Error(data.error?.message || data.message || '解说配音失败')
+      throw new Error(data.error?.message || data.message || t('filmCreate.narrationDubbingFailed'))
     }
     if (data.data?.local_path) {
       sbNarrationAudioPaths.value = { ...sbNarrationAudioPaths.value, [sb.id]: data.data.local_path }
       sb.narration_audio_local_path = data.data.local_path
-      ElMessage.success('解说配音已生成')
+      ElMessage.success(t('filmCreate.narrationDubbingGenerated'))
     }
   } catch (e) {
-    ElMessage.error(e.message || '解说 TTS 失败')
+    ElMessage.error(e.message || t('filmCreate.narrationDubbingFailed'))
   } finally {
     ttsSbNarrationIds.delete(sb.id)
   }
@@ -5655,13 +5668,13 @@ function formatSrtTimestamp(ms) {
 async function onExportStoryboardSheet() {
   const boards = storyboards.value || []
   if (!boards.length) {
-    ElMessage.warning('暂无分镜')
+    ElMessage.warning(t('filmCreate.noStoryboardsWarning'))
     return
   }
   const epNum = store.currentEpisode?.episode_number
   const dramaTitle = (store.drama?.title || 'project').replace(/[\\/:*?"<>|]/g, '_')
-  const epLabel = epNum != null ? `第${epNum}集` : `ep${currentEpisodeId.value || '1'}`
-  const filenameBase = `${dramaTitle}-${epLabel}-分镜表`
+  const epLabel = epNum != null ? t('filmCreate.episodeNum', { num: epNum }) : `ep${currentEpisodeId.value || '1'}`
+  const filenameBase = `${dramaTitle}-${epLabel}-${t('filmCreate.storyboardSheetFilename')}`
   const useFirstLast = !!storyboardUseFirstLastFrame.value
 
   exportingStoryboardSheet.value = true
@@ -5740,16 +5753,16 @@ async function onExportStoryboardSheet() {
   )
 
   if (!result.ok) {
-    ElMessage.warning('当前分镜没有可导出的内容')
+    ElMessage.warning(t('filmCreate.noExportableContentWarning'))
     return
   }
-  ElMessage.success(`已导出分镜表（${result.count} 个镜头）`)
+  ElMessage.success(t('filmCreate.exportedStoryboardSheetCount', { count: result.count }))
 }
 
 function onExportNarrationSrt() {
   const boards = storyboards.value || []
   if (!boards.length) {
-    ElMessage.warning('暂无分镜')
+    ElMessage.warning(t('filmCreate.noStoryboardsWarning'))
     return
   }
   let tMs = 0
@@ -5768,7 +5781,7 @@ function onExportNarrationSrt() {
     tMs += durMs
   }
   if (!lines.length) {
-    ElMessage.warning('当前分镜没有可导出的解说文案')
+    ElMessage.warning(t('filmCreate.noNarrationToExportWarning'))
     return
   }
   const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
@@ -5777,7 +5790,7 @@ function onExportNarrationSrt() {
   a.download = `narration-${currentEpisodeId.value || 'episode'}.srt`
   a.click()
   URL.revokeObjectURL(a.href)
-  ElMessage.success('已下载解说 SRT')
+  ElMessage.success(t('filmCreate.downloadedNarrationSrt'))
 }
 
 async function onSaveSbNarrationField(sb) {
@@ -5819,7 +5832,7 @@ async function onToggleSbUniversalMode(sb) {
     }
   } catch (e) {
     sbCreationMode.value = { ...sbCreationMode.value, [sb.id]: cur }
-    ElMessage.error(e.message || '保存失败')
+    ElMessage.error(e.message || t('common.saveFailed'))
   }
 }
 
@@ -5886,24 +5899,24 @@ function buildUniversalSegmentFieldOverrides(sb) {
 
 /** 全能片段：@图片N 转 Grok 占位符 <IMAGE_N> */
 function universalSegmentAtImageToGrokTags(text) {
-  return (text || '').replace(/@图片(\d+)/g, '<IMAGE_$1>')
+  return (text || '').replace(/@图片(\d+)/g, '<IMAGE_$1>') // i18n-scan-ignore: regex
 }
 
 function onUniversalSegmentToGrokVideoTags(sb) {
   if (!sb?.id) return
   const raw = (sbUniversalSegmentText.value[sb.id] ?? '').toString()
   if (!raw.trim()) {
-    ElMessage.warning('请先填写或生成片段描述')
+    ElMessage.warning(t('filmCreate.enterSegmentDescFirst'))
     return
   }
   const next = universalSegmentAtImageToGrokTags(raw)
   if (next === raw) {
-    ElMessage.info('未找到 @图片N 标记，无需转换')
+    ElMessage.info(t('filmCreate.noAtImageTagFound'))
     return
   }
   sbUniversalSegmentText.value = { ...sbUniversalSegmentText.value, [sb.id]: next }
   void onSaveUniversalSegmentField(sb)
-  ElMessage.success('已改为 Grok 视频占位符格式（<IMAGE_N>）')
+  ElMessage.success(t('filmCreate.convertedToGrokTagsSuccess'))
 }
 
 function onUniversalSegmentPromptMenu(sb, cmd) {
@@ -5936,7 +5949,7 @@ async function onGenerateUniversalSegmentPrompt(sb, opts = {}) {
     )
     const text = (data?.universal_segment_text ?? '').toString().trim()
     if (!text) {
-      ElMessage.warning('未收到完整生成结果，请重试')
+      ElMessage.warning(t('filmCreate.incompleteGenResultRetry'))
       return
     }
     sbUniversalSegmentText.value = { ...sbUniversalSegmentText.value, [sb.id]: text }
@@ -5945,9 +5958,9 @@ async function onGenerateUniversalSegmentPrompt(sb, opts = {}) {
       const row = list.find((x) => Number(x.id) === Number(sb.id))
       if (row) row.universal_segment_text = text
     }
-    ElMessage.success(force ? '已强制生成全能片段提示词（无图模式）' : '已根据分镜生成全能片段提示词')
+    ElMessage.success(force ? t('filmCreate.omniPromptForcedNoImage') : t('filmCreate.omniPromptGenerated'))
   } catch (e) {
-    ElMessage.error(e.message || '生成失败，请检查文本模型配置')
+    ElMessage.error(e.message || t('filmCreate.genFailedCheckModel'))
   } finally {
     generatingUniversalSegmentIds.delete(sb.id)
   }
@@ -5959,7 +5972,7 @@ async function onPolishUniversalSegmentPromptStream(sb, opts = {}) {
   const force = !!opts.forceWithoutReferenceImages
   const draft = sbUniversalSegmentTrimmed(sb)
   if (!draft) {
-    ElMessage.warning('请先填写或生成片段描述后再润色')
+    ElMessage.warning(t('filmCreate.fillDescBeforePolishWarning'))
     return
   }
   generatingUniversalSegmentIds.add(sb.id)
@@ -5981,7 +5994,7 @@ async function onPolishUniversalSegmentPromptStream(sb, opts = {}) {
     )
     const text = (data?.universal_segment_text ?? '').toString().trim()
     if (!text) {
-      ElMessage.warning('未收到完整润色结果，请重试')
+      ElMessage.warning(t('filmCreate.incompletePolishResultRetry'))
       return
     }
     sbUniversalSegmentText.value = { ...sbUniversalSegmentText.value, [sb.id]: text }
@@ -5990,9 +6003,9 @@ async function onPolishUniversalSegmentPromptStream(sb, opts = {}) {
       const row = list.find((x) => Number(x.id) === Number(sb.id))
       if (row) row.universal_segment_text = text
     }
-    ElMessage.success(force ? '全能片段已强制润色并保存（无图模式）' : '全能片段提示词已润色并保存')
+    ElMessage.success(force ? t('filmCreate.omniPolishedForcedNoImage') : t('filmCreate.omniPolishedSaved'))
   } catch (e) {
-    ElMessage.error(e.message || '润色失败，请检查文本模型配置')
+    ElMessage.error(e.message || t('filmCreate.polishFailedCheckModel'))
   } finally {
     generatingUniversalSegmentIds.delete(sb.id)
   }
@@ -6062,7 +6075,7 @@ async function polishUniversalSegmentsAfterGeneration(opts = {}) {
       } catch (e) {
         const msg = e?.message || String(e)
         if (onShotError) onShotError(sb, msg)
-        else ElMessage.warning(`分镜 #${sb.storyboard_number ?? sb.id} 全能润色失败：${msg}`)
+        else ElMessage.warning(t('filmCreate.shotOmniPolishFailed', { num: sb.storyboard_number ?? sb.id, msg }))
       } finally {
         generatingUniversalSegmentIds.delete(sb.id)
       }
@@ -6124,7 +6137,7 @@ function getSbUniversalOmniRefSlots(sb) {
     out.push({
       index: idx++,
       kind: 'scene',
-      name: (scene.name || '场景').toString(),
+      name: (scene.name || t('filmCreate.scene')).toString(),
       thumbUrl: assetImageUrl(scene),
     })
   }
@@ -6133,7 +6146,7 @@ function getSbUniversalOmniRefSlots(sb) {
       out.push({
         index: idx++,
         kind: 'character',
-        name: (c.name || '角色').toString(),
+        name: (c.name || t('filmCreate.character')).toString(),
         thumbUrl: assetImageUrl(c),
       })
     }
@@ -6143,7 +6156,7 @@ function getSbUniversalOmniRefSlots(sb) {
       out.push({
         index: idx++,
         kind: 'prop',
-        name: (p.name || '物品').toString(),
+        name: (p.name || t('filmCreate.prop')).toString(),
         thumbUrl: assetImageUrl(p),
       })
     }
@@ -6212,9 +6225,9 @@ async function getActiveVideoAiConfig() {
 
 async function confirmUniversalNonSeedance2Video() {
   await ElMessageBox.confirm(
-    '你当前视频模型不支持多图参考，全能模式将降级：优先用分镜主图，否则仅传场景参考图。是否继续？',
-    '全能模式与模型不匹配',
-    { confirmButtonText: '继续', cancelButtonText: '取消', type: 'warning' }
+    t('filmCreate.omniModelMismatchConfirm'),
+    t('filmCreate.omniModelMismatchTitle'),
+    { confirmButtonText: t('common.continue'), cancelButtonText: t('common.cancel'), type: 'warning' }
   )
 }
 
@@ -6247,7 +6260,7 @@ function formatVideoPromptForEdit(text) {
   if (!text) return ''
   // 按「主体：」「运动：」等分段做换行，方便阅读
   return text
-    .replace(/([。；])\s*(主体|运动|环境|运镜|美学|声音|时长)：/g, '$1\n$2：')
+    .replace(/([。；])\s*(主体|运动|环境|运镜|美学|声音|时长)：/g, '$1\n$2：') // i18n-scan-ignore: regex
     .replace(/^\s+|\s+$/g, '')
 }
 
@@ -6259,10 +6272,10 @@ async function onPolishSbPrompt() {
     const res = await storyboardsAPI.polishPrompt(sb.id)
     if (res?.polished_prompt) {
       sbPromptPolishedText.value = res.polished_prompt
-      ElMessage.success('通用优化提示词已生成')
+      ElMessage.success(t('filmCreate.genericOptimizedPromptGen'))
     }
   } catch (e) {
-    ElMessage.error(e.message || '生成失败，请检查文本模型配置')
+    ElMessage.error(e.message || t('filmCreate.genFailedCheckModel'))
   } finally {
     sbPromptPolishing.value = false
   }
@@ -6281,9 +6294,9 @@ async function onSaveSbPromptDialog() {
     })
     await loadDrama()
     showSbPromptDialog.value = false
-    ElMessage.success('提示词已保存')
+    ElMessage.success(t('filmCreate.promptSaved'))
   } catch (e) {
-    ElMessage.error(e.message || '保存失败')
+    ElMessage.error(e.message || t('common.saveFailed'))
   } finally {
     sbPromptSaving.value = false
   }
@@ -6295,9 +6308,9 @@ async function onSaveSbImagePrompt(sb) {
     await storyboardsAPI.update(sb.id, { image_prompt: (editingSbImagePromptText.value || '').toString().trim() || null })
     await loadDrama()
     editingSbImagePromptId.value = null
-    ElMessage.success('图片提示词已保存')
+    ElMessage.success(t('filmCreate.imagePromptSaved'))
   } catch (e) {
-    ElMessage.error(e.message || '保存失败')
+    ElMessage.error(e.message || t('common.saveFailed'))
   }
 }
 
@@ -6312,11 +6325,32 @@ function angleToPromptFragment(h, v, s) {
   const hDesc = { front:'shooting from the front', front_left:'shooting from front-left at 45-degree angle', left:'shooting from the left side, profile view', back_left:'shooting from back-left at 135-degree angle', back:"shooting from behind, character's back to camera", back_right:'shooting from back-right at 135-degree angle', right:'shooting from the right side, profile view', front_right:'shooting from front-right at 45-degree angle' }
   const vDesc = { worm:"extreme low-angle worm's eye view, camera near ground pointing sharply upward, strong upward perspective distortion, background shows sky/ceiling", low:'low-angle upward shot, camera below eye-line, slight upward tilt, empowering perspective', eye_level:'eye-level shot, neutral perspective, natural horizontal framing', high:"high-angle bird's eye view, camera above looking down, background shows floor/ground with downward perspective distortion" }
   const sDesc = { close_up:'close-up shot (face/bust framing), subject fills most of frame, shallow depth of field, background softly blurred', medium:'medium shot (waist-up to full body), character and immediate surroundings visible, moderate depth of field', wide:'wide shot (full body with environment), subject small relative to scene, deep depth of field, environment context prominent' }
-  const hLabel = { front:'正面', front_left:'前左', left:'左侧', back_left:'后左', back:'背面', back_right:'后右', right:'右侧', front_right:'前右' }
-  const vLabel = { worm:'虫眼仰', low:'仰拍', eye_level:'平视', high:'俯拍' }
-  const sLabel = { close_up:'特写', medium:'中景', wide:'远景' }
+  const hLabel = {
+    front: () => t('filmCreate.angleFront'),
+    front_left: () => t('filmCreate.angleFrontLeft'),
+    left: () => t('filmCreate.angleLeft'),
+    back_left: () => t('filmCreate.angleBackLeft'),
+    back: () => t('filmCreate.angleBack'),
+    back_right: () => t('filmCreate.angleBackRight'),
+    right: () => t('filmCreate.angleRight'),
+    front_right: () => t('filmCreate.angleFrontRight'),
+  }
+  const vLabel = {
+    worm: () => t('filmCreate.angleWorm'),
+    low: () => t('filmCreate.angleLow'),
+    eye_level: () => t('filmCreate.angleEyeLevel'),
+    high: () => t('filmCreate.angleHigh'),
+  }
+  const sLabel = {
+    close_up: () => t('filmCreate.angleCloseUp'),
+    medium: () => t('filmCreate.angleMedium'),
+    wide: () => t('filmCreate.angleWide'),
+  }
   const fragment = [sDesc[s] || sDesc.medium, vDesc[v] || vDesc.eye_level, hDesc[h] || hDesc.front].join(', ')
-  const label = `${sLabel[s] || '中景'}·${vLabel[v] || '平视'}·${hLabel[h] || '正面'}`
+  const sText = sLabel[s] ? sLabel[s]() : t('filmCreate.angleMedium')
+  const vText = vLabel[v] ? vLabel[v]() : t('filmCreate.angleEyeLevel')
+  const hText = hLabel[h] ? hLabel[h]() : t('filmCreate.angleFront')
+  const label = `${sText} · ${vText} · ${hText}`
   return { fragment, label }
 }
 
@@ -6351,9 +6385,9 @@ async function onSaveSbVideoFields(sb) {
       videoParamsTarget.value = { ...sb, video_prompt: newVp }
     }
     await loadDrama()
-    ElMessage.success('已保存，视频提示词已按最新规则自动生成')
+    ElMessage.success(t('filmCreate.savedVideoPromptAutoGenerated'))
   } catch (e) {
-    ElMessage.error(e.message || '保存失败')
+    ElMessage.error(e.message || t('common.saveFailed'))
   }
 }
 
@@ -6363,9 +6397,9 @@ async function onSaveSbVideoPrompt(sb) {
     await storyboardsAPI.update(sb.id, { video_prompt: (editingSbVideoPromptText.value || '').toString().trim() || null })
     await loadDrama()
     editingSbVideoPromptId.value = null
-    ElMessage.success('视频提示词已保存')
+    ElMessage.success(t('filmCreate.videoPromptSaved'))
   } catch (e) {
-    ElMessage.error(e.message || '保存失败')
+    ElMessage.error(e.message || t('common.saveFailed'))
   }
 }
 
@@ -6402,9 +6436,9 @@ async function onSplitSbByAudio(sb) {
   if (!sb?.id) return
   try {
     await ElMessageBox.confirm(
-      '将把本镜按「每句对白一条 + 旁白单独一条」拆成多个分镜，原镜变为第一条。已生成的视频不会保留。是否继续？',
-      '按对白拆镜',
-      { type: 'warning', confirmButtonText: '拆镜', cancelButtonText: '取消' }
+      t('filmCreate.splitByDialogueConfirmMsg'),
+      t('filmCreate.splitByDialogueConfirmTitle'),
+      { type: 'warning', confirmButtonText: t('filmCreate.splitShot'), cancelButtonText: t('common.cancel') }
     )
   } catch {
     return
@@ -6419,9 +6453,9 @@ async function onSplitSbByAudio(sb) {
     const summary = res?.plans_summary || ''
     showVideoParamsDialog.value = false
     await loadDrama()
-    ElMessage.success(summary ? `已拆成 ${n} 条：${summary}` : `已拆成 ${n} 条分镜`)
+    ElMessage.success(summary ? t('filmCreate.splitShotCountWithSummary', { count: n, summary }) : t('filmCreate.splitShotCount', { count: n }))
   } catch (e) {
-    ElMessage.error(e.message || '拆镜失败')
+    ElMessage.error(e.message || t('filmCreate.splitShotFailed'))
   } finally {
     splitByAudioLoading.value = false
   }
@@ -6435,7 +6469,7 @@ async function onSaveVideoParams() {
     await onSaveSbVideoFields(sb)
     showVideoParamsDialog.value = false
   } catch (e) {
-    ElMessage.error(e.message || '保存失败')
+    ElMessage.error(e.message || t('common.saveFailed'))
   } finally {
     videoParamsSaving.value = false
   }
@@ -6447,9 +6481,9 @@ async function onBatchInferParams() {
   try {
     const res = await storyboardsAPI.batchInferParams(currentEpisodeId.value, false)
     await loadDrama()
-    ElMessage.success(`摄影参数推断完成，更新了 ${res?.updated ?? 0} 条分镜`)
+    ElMessage.success(t('filmCreate.cameraParamInferredSuccess', { count: res?.updated ?? 0 }))
   } catch (e) {
-    ElMessage.error(e.message || '推断失败')
+    ElMessage.error(e.message || t('filmCreate.inferenceFailed'))
   } finally {
     inferringParams.value = false
   }
@@ -6471,14 +6505,14 @@ async function onRegenerateLayoutDescription(sb) {
       // 避免覆盖我们刚刚写入的 sbLayoutDescription 等本地字段）
       try { await refreshStoryboardsOnly() } catch (_) {}
 
-      ElMessage.success('布局描述已由 AI 重新优化并保存（已参考上下分镜连贯性）')
+      ElMessage.success(t('filmCreate.layoutDescOptimizedSaved'))
       // 注意：不再调用 loadDrama()，因为它会全量重建所有 sbXxx 映射，可能用服务端旧数据覆盖本次结果。
       // 等后端 rowToStoryboard 补全 layout_description 字段后，关闭再打开对话框即可看到持久化值。
     } else {
-      ElMessage.warning('AI 未返回有效的布局描述')
+      ElMessage.warning(t('filmCreate.noValidLayoutDescWarning'))
     }
   } catch (e) {
-    ElMessage.error(e.message || '重新生成布局描述失败')
+    ElMessage.error(e.message || t('filmCreate.regenLayoutDescFailed'))
   } finally {
     regeneratingLayoutSbIds.delete(sb.id)
   }
@@ -6513,26 +6547,26 @@ async function onGenerateSbVideo(sb) {
   if (!hasAnyImage) {
     if (!universal) {
       await ElMessageBox.alert(
-        '当前为传统模式，生视频需要分镜参考图。请先生成或上传分镜图片后再试。',
-        '传统模式缺少分镜图',
-        { confirmButtonText: '知道了', type: 'warning' }
+        t('filmCreate.traditionalMissingImageAlertMsg'),
+        t('filmCreate.traditionalMissingImageAlertTitle'),
+        { confirmButtonText: t('common.confirm'), type: 'warning' }
       )
       return
     }
     try {
       await ElMessageBox.confirm(
         universalOmniApi
-          ? '当前没有可用的参考图（场景/角色/道具等；不含经典分镜主图），将按纯文案提交 Omni-Video（模型以 AI 配置为准），效果可能不稳定。确认继续？'
-          : '当前没有分镜主图且无场景参考图，将仅按文字提示词生成视频，效果可能不稳定。确认继续？',
-        universalOmniApi ? '全能模式无参考图' : '全能降级无参考图',
-        { confirmButtonText: '继续生成', cancelButtonText: '取消', type: 'warning' }
+          ? t('filmCreate.omniNoRefImageConfirm')
+          : t('filmCreate.degradedNoRefImageConfirm'),
+        universalOmniApi ? t('filmCreate.omniNoRefImageTitle') : t('filmCreate.degradedNoRefImageTitle'),
+        { confirmButtonText: t('filmCreate.continueGenerate'), cancelButtonText: t('common.cancel'), type: 'warning' }
       )
     } catch {
       return
     }
   }
   generatingSbVideoIds.add(sb.id)
-  const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, '分镜视频')
+  const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, t('filmCreate.storyboardVideo'))
   genStore.markRunning(meta)
   sbVideoErrors.value[sb.id] = ''
   // 清除前端选中状态 + 清除后端手动指定的 video_url，让合成时自动取最新生成的视频
@@ -6583,18 +6617,18 @@ async function onGenerateSbVideo(sb) {
     if (res?.task_id) {
       const pollRes = await pollTask(res.task_id, () => loadSingleStoryboardMedia(sb.id), meta)
       if (pollRes?.status === 'failed') {
-        sbVideoErrors.value[sb.id] = pollRes.error || '视频生成失败'
+        sbVideoErrors.value[sb.id] = pollRes.error || t('filmCreate.videoGenFailed')
       } else if (pollRes?.status === 'completed') {
         sbVideoErrors.value[sb.id] = ''
-        ElMessage.success('视频生成完成')
+        ElMessage.success(t('filmCreate.videoGenDone'))
       }
     } else {
       await loadSingleStoryboardMedia(sb.id)
-      ElMessage.success('视频生成已提交，请稍后查看')
+      ElMessage.success(t('filmCreate.videoGenSubmittedTip'))
     }
   } catch (e) {
-    sbVideoErrors.value[sb.id] = e.message || '提交失败'
-    ElMessage.error(e.message || '提交失败')
+    sbVideoErrors.value[sb.id] = e.message || t('filmCreate.msgSubmitFailed')
+    ElMessage.error(e.message || t('filmCreate.msgSubmitFailed'))
   } finally {
     generatingSbVideoIds.delete(sb.id)
     genStore.markDone(meta)
@@ -6607,29 +6641,29 @@ async function onResumeSbVideoPoll(sb) {
   if (!sb?.id || isSbVideoGenerating(sb.id)) return
   const failed = getSbResumableFailedVideo(sb.id)
   if (!failed?.id) {
-    ElMessage.warning('当前失败记录无法继续查询，请重新生成')
+    ElMessage.warning(t('filmCreate.cannotQueryFailedRecordWarning'))
     return
   }
   generatingSbVideoIds.add(sb.id)
-  const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, '继续查询')
+  const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, t('filmCreate.continueQuery'))
   genStore.markRunning(meta)
   sbVideoErrors.value[sb.id] = ''
   try {
     const res = await videosAPI.resumePoll(failed.id)
     const taskId = res?.task_id
     if (!taskId) {
-      throw new Error('未返回任务 ID')
+      throw new Error(t('filmCreate.noTaskIdReturned'))
     }
     const pollRes = await pollTask(taskId, () => loadSingleStoryboardMedia(sb.id), meta)
     if (pollRes?.status === 'failed') {
-      sbVideoErrors.value[sb.id] = pollRes.error || '继续查询失败'
+      sbVideoErrors.value[sb.id] = pollRes.error || t('filmCreate.continueQueryFailed')
     } else if (pollRes?.status === 'completed') {
       sbVideoErrors.value[sb.id] = ''
-      ElMessage.success('视频查询完成')
+      ElMessage.success(t('filmCreate.videoQueryDone'))
     }
   } catch (e) {
-    sbVideoErrors.value[sb.id] = e.message || '继续查询失败'
-    ElMessage.error(e.message || '继续查询失败')
+    sbVideoErrors.value[sb.id] = e.message || t('filmCreate.continueQueryFailed')
+    ElMessage.error(e.message || t('filmCreate.continueQueryFailed'))
   } finally {
     generatingSbVideoIds.delete(sb.id)
     genStore.markDone(meta)
@@ -6642,19 +6676,19 @@ async function onLinkTailFrameToNext(sb) {
   if (!dramaId.value || !sb?.id) return
   const nextSb = getNextStoryboard(sb.id)
   if (!nextSb) {
-    ElMessage.warning('已是最后一个分镜，没有下一个分镜可衔接')
+    ElMessage.warning(t('filmCreate.alreadyLastShotWarning'))
     return
   }
   const video = getSbVideo(sb.id)
   if (!video) {
-    ElMessage.warning('当前分镜没有视频')
+    ElMessage.warning(t('filmCreate.shotNoVideoWarning'))
     return
   }
   try {
     await ElMessageBox.confirm(
-      `确定将 #${sb.storyboard_number ?? sb.id} 视频的尾帧设为 #${nextSb.storyboard_number ?? nextSb.id} 的首帧？\n原首帧将自动进入历史。`,
-      '尾帧衔接',
-      { confirmButtonText: '确认执行', cancelButtonText: '取消', type: 'warning' }
+      t('filmCreate.tailLinkConfirmMsg', { cur: sb.storyboard_number ?? sb.id, next: nextSb.storyboard_number ?? nextSb.id }),
+      t('filmCreate.tailLinkTitle'),
+      { confirmButtonText: t('common.confirm'), cancelButtonText: t('common.cancel'), type: 'warning' }
     )
   } catch {
     return
@@ -6665,14 +6699,14 @@ async function onLinkTailFrameToNext(sb) {
     if (data?.error) {
       throw new Error(data.error)
     }
-    ElMessage.success(`已将尾帧设为 #${nextSb.storyboard_number ?? nextSb.id} 的首帧`)
+    ElMessage.success(t('filmCreate.tailLinkSuccess', { num: nextSb.storyboard_number ?? nextSb.id }))
     // 刷新两个分镜的媒体
     await Promise.all([
       loadSingleStoryboardMedia(sb.id),
       loadSingleStoryboardMedia(nextSb.id)
     ])
   } catch (e) {
-    ElMessage.error(e.message || '尾帧衔接失败')
+    ElMessage.error(e.message || t('filmCreate.tailLinkFailed'))
   } finally {
     linkingTailFrameIds.delete(sb.id)
   }
@@ -6683,12 +6717,12 @@ async function onUsePrevTailAsFirst(sb) {
   if (!dramaId.value || !sb?.id) return
   const prevSb = getPrevStoryboard(sb.id)
   if (!prevSb) {
-    ElMessage.warning('已是第一个分镜，没有上一分镜可取尾帧')
+    ElMessage.warning(t('filmCreate.alreadyFirstShotWarning'))
     return
   }
   const prevLastImg = getSbLastImage(prevSb.id)
   if (!prevLastImg) {
-    ElMessage.warning(`上一分镜 #${prevSb.storyboard_number ?? prevSb.id} 尚无尾帧图片`)
+    ElMessage.warning(t('filmCreate.prevShotNoLastFrameWarning', { num: prevSb.storyboard_number ?? prevSb.id }))
     return
   }
 
@@ -6701,14 +6735,14 @@ async function onUsePrevTailAsFirst(sb) {
       drama_id: dramaId.value,
       image_url: prevLastImg.image_url || '',
       local_path: prevLastImg.local_path || undefined,
-      prompt: `上镜尾帧（直接复用 #${prevSb.storyboard_number ?? prevSb.id} 尾帧高清原图）`,
+      prompt: t('filmCreate.prevTailFramePrompt', { num: prevSb.storyboard_number ?? prevSb.id }),
       frame_type: 'storyboard_first'
     })
     if (uploaded?.id) {
       // 手动设置本地选中，确保显示立即切换；同时调用 onSelect 做一次 server patch（与 upload 里的 bind 互补）
       onSelectSbFrameImage(sb, uploaded, 'first')
     }
-    ElMessage.success(`已将 #${prevSb.storyboard_number ?? prevSb.id} 尾帧设为本分镜首帧（高清原图）`)
+    ElMessage.success(t('filmCreate.prevTailFrameSuccess', { num: prevSb.storyboard_number ?? prevSb.id }))
 
     // 刷新分镜元数据（拿回服务器最新的 first_frame_image_id）+ 媒体列表
     await Promise.all([
@@ -6718,7 +6752,7 @@ async function onUsePrevTailAsFirst(sb) {
     // 清除可能残留的手动选中（让服务器权威绑定 id 生效）
     delete sbSelectedImgId.value[sb.id]
   } catch (e) {
-    ElMessage.error(e.message || '上镜尾帧设置失败')
+    ElMessage.error(e.message || t('filmCreate.prevTailFrameFailed'))
   } finally {
     usingPrevTailAsFirstIds.delete(sb.id)
   }
@@ -6750,7 +6784,7 @@ async function onGenerateStoryboard() {
   trackFilmCreateAction('generate_storyboard_click')
   const epId = currentEpisodeId.value
   if (!epId) return
-  const meta = buildExtractTaskMeta(store, dramaId.value, epId, GEN_RESOURCE.GENERATE_STORYBOARD, 'AI生成分镜')
+  const meta = buildExtractTaskMeta(store, dramaId.value, epId, GEN_RESOURCE.GENERATE_STORYBOARD, t('filmCreate.aiGenerateStoryboard'))
   genStore.markRunning(meta)
   // 生成期间每 2 秒刷新该集分镜列表，让已解析的分镜逐步出现（切集后仍更新原集缓存）
   const refreshTimer = setInterval(() => refreshStoryboardsForEpisode(epId), 2000)
@@ -6782,16 +6816,16 @@ async function onGenerateStoryboard() {
     ElMessage.success(
       storyboardUniversalOmni.value
         ? polishedN > 0
-          ? `全能分镜生成完成，已自动润色 ${polishedN} 条片段`
-          : '全能分镜生成完成'
-        : '分镜生成完成'
+          ? t('filmCreate.omniSbGenDoneWithPolish', { count: polishedN })
+          : t('filmCreate.omniSbGenDone')
+        : t('filmCreate.storyboardGenDone')
     )
     trackFilmCreateAction('generate_storyboard_complete', {
       extra: { storyboard_count: (store.storyboards || []).length },
     })
   } catch (e) {
     // HTTP 错误由 request 拦截器统一展示，此处仅处理拦截器未覆盖的异常
-    if (!e.response) ElMessage.error(e.message || '生成失败')
+    if (!e.response) ElMessage.error(e.message || t('filmCreate.generationFailed'))
   } finally {
     clearInterval(refreshTimer)
     genStore.markDone(meta)
@@ -6800,7 +6834,7 @@ async function onGenerateStoryboard() {
 
 async function onAddSingleStoryboard(){
   if (!currentEpisodeId.value) {
-    ElMessage.warning('请先选择集')
+    ElMessage.warning(t('filmCreate.msgSelectEpisodeFirst'))
     return
   }
   try {
@@ -6811,29 +6845,29 @@ async function onAddSingleStoryboard(){
     await storyboardsAPI.create({
       episode_id: currentEpisodeId.value,
       storyboard_number: maxNum + 1,
-      title: `镜头 ${maxNum + 1}`,
+      title: t('filmCreate.shotTitleDefault', { num: maxNum + 1 }),
       description: '',
     })
-    ElMessage.success('添加成功')
+    ElMessage.success(t('common.addSuccess'))
     await loadDrama() // 刷新列表
   } catch (e) {
-    ElMessage.error(e.message || '添加失败')
+    ElMessage.error(e.message || t('filmCreate.msgAddFailed'))
   }
 }
 
 async function onDeleteSingleStoryboard(id){
   try {
-    await ElMessageBox.confirm('确定要删除这个分镜吗？', '提示', {
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('filmCreate.confirmDeleteStoryboard'), t('common.warning'), {
+      confirmButtonText: t('common.delete'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
     await storyboardsAPI.delete(id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('common.deleteSuccess'))
     await loadDrama() // 刷新列表
   } catch (e) {
     if (e !== 'cancel') {
-      ElMessage.error(e.message || '删除失败')
+      ElMessage.error(e.message || t('filmCreate.deleteFailed'))
     }
   }
 }
@@ -6841,10 +6875,10 @@ async function onDeleteSingleStoryboard(id){
 async function onInsertStoryboardBefore(sb) {
   try {
     await storyboardsAPI.insertBefore(sb.id)
-    ElMessage.success('已在此位置前新增空白分镜')
+    ElMessage.success(t('filmCreate.insertedBlankShotSuccess'))
     await loadDrama()
   } catch (e) {
-    ElMessage.error(e.message || '新增失败')
+    ElMessage.error(e.message || t('filmCreate.insertFailed'))
   }
 }
 
@@ -6861,7 +6895,7 @@ async function startBatchImageGeneration() {
     const boards = store.storyboards || []
     const todo = boards.filter((sb) => !hasSbImage(sb))
     if (todo.length === 0) {
-      ElMessage.info('所有分镜均已有图片，无需重新生成')
+      ElMessage.info(t('filmCreate.allShotsHaveImagesTip'))
       return
     }
     batchImageProgress.value = { current: 0, total: todo.length, failed: 0 }
@@ -6894,7 +6928,7 @@ async function startBatchImageGeneration() {
           if (res?.task_id) {
             const pollRes = await pollTask(res.task_id, () => loadSingleStoryboardMedia(sb.id))
             if (pollRes?.status === 'failed') {
-              batchImageErrors.value.push(`#${sb.storyboard_number ?? sb.id}: ${pollRes.error || '生成失败'}`)
+              batchImageErrors.value.push(`#${sb.storyboard_number ?? sb.id}: ${pollRes.error || t('filmCreate.generationFailed')}`)
               batchImageProgress.value = { ...batchImageProgress.value, failed: batchImageProgress.value.failed + 1 }
             }
           } else {
@@ -6905,7 +6939,7 @@ async function startBatchImageGeneration() {
             delete sbSelectedImgId.value[sb.id]
           }
         } catch (e) {
-          batchImageErrors.value.push(`#${sb.storyboard_number ?? sb.id}: ${e.message || '提交失败'}`)
+          batchImageErrors.value.push(`#${sb.storyboard_number ?? sb.id}: ${e.message || t('filmCreate.msgSubmitFailed')}`)
           batchImageProgress.value = { ...batchImageProgress.value, failed: batchImageProgress.value.failed + 1 }
         }
         doneCount++
@@ -6916,10 +6950,10 @@ async function startBatchImageGeneration() {
     if (!batchImageStopping.value) {
       // 最终统一恢复选中状态，确保所有首帧生成后服务器绑定立即生效（与单条生成路径一致）
       restoreSelectionsFromBackend()
-      if (batchImageProgress.value.failed === 0) ElMessage.success(`分镜图批量生成完成（共 ${todo.length} 条）`)
-      else ElMessage.warning(`批量完成，${batchImageProgress.value.failed}/${todo.length} 条失败`)
+      if (batchImageProgress.value.failed === 0) ElMessage.success(t('filmCreate.batchImageSuccessAll', { count: todo.length }))
+      else ElMessage.warning(t('filmCreate.batchImagePartial', { failed: batchImageProgress.value.failed, total: todo.length }))
     } else {
-      ElMessage.info('批量生成已停止')
+      ElMessage.info(t('filmCreate.batchImageStopped'))
     }
   } finally {
     batchImageRunning.value = false
@@ -6948,7 +6982,7 @@ async function startBatchVideoGeneration() {
       return !!getSbFirstFrameUrl(sb)
     })
     if (todo.length === 0) {
-      ElMessage.info('没有需要生成视频的分镜（分镜缺少图片，或视频已全部生成）')
+      ElMessage.info(t('filmCreate.noShotsNeedVideoTip'))
       return
     }
     batchVideoProgress.value = { current: 0, total: todo.length, failed: 0 }
@@ -7026,10 +7060,10 @@ async function startBatchVideoGeneration() {
             duration: getSbVideoDurationForApi(sb),
           })
           if (res?.task_id) {
-            const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, '分镜视频')
+            const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, t('filmCreate.storyboardVideoShort'))
             const pollRes = await pollTask(res.task_id, () => loadSingleStoryboardMedia(sb.id), meta)
             if (pollRes?.status === 'failed') {
-              batchVideoErrors.value.push(`#${sb.storyboard_number ?? sb.id}: ${pollRes.error || '生成失败'}`)
+              batchVideoErrors.value.push(`#${sb.storyboard_number ?? sb.id}: ${pollRes.error || t('filmCreate.generationFailed')}`)
               batchVideoProgress.value = { ...batchVideoProgress.value, failed: batchVideoProgress.value.failed + 1 }
               prevVideoItem = null
             } else if (contiguity && pollRes?.status === 'completed') {
@@ -7045,7 +7079,7 @@ async function startBatchVideoGeneration() {
             }
           }
         } catch (e) {
-          batchVideoErrors.value.push(`#${sb.storyboard_number ?? sb.id}: ${e.message || '提交失败'}`)
+          batchVideoErrors.value.push(`#${sb.storyboard_number ?? sb.id}: ${e.message || t('filmCreate.msgSubmitFailed')}`)
           batchVideoProgress.value = { ...batchVideoProgress.value, failed: batchVideoProgress.value.failed + 1 }
           if (contiguity) prevVideoItem = null
         } finally {
@@ -7057,10 +7091,10 @@ async function startBatchVideoGeneration() {
     }
     await Promise.allSettled(Array.from({ length: Math.min(videoConcurrency, todo.length) }, () => videoWorker()))
     if (!batchVideoStopping.value) {
-      if (batchVideoProgress.value.failed === 0) ElMessage.success(`分镜视频批量生成完成（共 ${todo.length} 条）`)
-      else ElMessage.warning(`批量完成，${batchVideoProgress.value.failed}/${todo.length} 条失败`)
+      if (batchVideoProgress.value.failed === 0) ElMessage.success(t('filmCreate.batchVideoSuccessAll', { count: todo.length }))
+      else ElMessage.warning(t('filmCreate.batchVideoPartial', { failed: batchVideoProgress.value.failed, total: todo.length }))
     } else {
-      ElMessage.info('批量生成已停止')
+      ElMessage.info(t('filmCreate.batchVideoStopped'))
     }
   } finally {
     batchVideoRunning.value = false
@@ -7081,7 +7115,9 @@ async function onGenerateVideo() {
   const did = dramaId.value
   const dramaTitle = store.drama?.title || ''
   const epNum = store.currentEpisode?.episode_number
-  const epLabel = dramaTitle ? `${dramaTitle} · 第${epNum ?? ''}集` : `第${epNum ?? ''}集`
+  const epLabel = dramaTitle
+    ? t('generationStore.episodeWithTitle', { title: dramaTitle, num: epNum ?? '' })
+    : t('generationStore.episodeOnly', { num: epNum ?? '' })
   const mergeMeta = {
     dramaId: did,
     episodeId: epId,
@@ -7089,7 +7125,7 @@ async function onGenerateVideo() {
     episodeNumber: epNum,
     resourceType: GEN_RESOURCE.EPISODE_MERGE,
     resourceId: epId,
-    label: `${epLabel} 合成视频`,
+    label: `${epLabel} ${t('filmCreate.mergeFullEpisodeVideo')}`,
   }
   store.setVideoStatus('generating', did, epId)
   store.setVideoProgress(5, did, epId)
@@ -7099,35 +7135,35 @@ async function onGenerateVideo() {
     const result = await dramaAPI.finalizeEpisode(epId, getFinalizeMergeOptions())
     if (result?.task_id != null) {
       store.setVideoProgress(10, did, epId)
-      ElMessage.success(result?.message || '视频合成任务已提交，请稍后查看')
+      ElMessage.success(result?.message || t('filmCreate.mergeVideoSubmittedTip'))
       const pollResult = await pollTask(result.task_id, () => loadDrama(), mergeMeta)
       await loadDrama()
       if (pollResult?.status === 'completed') {
         store.setVideoProgress(100, did, epId)
         if (currentEpisodeVideoUrl.value) {
           store.setVideoStatus('done', did, epId)
-          ElMessage.success('视频生成完成')
+          ElMessage.success(t('filmCreate.videoGenDone'))
         } else {
           store.setVideoStatus('error', did, epId)
-          videoErrorMsg.value = '视频生成完成但未获取到播放地址，请稍后刷新'
+          videoErrorMsg.value = t('filmCreate.videoDoneNoUrlRefreshTip')
           ElMessage.warning(videoErrorMsg.value)
         }
       } else if (pollResult?.status === 'failed') {
         store.setVideoStatus('error', did, epId)
-        videoErrorMsg.value = pollResult?.error || '视频生成失败'
+        videoErrorMsg.value = pollResult?.error || t('filmCreate.videoGenFailed')
       } else if (pollResult?.status === 'timeout') {
         store.setVideoStatus('generating', did, epId)
-        videoErrorMsg.value = '任务仍在排队或生成中，请稍后刷新查看'
+        videoErrorMsg.value = t('filmCreate.taskQueuedOrGenRefreshTip')
         ElMessage.warning(videoErrorMsg.value)
       }
     } else {
       store.setVideoStatus('error', did, epId)
-      const msg = result?.message || '本集没有可合成的视频片段'
+      const msg = result?.message || t('filmCreate.noClipsToMergeTip')
       videoErrorMsg.value = msg
       ElMessage.warning(msg)
     }
   } catch (e) {
-    videoErrorMsg.value = e.message || '生成失败'
+    videoErrorMsg.value = e.message || t('filmCreate.generationFailed')
     store.setVideoStatus('error', did, epId)
   } finally {
     if (store.getVideoStatus(did, epId) !== 'generating') {
@@ -7176,12 +7212,12 @@ function pollTaskWithPause(taskId, onDone, meta = {}) {
     const finishStore = (status, error) => {
       if (!trackInStore || !taskId) return
       if (status === 'completed') genStore.markDone({ ...resolvedMeta, taskId })
-      else genStore.markFailed({ ...resolvedMeta, taskId }, error || '任务失败')
+      else genStore.markFailed({ ...resolvedMeta, taskId }, error || t('filmCreate.taskFailed'))
     }
     const tick = async () => {
       if (pipelineAbortRequested.value) {
-        finishStore('failed', '全流程已取消')
-        reject(Object.assign(new Error('全流程已取消'), { pipelineAborted: true }))
+        finishStore('failed', t('filmCreate.pipelineCancelled'))
+        reject(Object.assign(new Error(t('filmCreate.pipelineCancelled')), { pipelineAborted: true }))
         return
       }
       if (pipelinePaused.value) {
@@ -7192,8 +7228,8 @@ function pollTaskWithPause(taskId, onDone, meta = {}) {
       try {
         const t = await taskAPI.get(taskId)
         if (pipelineAbortRequested.value) {
-          finishStore('failed', '全流程已取消')
-          reject(Object.assign(new Error('全流程已取消'), { pipelineAborted: true }))
+          finishStore('failed', t('filmCreate.pipelineCancelled'))
+          reject(Object.assign(new Error(t('filmCreate.pipelineCancelled')), { pipelineAborted: true }))
           return
         }
         if (t.status === 'completed') {
@@ -7203,7 +7239,7 @@ function pollTaskWithPause(taskId, onDone, meta = {}) {
           return
         }
         if (t.status === 'failed') {
-          const errMsg = (t.error || t.message || '任务失败').trim()
+          const errMsg = (t.error || t.message || t('filmCreate.taskFailed')).trim()
           finishStore('failed', errMsg)
           resolve({ status: 'failed', error: errMsg })
           return
@@ -7213,7 +7249,7 @@ function pollTaskWithPause(taskId, onDone, meta = {}) {
       }
       if (attempts < maxAttempts) setTimeout(tick, interval)
       else {
-        const timeoutMsg = '任务查询超时（超过15分钟）'
+        const timeoutMsg = t('filmCreate.taskQueryTimeout15m')
         finishStore('failed', timeoutMsg)
         resolve({ status: 'timeout', error: timeoutMsg })
       }
@@ -7243,11 +7279,11 @@ function addPipelineError(step, message) {
 
 async function checkPause() {
   if (pipelineAbortRequested.value) {
-    throw Object.assign(new Error('全流程已取消'), { pipelineAborted: true })
+    throw Object.assign(new Error(t('filmCreate.pipelineCancelled')), { pipelineAborted: true })
   }
   while (pipelinePaused.value) {
     if (pipelineAbortRequested.value) {
-      throw Object.assign(new Error('全流程已取消'), { pipelineAborted: true })
+      throw Object.assign(new Error(t('filmCreate.pipelineCancelled')), { pipelineAborted: true })
     }
     await waitForResume()
   }
@@ -7292,7 +7328,7 @@ async function pipelineWithRetry(stepName, fn, maxRetries = 3) {
       if (r < maxRetries - 1) await pipelineRest()
     }
   }
-  addPipelineError(stepName, '重试3次均失败: ' + (lastErr?.message || String(lastErr)))
+  addPipelineError(stepName, t('filmCreate.retryFailed3Times', { error: lastErr?.message || String(lastErr) }))
   return false
 }
 
@@ -7339,7 +7375,7 @@ async function startTextFrameworkPipeline() {
 
 function setPipelineStep(idx, text) {
   pipelineStepIndex.value = idx
-  pipelineCurrentStep.value = `[步骤 ${idx}/${pipelineStepTotal.value}] ${text}`
+  pipelineCurrentStep.value = `[${t('filmCreate.stepNumOfTotal', { idx, total: pipelineStepTotal.value })}] ${text}`
 }
 
 async function runOneClickPipeline(textOnly = false) {
@@ -7357,7 +7393,7 @@ async function runOneClickPipeline(textOnly = false) {
     await checkPause()
     let chars = store.currentEpisode?.characters ?? []
     if (chars.length === 0) {
-      setPipelineStep(1, '提取角色...')
+      setPipelineStep(1, t('filmCreate.pipeExtractChars'))
       try {
         const outline = (store.scriptContent || '').toString().trim() || (storyInput.value || '').toString().trim() || undefined
         const res = await generationAPI.generateCharacters(dramaIdVal, { episode_id: store.currentEpisode?.id ?? undefined, outline: outline || undefined })
@@ -7365,68 +7401,68 @@ async function runOneClickPipeline(textOnly = false) {
         if (taskId) {
           const result = await pollTaskWithPause(taskId, () => loadDrama())
           if (result?.paused) { await waitForResume(); return }
-          if (result?.error) { addPipelineError('提取角色', result.error); return }
+          if (result?.error) { addPipelineError(t('filmCreate.pipeExtractCharsShort'), result.error); return }
         } else {
           await loadDrama()
         }
         await pipelineRest()
       } catch (e) {
-        addPipelineError('提取角色', e.message || String(e))
+        addPipelineError(t('filmCreate.pipeExtractCharsShort'), e.message || String(e))
         return
       }
       chars = store.currentEpisode?.characters ?? []
     } else {
-      setPipelineStep(1, `已有 ${chars.length} 个角色，跳过提取`)
+      setPipelineStep(1, t('filmCreate.pipeCharsExistSkip', { count: chars.length }))
     }
 
     // 步骤 2：提取场景
     await checkPause()
     let sceneList = store.currentEpisode?.scenes ?? []
     if (sceneList.length === 0) {
-      setPipelineStep(2, '提取场景...')
+      setPipelineStep(2, t('filmCreate.pipeExtractScenes'))
       try {
         const res = await dramaAPI.extractBackgrounds(episodeId, { model: undefined, style, language: scriptLanguage.value })
         const taskId = res?.task_id
         if (taskId) {
           const result = await pollTaskWithPause(taskId, () => loadDrama())
           if (result?.paused) { await waitForResume(); return }
-          if (result?.error) { addPipelineError('提取场景', result.error); return }
+          if (result?.error) { addPipelineError(t('filmCreate.pipeExtractScenesShort'), result.error); return }
         } else {
           await loadDrama()
         }
         await pipelineRest()
       } catch (e) {
-        addPipelineError('提取场景', e.message || String(e))
+        addPipelineError(t('filmCreate.pipeExtractScenesShort'), e.message || String(e))
         return
       }
       sceneList = store.currentEpisode?.scenes ?? []
     } else {
-      setPipelineStep(2, `已有 ${sceneList.length} 个场景，跳过提取`)
+      setPipelineStep(2, t('filmCreate.pipeScenesExistSkip', { count: sceneList.length }))
     }
 
     // 步骤 3：提取道具
     await checkPause()
     let propList = store.props ?? []
     if (propList.length === 0) {
-      setPipelineStep(3, '提取道具...')
+      setPipelineStep(3, t('filmCreate.pipeExtractProps'))
       try {
         const res = await propAPI.extractFromScript(episodeId)
         const taskId = res?.task_id
         if (taskId) {
           const result = await pollTaskWithPause(taskId, () => loadDrama())
           if (result?.paused) { await waitForResume(); return }
-          if (result?.error) { addPipelineError('提取道具', result.error); return }
+          if (result?.error) { addPipelineError(t('filmCreate.pipeExtractPropsShort'), result.error); return }
         } else {
           await loadDrama()
         }
         await pipelineRest()
       } catch (e) {
-        addPipelineError('提取道具', e.message || String(e))
+        addPipelineError(t('filmCreate.pipeExtractPropsShort'), e.message || String(e))
         // 道具提取失败不中断流程
       }
       propList = store.props ?? []
     } else {
-      setPipelineStep(3, `已有 ${propList.length} 个道具，跳过提取`)
+      setPipelineStep(3, t('filmCreate.pipePropsExistSkip', { count: propList.length }))
     }
 
     // 步骤 4：生成分镜脚本
@@ -7435,7 +7471,7 @@ async function runOneClickPipeline(textOnly = false) {
     let boards = store.storyboards || []
     const hadBoardsBeforeStep4 = boards.length > 0
     if (boards.length === 0) {
-      setPipelineStep(4, '生成分镜脚本...')
+      setPipelineStep(4, t('filmCreate.pipeGenStoryboard'))
       // 与手动生成一样，每 2 秒刷新一次分镜列表，让已解析的分镜逐步显示
       const sbRefreshTimer = setInterval(refreshStoryboardsOnly, 2000)
       try {
@@ -7454,7 +7490,7 @@ async function runOneClickPipeline(textOnly = false) {
           if (result?.error) {
             // 任务失败，但后端可能已保存了部分分镜，确保最新状态显示出来再停止
             await loadDrama()
-            addPipelineError('生成分镜', result.error)
+            addPipelineError(t('filmCreate.pipeGenStoryboardShort'), result.error)
             clearInterval(sbRefreshTimer)
             return
           }
@@ -7466,7 +7502,7 @@ async function runOneClickPipeline(textOnly = false) {
         await loadDrama()
         await pipelineRest()
       } catch (e) {
-        addPipelineError('生成分镜', e.message || String(e))
+        addPipelineError(t('filmCreate.pipeGenStoryboardShort'), e.message || String(e))
         clearInterval(sbRefreshTimer)
         return
       }
@@ -7474,7 +7510,7 @@ async function runOneClickPipeline(textOnly = false) {
       await loadStoryboardMedia()
       boards = store.storyboards || []
     } else {
-      setPipelineStep(4, `已有 ${boards.length} 个分镜，跳过生成`)
+      setPipelineStep(4, t('filmCreate.pipeBoardsExistSkip', { count: boards.length }))
     }
 
     const generatedSbThisPipeline = !hadBoardsBeforeStep4
@@ -7485,25 +7521,33 @@ async function runOneClickPipeline(textOnly = false) {
         onShotProgress: (cur, total, sb) =>
           setPipelineStep(
             4,
-            `润色全能分镜(${cur}/${total}) #${sb.storyboard_number ?? cur} ${(sb.title || '').slice(0, 16)}`
+            t('filmCreate.pipePolishOmniStep', {
+              cur,
+              total,
+              num: sb.storyboard_number ?? cur,
+              title: (sb.title || '').slice(0, 16),
+            })
           ),
         onShotError: (sb, msg) =>
-          addPipelineError('润色全能分镜', `镜#${sb.storyboard_number ?? sb.id}: ${msg}`),
+          addPipelineError(
+            t('filmCreate.pipePolishOmniShort'),
+            `${t('filmCreate.shotHash', { num: sb.storyboard_number ?? sb.id })}: ${msg}`
+          ),
       })
       await loadDrama()
       await loadStoryboardMedia()
     }
 
     if (textOnly) {
-      pipelineCurrentStep.value = '文本框架已就绪（未生成图片与视频）'
-      ElMessage.success('文本框架已生成：角色、场景、道具与分镜脚本已就绪')
+      pipelineCurrentStep.value = t('filmCreate.textFrameworkReadyNoMedia')
+      ElMessage.success(t('filmCreate.textFrameworkGeneratedSuccess'))
       return
     }
 
     // ════════════════════════════════════════════════════════
     // ⏱ 倒计时 20 秒：请浏览分镜内容，确认后开始生成角色/场景/道具图片
     // ════════════════════════════════════════════════════════
-    await runPipelineCountdown(20, '分镜脚本生成完毕，请浏览确认内容。倒计时结束后将开始生成角色、场景、道具图片。')
+    await runPipelineCountdown(20, t('filmCreate.countdownAfterSbPrompt'))
     await checkPause()
 
     // ════════════════════════════════════════════════════════
@@ -7514,12 +7558,12 @@ async function runOneClickPipeline(textOnly = false) {
     {
       const charsWithoutImage = chars.filter((c) => !hasAssetImage(c))
       const concurrency = pipelineConcurrency.value
-      setPipelineStep(5, `生成角色图（${charsWithoutImage.length} 个，并发 ${concurrency}）...`)
+      setPipelineStep(5, t('filmCreate.pipeGenCharImages', { count: charsWithoutImage.length, concurrency }))
       const { paused } = await runConcurrently(charsWithoutImage, concurrency, async (char) => {
         await checkPause()
         generatingCharIds.add(char.id)
         try {
-          const stepName = '角色图 ' + (char.name || char.id)
+          const stepName = `${t('filmCreate.charImageShort')} ${char.name || char.id}`
           const ok = await pipelineWithRetry(stepName, async () => {
             const res = await characterAPI.generateImage(char.id, undefined, style)
             const taskId = res?.image_generation?.task_id ?? res?.task_id
@@ -7540,7 +7584,7 @@ async function runOneClickPipeline(textOnly = false) {
         } finally {
           generatingCharIds.delete(char.id)
         }
-      }, { getLabel: (char) => '角色图 ' + (char.name || char.id) })
+      }, { getLabel: (char) => `${t('filmCreate.charImageShort')} ${char.name || char.id}` })
       if (paused) { await waitForResume() }
     }
 
@@ -7548,13 +7592,13 @@ async function runOneClickPipeline(textOnly = false) {
     {
       const scenesWithoutImage = sceneList.filter((s) => !hasAssetImage(s))
       const concurrency = pipelineConcurrency.value
-      setPipelineStep(6, `生成场景图（${scenesWithoutImage.length} 个，并发 ${concurrency}）...`)
+      setPipelineStep(6, t('filmCreate.pipeGenSceneImages', { count: scenesWithoutImage.length, concurrency }))
       await checkPause()
       const { paused } = await runConcurrently(scenesWithoutImage, concurrency, async (scene) => {
         await checkPause()
         generatingSceneIds.add(scene.id)
         try {
-          const stepName = '场景图 ' + (scene.location || scene.id)
+          const stepName = `${t('filmCreate.sceneImageShort')} ${scene.location || scene.id}`
           const ok = await pipelineWithRetry(stepName, async () => {
             const useQuad = !!sceneUseQuadGrid.value
             const res = await sceneAPI.generateImage({ scene_id: scene.id, model: undefined, style, use_quad_grid: useQuad })
@@ -7576,7 +7620,7 @@ async function runOneClickPipeline(textOnly = false) {
         } finally {
           generatingSceneIds.delete(scene.id)
         }
-      }, { getLabel: (scene) => '场景图 ' + (scene.location || scene.id) })
+      }, { getLabel: (scene) => `${t('filmCreate.sceneImageShort')} ${scene.location || scene.id}` })
       if (paused) { await waitForResume() }
     }
 
@@ -7584,13 +7628,13 @@ async function runOneClickPipeline(textOnly = false) {
     {
       const propsWithoutImage = propList.filter((p) => !hasAssetImage(p))
       const concurrency = pipelineConcurrency.value
-      setPipelineStep(7, `生成道具图（${propsWithoutImage.length} 个，并发 ${concurrency}）...`)
+      setPipelineStep(7, t('filmCreate.pipeGenPropImages', { count: propsWithoutImage.length, concurrency }))
       await checkPause()
       const { paused } = await runConcurrently(propsWithoutImage, concurrency, async (prop) => {
         await checkPause()
         generatingPropIds.add(prop.id)
         try {
-          const stepName = '道具图 ' + (prop.name || prop.id)
+          const stepName = `${t('filmCreate.propImageShort')} ${prop.name || prop.id}`
           const ok = await pipelineWithRetry(stepName, async () => {
             const res = await propAPI.generateImage(prop.id, undefined, style)
             const taskId = res?.image_generation?.task_id ?? res?.task_id
@@ -7611,14 +7655,14 @@ async function runOneClickPipeline(textOnly = false) {
         } finally {
           generatingPropIds.delete(prop.id)
         }
-      }, { getLabel: (prop) => '道具图 ' + (prop.name || prop.id) })
+      }, { getLabel: (prop) => `${t('filmCreate.propImageShort')} ${prop.name || prop.id}` })
       if (paused) { await waitForResume() }
     }
 
     // ════════════════════════════════════════════════════════
     // ⏱ 倒计时 30 秒：请浏览角色/场景/道具图，确认后开始生成分镜图
     // ════════════════════════════════════════════════════════
-    await runPipelineCountdown(30, '角色、场景、道具图片生成完毕，请浏览确认效果。倒计时结束后将开始生成分镜图（消耗较多 Token）。')
+    await runPipelineCountdown(30, t('filmCreate.countdownAfterAssetsPrompt'))
     await checkPause()
 
     // ════════════════════════════════════════════════════════
@@ -7631,12 +7675,12 @@ async function runOneClickPipeline(textOnly = false) {
       boards = store.storyboards || []
       const boardsWithoutImg = boards.filter((sb) => !hasSbImage(sb))
       const concurrency = pipelineConcurrency.value
-      setPipelineStep(8, `生成分镜图（${boardsWithoutImg.length} 个，并发 ${concurrency}）...`)
+      setPipelineStep(8, t('filmCreate.pipeGenSbImages', { count: boardsWithoutImg.length, concurrency }))
       const { paused } = await runConcurrently(boardsWithoutImg, concurrency, async (sb) => {
         await checkPause()
         generatingSbImageIds.add(sb.id)
         try {
-          const stepName = '分镜图 #' + (sb.storyboard_number ?? sb.id)
+          const stepName = `${t('filmCreate.storyboardImageShort')} #${sb.storyboard_number ?? sb.id}`
           const ok = await pipelineWithRetry(stepName, async () => {
             const useFirstLast = storyboardUseFirstLastFrame.value && !isSbUniversalMode(sb.id)
             let prompt = sb.polished_prompt || sb.image_prompt || sb.description || ''
@@ -7664,14 +7708,14 @@ async function runOneClickPipeline(textOnly = false) {
         } finally {
           generatingSbImageIds.delete(sb.id)
         }
-      }, { getLabel: (sb) => '分镜图 #' + (sb.storyboard_number ?? sb.id) })
+      }, { getLabel: (sb) => `${t('filmCreate.storyboardImageShort')} #${sb.storyboard_number ?? sb.id}` })
       if (paused) { await waitForResume() }
     }
 
     // ════════════════════════════════════════════════════════
     // ⏱ 倒计时 20 秒：请浏览分镜图，确认后开始生成分镜视频
     // ════════════════════════════════════════════════════════
-    await runPipelineCountdown(20, '分镜图生成完毕，请浏览确认图片效果。倒计时结束后将开始生成分镜视频（消耗最多 Token）。')
+    await runPipelineCountdown(20, t('filmCreate.countdownAfterSbImagesPrompt'))
     await checkPause()
 
     // ════════════════════════════════════════════════════════
@@ -7691,12 +7735,12 @@ async function runOneClickPipeline(textOnly = false) {
         return !!getSbFirstFrameUrl(sb)
       })
       const concurrency = pipelineVideoConcurrency.value
-      setPipelineStep(9, `生成分镜视频（${boards2.length} 个，并发 ${concurrency}）...`)
+      setPipelineStep(9, t('filmCreate.pipeGenSbVideos', { count: boards2.length, concurrency }))
       const { paused } = await runConcurrently(boards2, concurrency, async (sb) => {
         await checkPause()
         generatingSbVideoIds.add(sb.id)
         try {
-          const stepName = '分镜视频 #' + (sb.storyboard_number ?? sb.id)
+          const stepName = `${t('filmCreate.storyboardVideoShort')} #${sb.storyboard_number ?? sb.id}`
           const ok = await pipelineWithRetry(stepName, async () => {
             const universal = isSbUniversalMode(sb.id)
             const omniRefs = universal ? collectSbOmniReferenceAbsoluteUrls(sb) : []
@@ -7723,7 +7767,7 @@ async function runOneClickPipeline(textOnly = false) {
               duration: getSbVideoDurationForApi(sb),
             })
             if (res?.task_id) {
-              const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, '分镜视频')
+              const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, t('filmCreate.storyboardVideoShort'))
               const result = await pollTaskWithPause(res.task_id, () => loadSingleStoryboardMedia(sb.id), meta)
               if (result?.paused) return { paused: true }
               if (result?.error) throw new Error(result.error)
@@ -7733,34 +7777,34 @@ async function runOneClickPipeline(textOnly = false) {
         } finally {
           generatingSbVideoIds.delete(sb.id)
         }
-      }, { getLabel: (sb) => '分镜视频 #' + (sb.storyboard_number ?? sb.id) })
+      }, { getLabel: (sb) => `${t('filmCreate.storyboardVideoShort')} #${sb.storyboard_number ?? sb.id}` })
       if (paused) { await waitForResume() }
     }
 
     // 步骤 10：合成整集视频
     await checkPause()
-    setPipelineStep(10, '合成整集视频...')
+    setPipelineStep(10, t('filmCreate.pipeMergeFullVideo'))
     try {
       const result = await dramaAPI.finalizeEpisode(episodeId, getFinalizeMergeOptions())
       if (result?.task_id != null) {
         const pollResult = await pollTaskWithPause(result.task_id, () => loadDrama())
         if (pollResult?.paused) { await waitForResume(); return }
-        if (pollResult?.error) addPipelineError('合成整集视频', pollResult.error)
+        if (pollResult?.error) addPipelineError(t('filmCreate.pipeMergeFullVideoShort'), pollResult.error)
         else await pipelineRest()
       } else {
-        addPipelineError('合成整集视频', result?.message || '本集没有可合成的视频片段')
+        addPipelineError(t('filmCreate.pipeMergeFullVideoShort'), result?.message || t('filmCreate.noClipsToMergeTip'))
       }
     } catch (e) {
-      addPipelineError('合成整集视频', e.message || String(e))
+      addPipelineError(t('filmCreate.pipeMergeFullVideoShort'), e.message || String(e))
     }
 
-    pipelineCurrentStep.value = '一键生成视频流程已执行完成'
-    ElMessage.success('一键生成视频流程已执行完成')
+    pipelineCurrentStep.value = t('filmCreate.oneClickVideoWorkflowDone')
+    ElMessage.success(t('filmCreate.oneClickVideoWorkflowDone'))
     trackFilmCreateAction('one_click_generate_complete', {
       extra: { error_count: pipelineErrorLog.value.length },
     })
   } catch (e) {
-    addPipelineError('流程', e.message || String(e))
+    addPipelineError(t('filmCreate.pipelineProcessShort'), e.message || String(e))
     trackFilmCreateAction('one_click_generate_failed', {
       extra: { message: String(e?.message || 'failed').slice(0, 120) },
     })
@@ -7790,14 +7834,14 @@ async function runRepairPipeline() {
   const style = getSelectedStyle()
 
   try {
-    pipelineCurrentStep.value = '正在加载数据...'
+    pipelineCurrentStep.value = t('filmCreate.pipeLoadingData')
     await loadDrama()
 
     // 1. 角色：没有则生成角色；再为每个无图角色生成图
     let chars = store.currentEpisode?.characters ?? []
     if (chars.length === 0) {
       await checkPause()
-      pipelineCurrentStep.value = '正在生成角色列表...'
+      pipelineCurrentStep.value = t('filmCreate.pipeGenCharList')
       try {
         const outline = (store.scriptContent || '').toString().trim() || (storyInput.value || '').toString().trim() || undefined
         const res = await generationAPI.generateCharacters(dramaIdVal, { episode_id: store.currentEpisode?.id ?? undefined, outline: outline || undefined })
@@ -7805,11 +7849,11 @@ async function runRepairPipeline() {
         if (taskId) {
           const result = await pollTaskWithPause(taskId, () => loadDrama())
           if (result?.paused) { await waitForResume(); return }
-          if (result?.error) { addPipelineError('生成角色', result.error); return }
+          if (result?.error) { addPipelineError(t('filmCreate.pipeGenCharShort'), result.error); return }
         } else await loadDrama()
         await pipelineRest()
       } catch (e) {
-        addPipelineError('生成角色', e.message || String(e))
+        addPipelineError(t('filmCreate.pipeGenCharShort'), e.message || String(e))
         return
       }
       chars = store.currentEpisode?.characters ?? []
@@ -7817,10 +7861,10 @@ async function runRepairPipeline() {
     const charsWithoutImage = chars.filter((c) => !hasAssetImage(c))
     {
       const concurrency = pipelineConcurrency.value
-      pipelineCurrentStep.value = `正在生成角色图（并发${concurrency}）...`
+      pipelineCurrentStep.value = t('filmCreate.pipeGenCharImagesProgress', { concurrency })
       const { paused } = await runConcurrently(charsWithoutImage, concurrency, async (char) => {
         await checkPause()
-        const stepName = '角色图 ' + (char.name || char.id)
+        const stepName = `${t('filmCreate.charImageShort')} ${char.name || char.id}`
         const ok = await pipelineWithRetry(stepName, async () => {
           const res = await characterAPI.generateImage(char.id, undefined, style)
           const taskId = res?.image_generation?.task_id ?? res?.task_id
@@ -7838,7 +7882,7 @@ async function runRepairPipeline() {
           }
         })
         if (ok && typeof ok === 'object' && ok.paused) return { paused: true }
-      }, { getLabel: (char) => '角色图 ' + (char.name || char.id) })
+      }, { getLabel: (char) => `${t('filmCreate.charImageShort')} ${char.name || char.id}` })
       if (paused) { await waitForResume() }
     }
 
@@ -7846,18 +7890,18 @@ async function runRepairPipeline() {
     let sceneList = store.currentEpisode?.scenes ?? []
     if (sceneList.length === 0) {
       await checkPause()
-      pipelineCurrentStep.value = '正在提取场景...'
+      pipelineCurrentStep.value = t('filmCreate.pipeExtractingScenes')
       try {
         const res = await dramaAPI.extractBackgrounds(episodeId, { model: undefined, style, language: scriptLanguage.value })
         const taskId = res?.task_id
         if (taskId) {
           const result = await pollTaskWithPause(taskId, () => loadDrama())
           if (result?.paused) { await waitForResume(); return }
-          if (result?.error) { addPipelineError('提取场景', result.error); return }
+          if (result?.error) { addPipelineError(t('filmCreate.pipeExtractScenesShort'), result.error); return }
         } else await loadDrama()
         await pipelineRest()
       } catch (e) {
-        addPipelineError('提取场景', e.message || String(e))
+        addPipelineError(t('filmCreate.pipeExtractScenesShort'), e.message || String(e))
         return
       }
       sceneList = store.currentEpisode?.scenes ?? []
@@ -7865,10 +7909,10 @@ async function runRepairPipeline() {
     const scenesWithoutImage = sceneList.filter((s) => !hasAssetImage(s))
     {
       const concurrency = pipelineConcurrency.value
-      pipelineCurrentStep.value = `正在生成场景图（并发${concurrency}）...`
+      pipelineCurrentStep.value = t('filmCreate.pipeGenSceneImagesProgress', { concurrency })
       const { paused } = await runConcurrently(scenesWithoutImage, concurrency, async (scene) => {
         await checkPause()
-        const stepName = '场景图 ' + (scene.location || scene.id)
+        const stepName = `${t('filmCreate.sceneImageShort')} ${scene.location || scene.id}`
         const ok = await pipelineWithRetry(stepName, async () => {
           const useQuad = !!sceneUseQuadGrid.value
           const res = await sceneAPI.generateImage({ scene_id: scene.id, model: undefined, style, use_quad_grid: useQuad })
@@ -7887,7 +7931,7 @@ async function runRepairPipeline() {
           }
         })
         if (ok && typeof ok === 'object' && ok.paused) return { paused: true }
-      }, { getLabel: (scene) => '场景图 ' + (scene.location || scene.id) })
+      }, { getLabel: (scene) => `${t('filmCreate.sceneImageShort')} ${scene.location || scene.id}` })
       if (paused) { await waitForResume() }
     }
 
@@ -7895,31 +7939,31 @@ async function runRepairPipeline() {
     let propList2 = store.props ?? []
     if (propList2.length === 0) {
       await checkPause()
-      pipelineCurrentStep.value = '正在提取道具...'
+      pipelineCurrentStep.value = t('filmCreate.pipeExtractingProps')
       try {
         const res = await propAPI.extractFromScript(episodeId)
         const taskId = res?.task_id
         if (taskId) {
           const result = await pollTaskWithPause(taskId, () => loadDrama())
           if (result?.paused) { await waitForResume(); return }
-          if (result?.error) { addPipelineError('提取道具', result.error); /* 不中断 */ }
+          if (result?.error) { addPipelineError(t('filmCreate.pipeExtractPropsShort'), result.error); /* 不中断 */ }
         } else await loadDrama()
         await pipelineRest()
       } catch (e) {
-        addPipelineError('提取道具', e.message || String(e))
+        addPipelineError(t('filmCreate.pipeExtractPropsShort'), e.message || String(e))
       }
       propList2 = store.props ?? []
     }
     const propsWithoutImage2 = propList2.filter((p) => !hasAssetImage(p))
     {
       const concurrency = pipelineConcurrency.value
-      pipelineCurrentStep.value = `正在生成道具图（并发${concurrency}）...`
+      pipelineCurrentStep.value = t('filmCreate.pipeGenPropImagesProgress', { concurrency })
       await checkPause()
       const { paused } = await runConcurrently(propsWithoutImage2, concurrency, async (prop) => {
         await checkPause()
         generatingPropIds.add(prop.id)
         try {
-          const stepName = '道具图 ' + (prop.name || prop.id)
+          const stepName = `${t('filmCreate.propImageShort')} ${prop.name || prop.id}`
           const ok = await pipelineWithRetry(stepName, async () => {
             const res = await propAPI.generateImage(prop.id, undefined, style)
             const taskId = res?.image_generation?.task_id ?? res?.task_id
@@ -7940,7 +7984,7 @@ async function runRepairPipeline() {
         } finally {
           generatingPropIds.delete(prop.id)
         }
-      }, { getLabel: (prop) => '道具图 ' + (prop.name || prop.id) })
+      }, { getLabel: (prop) => `${t('filmCreate.propImageShort')} ${prop.name || prop.id}` })
       if (paused) { await waitForResume() }
     }
 
@@ -7949,7 +7993,7 @@ async function runRepairPipeline() {
     const hadBoardsBeforeRepairSb = boards.length > 0
     if (boards.length === 0) {
       await checkPause()
-      pipelineCurrentStep.value = '正在生成分镜...'
+      pipelineCurrentStep.value = t('filmCreate.pipeGeneratingStoryboards')
       try {
         const res = await dramaAPI.generateStoryboard(episodeId, {
           aspect_ratio: projectAspectRatio.value || '16:9',
@@ -7962,12 +8006,12 @@ async function runRepairPipeline() {
         if (taskId) {
           const result = await pollTaskWithPause(taskId, () => loadDrama())
           if (result?.paused) { await waitForResume(); return }
-          if (result?.error) { addPipelineError('分镜生成', result.error); return }
+          if (result?.error) { addPipelineError(t('filmCreate.pipeGenStoryboardAltShort'), result.error); return }
         }
         await loadDrama()
         await pipelineRest()
       } catch (e) {
-        addPipelineError('分镜生成', e.message || String(e))
+        addPipelineError(t('filmCreate.pipeGenStoryboardAltShort'), e.message || String(e))
         return
       }
       boards = store.storyboards || []
@@ -7977,10 +8021,18 @@ async function runRepairPipeline() {
       await polishUniversalSegmentsAfterGeneration({
         checkPause,
         onShotProgress: (cur, total, sb) => {
-          pipelineCurrentStep.value = `润色全能分镜(${cur}/${total}) #${sb.storyboard_number ?? cur} ${(sb.title || '').slice(0, 16)}`
+          pipelineCurrentStep.value = t('filmCreate.pipePolishOmniStep', {
+            cur,
+            total,
+            num: sb.storyboard_number ?? cur,
+            title: (sb.title || '').slice(0, 16),
+          })
         },
         onShotError: (sb, msg) =>
-          addPipelineError('润色全能分镜', `镜#${sb.storyboard_number ?? sb.id}: ${msg}`),
+          addPipelineError(
+            t('filmCreate.pipePolishOmniShort'),
+            `${t('filmCreate.shotHash', { num: sb.storyboard_number ?? sb.id })}: ${msg}`
+          ),
       })
       await loadDrama()
     }
@@ -7989,10 +8041,10 @@ async function runRepairPipeline() {
     const boardsWithoutImg = boards.filter((sb) => !hasSbImage(sb))
     {
       const concurrency = pipelineConcurrency.value
-      pipelineCurrentStep.value = `正在生成分镜图（并发${concurrency}）...`
+      pipelineCurrentStep.value = t('filmCreate.pipeGenSbImagesProgress', { concurrency })
       const { paused } = await runConcurrently(boardsWithoutImg, concurrency, async (sb) => {
         await checkPause()
-        const stepName = '分镜图 #' + (sb.storyboard_number ?? sb.id)
+        const stepName = `${t('filmCreate.storyboardImageShort')} #${sb.storyboard_number ?? sb.id}`
         const ok = await pipelineWithRetry(stepName, async () => {
           const useFirstLast = storyboardUseFirstLastFrame.value && !isSbUniversalMode(sb.id)
           let prompt = sb.polished_prompt || sb.image_prompt || sb.description || ''
@@ -8017,7 +8069,7 @@ async function runRepairPipeline() {
           } else await loadSingleStoryboardMedia(sb.id)
         })
         if (ok && typeof ok === 'object' && ok.paused) return { paused: true }
-      }, { getLabel: (sb) => '分镜图 #' + (sb.storyboard_number ?? sb.id) })
+      }, { getLabel: (sb) => `${t('filmCreate.storyboardImageShort')} #${sb.storyboard_number ?? sb.id}` })
       if (paused) { await waitForResume() }
     }
     await loadStoryboardMedia()
@@ -8032,12 +8084,12 @@ async function runRepairPipeline() {
     })
     {
       const concurrency = pipelineVideoConcurrency.value
-      pipelineCurrentStep.value = `正在生成分镜视频（并发${concurrency}）...`
+      pipelineCurrentStep.value = t('filmCreate.pipeGenSbVideosProgress', { concurrency })
       const { paused } = await runConcurrently(boards2, concurrency, async (sb) => {
         await checkPause()
         generatingSbVideoIds.add(sb.id)
         try {
-          const stepName = '分镜视频 #' + (sb.storyboard_number ?? sb.id)
+          const stepName = `${t('filmCreate.storyboardVideoShort')} #${sb.storyboard_number ?? sb.id}`
           const ok = await pipelineWithRetry(stepName, async () => {
             const universal = isSbUniversalMode(sb.id)
             const omniRefs = universal ? collectSbOmniReferenceAbsoluteUrls(sb) : []
@@ -8063,7 +8115,7 @@ async function runRepairPipeline() {
               duration: getSbVideoDurationForApi(sb),
             })
             if (res?.task_id) {
-              const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, '分镜视频')
+              const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, t('filmCreate.storyboardVideoShort'))
               const result = await pollTaskWithPause(res.task_id, () => loadSingleStoryboardMedia(sb.id), meta)
               if (result?.paused) return { paused: true }
               if (result?.error) throw new Error(result.error)
@@ -8073,31 +8125,31 @@ async function runRepairPipeline() {
         } finally {
           generatingSbVideoIds.delete(sb.id)
         }
-      }, { getLabel: (sb) => '分镜视频 #' + (sb.storyboard_number ?? sb.id) })
+      }, { getLabel: (sb) => `${t('filmCreate.storyboardVideoShort')} #${sb.storyboard_number ?? sb.id}` })
       if (paused) { await waitForResume() }
     }
 
     // 4. 生成整集视频（合成整个视频）
     await checkPause()
-    pipelineCurrentStep.value = '正在生成整集视频...'
+    pipelineCurrentStep.value = t('filmCreate.pipeGeneratingFullVideo')
     try {
       const result = await dramaAPI.finalizeEpisode(episodeId, getFinalizeMergeOptions())
       if (result?.task_id != null) {
         const pollResult = await pollTaskWithPause(result.task_id, () => loadDrama())
         if (pollResult?.paused) { await waitForResume(); return }
-        if (pollResult?.error) addPipelineError('生成整集视频', pollResult.error)
+        if (pollResult?.error) addPipelineError(t('filmCreate.pipeGenFullVideoShort'), pollResult.error)
         else await pipelineRest()
       } else {
-        addPipelineError('生成整集视频', result?.message || '本集没有可合成的视频片段')
+        addPipelineError(t('filmCreate.pipeGenFullVideoShort'), result?.message || t('filmCreate.noClipsToMergeTip'))
       }
     } catch (e) {
-      addPipelineError('生成整集视频', e.message || String(e))
+      addPipelineError(t('filmCreate.pipeGenFullVideoShort'), e.message || String(e))
     }
 
-    pipelineCurrentStep.value = '补全并生成流程已执行完成'
-    ElMessage.success('修复缺失流程已执行完成')
+    pipelineCurrentStep.value = t('filmCreate.fixMissingPipelineDone')
+    ElMessage.success(t('filmCreate.fixMissingWorkflowDone'))
   } catch (e) {
-    addPipelineError('流程', e.message || String(e))
+    addPipelineError(t('filmCreate.pipelineProcessShort'), e.message || String(e))
   }
 }
 

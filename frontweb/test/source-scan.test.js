@@ -86,42 +86,46 @@ test('source-scan: no new Chinese hardcoded in frontend sources', () => {
   )
 })
 
-test('source-scan: allowlist keeps shrinking (no stale entries)', () => {
-  const stale = []
-  for (const [file, count] of Object.entries(allowlist)) {
-    const actual = leaks.get(file) || 0
-    if (actual < count) {
-      stale.push(`${file}: allowlist says ${count}, actual ${actual} (lower it to ${actual})`)
-    }
-    if (actual === 0) {
-      stale.push(`${file}: no leaks left, remove this allowlist entry`)
-    }
-  }
-
-  assert.deepEqual(
-    stale,
-    [],
-    [
-      'The i18n allowlist is out of date. Lower each number to the real count',
-      '(or delete the entry when it reaches 0) in frontweb/test/i18n-allowlist.json.',
-      '',
-      ...stale.sort(),
-    ].join('\n'),
-  )
-})
-
 test('source-scan: leak report is actionable', () => {
-  for (const [file, count] of leaks) {
-    const hits = scanFile(path.join(srcDir, file))
-    assert.equal(hits.length, count, `scan count mismatch for ${file}`)
-    const report = formatHits(srcDir, file, hits)
-    assert.match(report, new RegExp(`${file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:\\d+`))
-  }
+  const fixture = path.resolve(testDir, 'fixtures/source-scan-sample.vue')
+  const hits = scanFile(fixture)
+  assert.equal(hits.length, 2)
+  const report = formatHits(testDir, 'fixtures/source-scan-sample.vue', hits)
+  assert.match(report, /fixtures\/source-scan-sample\.vue:\d+/)
 })
 
-test('source-scan: allowlist file exists and is valid JSON', () => {
-  assert.ok(fs.existsSync(allowlistPath), 'frontweb/test/i18n-allowlist.json is missing')
-  assert.equal(typeof allowlist, 'object')
-})
+if (fs.existsSync(allowlistPath)) {
+  test('source-scan: allowlist keeps shrinking (no stale entries)', () => {
+    const stale = []
+    for (const [file, count] of Object.entries(allowlist)) {
+      const actual = leaks.get(file) || 0
+      if (actual < count) {
+        stale.push(`${file}: allowlist says ${count}, actual ${actual} (lower it to ${actual})`)
+      }
+      if (actual === 0) {
+        stale.push(`${file}: no leaks left, remove this allowlist entry`)
+      }
+    }
+
+    assert.deepEqual(
+      stale,
+      [],
+      [
+        'The i18n allowlist is out of date. Lower each number to the real count',
+        '(or delete the entry when it reaches 0) in frontweb/test/i18n-allowlist.json.',
+        '',
+        ...stale.sort(),
+      ].join('\n'),
+    )
+  })
+
+  test('source-scan: allowlist file is valid JSON', () => {
+    assert.equal(typeof allowlist, 'object')
+  })
+} else {
+  test('source-scan: allowlist eliminated and zero leaks remain', () => {
+    assert.equal(leaks.size, 0, `Expected 0 files with leaks, found: ${[...leaks.keys()].join(', ')}`)
+  })
+}
 
 export { leaks }
