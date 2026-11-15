@@ -56,12 +56,23 @@ export default {
     networkError: 'Network error, please try again later',
     project: 'Project',
     generateScriptFor: 'Generating script for {name}',
+    failedFor: '{label} failed',
     dark: 'Dark',
     light: 'Light',
     title: 'Title',
     unnamed: 'Unnamed',
     deleted: 'Deleted',
     generating: 'Generating',
+  },
+
+  routes: {
+    projectList: 'Projects',
+    dramaDetail: 'Project Detail',
+    filmCreate: 'AI Video Studio',
+    canvas: 'Canvas Mode',
+    aiConfig: 'AI Settings',
+    freeCreate: 'Free Create',
+    mediaLibrary: 'Media Library',
   },
 
   header: {
@@ -365,6 +376,59 @@ export default {
     generateVideo: 'Generate Video Clip',
     videoPlayer: 'Video Player',
     exportStoryboardSheet: 'Export Storyboard Sheet',
+
+    // Task labels (generation panel)
+    charImageTaskLabel: '{episode} character image: {name}',
+    propImageTaskLabel: '{episode} prop image: {name}',
+    sceneImageTaskLabel: '{episode} scene image: {name}',
+
+    // Entity names used inside messages
+    entityCharacter: 'character',
+    entityProp: 'prop',
+    entityScene: 'scene',
+
+    // Delete confirmations
+    confirmDeletionTitle: 'Confirm Deletion',
+    deleteCharacterPrompt: 'Are you sure you want to delete character "{name}"? This action cannot be undone.',
+    deletePublicCharacterPrompt: 'Delete public character "{name}"?',
+    deletePropPrompt: 'Are you sure you want to delete prop "{name}"? This action cannot be undone.',
+    deletePublicPropPrompt: 'Delete public prop "{name}"?',
+    deleteScenePrompt: 'Are you sure you want to delete scene "{name}"? This action cannot be undone.',
+    deletePublicScenePrompt: 'Delete public scene "{name}"?',
+
+    // Scene / prop extraction
+    msgSceneExtractSubmitted: 'Scene extraction task submitted',
+    msgPropExtractSubmitted: 'Prop extraction task submitted',
+    msgScenePromptGenerated: 'Single frame prompt generated',
+    msgSceneDescExtracted: 'Scene description extracted from image',
+    msgPropDescExtracted: 'Prop description extracted from image',
+    msgFeatureDescExtracted: 'Feature description extracted from reference image',
+    msgScriptSaveFirst: 'Please complete the script and save first',
+    msgVisionModelMissing: 'Extraction failed, please check whether a vision model is configured in AI Settings',
+
+    // SD2 certification
+    sd2ActionViewCert: 'View SD2 Cert',
+    sd2ActionRefreshCert: 'Refresh SD2 Cert',
+    sd2ActionRecertify: 'Re-certify SD2',
+    sd2ActionCertify: 'SD2 Certify',
+    msgSd2CertSubmitted: 'SD2 certification request submitted',
+    msgSd2CertRefreshed: 'SD2 certification status refreshed',
+    msgSd2CertFailed: 'SD2 certification failed',
+
+    // Voice reference
+    voiceActionView: 'Voice Ref',
+    voiceActionRefresh: 'Refresh Voice',
+    voiceActionReupload: 'Re-upload Voice',
+    voiceActionUpload: 'Upload Voice',
+    msgRefreshFailed: 'Refresh failed',
+    msgVoiceRefSet: 'Voice reference is set and will be used with Seedance 2.0',
+    msgVoiceRefreshed: 'Voice status refreshed',
+    msgVoiceUploaded: 'Seedance 2.0 voice reference uploaded',
+    msgVoiceUploadFailed: 'Voice upload failed',
+    msgNoVoiceRef: 'No voice reference audio for this character',
+    msgAudioPlaybackNotFound: 'Audio playback failed: the file may be missing or the path may not match, please try re-uploading the voice reference',
+    msgAudioPlaybackFailed: 'Audio playback failed, please check the file or try again later',
+    msgAudioUnplayable: 'Unable to play audio',
   },
 
   dramaCanvas: {
@@ -503,6 +567,26 @@ export default {
     extractProps: 'Extract Props',
     extractAll: 'Extract All',
     fillScriptFirst: 'Please enter script content first',
+
+    // Batch generation (episode-level actions)
+    episodeHasStoryboards: 'Episode {num} already has {count} storyboards. Regenerating may append or overwrite content. Continue?',
+    storyboardsGenerated: 'Storyboards generated: {count} shots',
+    batchImageConfirm: 'Images will be generated for {count} storyboards one by one. This may take a while. Continue?',
+    batchImageProgress: 'Generating images {current}/{total}: shot #{id}',
+    shotImageFailed: 'Shot #{id} image generation failed: {error}',
+    batchImageDone: 'Batch image generation finished: {count} shots',
+    batchVideoConfirm: 'Videos will be generated for {count} storyboards one by one. Continue?',
+    batchVideoProgress: 'Generating videos {current}/{total}: shot #{id}',
+    shotVideoFailed: 'Shot #{id} video generation failed: {error}',
+    batchVideoDone: 'Batch video generation finished: {count} shots',
+    batchPartial: '{ok} shots done, {failed} failed',
+    shotMissingPrompt: 'Shot #{id} has no image prompt',
+    shotMissingImage: 'Shot #{id} has no image, so the video cannot be generated',
+    shotNotFound: 'Storyboard {id} not found',
+    shotTitle: 'Shot {num}',
+    addedItem: 'Added {name}',
+    extractionSummary: 'Extraction finished: {characters} characters · {scenes} scenes · {props} props',
+    generationFailed: 'Generation failed',
   },
 
   dramaDetail: {

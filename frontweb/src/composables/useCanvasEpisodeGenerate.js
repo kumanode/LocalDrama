@@ -22,7 +22,7 @@ async function pollTask(taskId, onTick, maxAttempts = 450, interval = 2000) {
       }
       onTick?.()
     } catch (e) {
-      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || '轮询失败' }
+      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || i18nT('dramaCanvas.pollingFailed') }
     }
   }
   return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
@@ -110,7 +110,10 @@ export function useCanvasEpisodeGenerate(deps) {
     if (existing.length > 0) {
       try {
         await ElMessageBox.confirm(
-          `第 ${ep.episode_number || ''} 集已有 ${existing.length} 个分镜。重新生成可能追加或覆盖内容，是否继续？`,
+          i18nT('dramaCanvas.episodeHasStoryboards', {
+            num: ep.episode_number || '',
+            count: existing.length,
+          }),
           i18nT('dramaCanvas.aiStoryboard'),
           { type: 'warning', confirmButtonText: i18nT('dramaCanvas.continueGenerating') }
         )
@@ -140,7 +143,7 @@ export function useCanvasEpisodeGenerate(deps) {
       await refreshCanvas(true)
       await storyboardsAPI.batchInferParams(ep.id, false).catch(() => {})
       const count = getStoryboardsForEpisode().length
-      ElMessage.success(`分镜生成完成，共 ${count} 镜`)
+      ElMessage.success(i18nT('dramaCanvas.storyboardsGenerated', { count }))
     } catch (e) {
       ElMessage.error(e?.message || i18nT('dramaCanvas.aiStoryboardGenerationFailed'))
     } finally {
@@ -167,7 +170,7 @@ export function useCanvasEpisodeGenerate(deps) {
     }
     try {
       await ElMessageBox.confirm(
-        `将为 ${todo.length} 个分镜依次生图，耗时可能较长，是否继续？`,
+        i18nT('dramaCanvas.batchImageConfirm', { count: todo.length }),
         i18nT('dramaCanvas.generateAllStoryboardImages'),
         { type: 'info', confirmButtonText: i18nT('dramaCanvas.start') }
       )
@@ -181,7 +184,11 @@ export function useCanvasEpisodeGenerate(deps) {
     try {
       for (let i = 0; i < todo.length; i++) {
         const sb = todo[i]
-        episodeGenProgress.value = `批量生图 ${i + 1}/${todo.length}：分镜 #${sb.storyboard_number ?? sb.id}`
+        episodeGenProgress.value = i18nT('dramaCanvas.batchImageProgress', {
+          current: i + 1,
+          total: todo.length,
+          id: sb.storyboard_number ?? sb.id,
+        })
         setSbBusy(sb, 'image', `${CANVAS_NODE_STATUS_LABELS.image} ${i + 1}/${todo.length}`)
         try {
           await runImageStep(drama.value, sb, getGenOpts())
@@ -189,13 +196,18 @@ export function useCanvasEpisodeGenerate(deps) {
           await refreshCanvas(true)
         } catch (e) {
           failed++
-          ElMessage.error(`分镜 #${sb.storyboard_number ?? sb.id} 生图失败：${e?.message || e}`)
+          ElMessage.error(
+            i18nT('dramaCanvas.shotImageFailed', {
+              id: sb.storyboard_number ?? sb.id,
+              error: e?.message || e,
+            })
+          )
         } finally {
           clearSbBusy(sb)
         }
       }
-      if (failed === 0) ElMessage.success(`批量生图完成，共 ${ok} 镜`)
-      else ElMessage.warning(`完成 ${ok} 镜，失败 ${failed} 镜`)
+      if (failed === 0) ElMessage.success(i18nT('dramaCanvas.batchImageDone', { count: ok }))
+      else ElMessage.warning(i18nT('dramaCanvas.batchPartial', { ok, failed }))
     } finally {
       episodeGenerating.value = false
       episodeGenProgress.value = ''
@@ -216,7 +228,7 @@ export function useCanvasEpisodeGenerate(deps) {
     }
     try {
       await ElMessageBox.confirm(
-        `将为 ${todo.length} 个分镜依次生视频，是否继续？`,
+        i18nT('dramaCanvas.batchVideoConfirm', { count: todo.length }),
         i18nT('dramaCanvas.generateAllStoryboardVideos'),
         { type: 'info', confirmButtonText: i18nT('dramaCanvas.start') }
       )
@@ -230,7 +242,11 @@ export function useCanvasEpisodeGenerate(deps) {
     try {
       for (let i = 0; i < todo.length; i++) {
         const sb = todo[i]
-        episodeGenProgress.value = `批量生视频 ${i + 1}/${todo.length}：分镜 #${sb.storyboard_number ?? sb.id}`
+        episodeGenProgress.value = i18nT('dramaCanvas.batchVideoProgress', {
+          current: i + 1,
+          total: todo.length,
+          id: sb.storyboard_number ?? sb.id,
+        })
         setSbBusy(sb, 'video', `${CANVAS_NODE_STATUS_LABELS.video} ${i + 1}/${todo.length}`)
         try {
           await runVideoStep(drama.value, sb, getGenOpts())
@@ -238,13 +254,18 @@ export function useCanvasEpisodeGenerate(deps) {
           await refreshCanvas(true)
         } catch (e) {
           failed++
-          ElMessage.error(`分镜 #${sb.storyboard_number ?? sb.id} 生视频失败：${e?.message || e}`)
+          ElMessage.error(
+            i18nT('dramaCanvas.shotVideoFailed', {
+              id: sb.storyboard_number ?? sb.id,
+              error: e?.message || e,
+            })
+          )
         } finally {
           clearSbBusy(sb)
         }
       }
-      if (failed === 0) ElMessage.success(`批量生视频完成，共 ${ok} 镜`)
-      else ElMessage.warning(`完成 ${ok} 镜，失败 ${failed} 镜`)
+      if (failed === 0) ElMessage.success(i18nT('dramaCanvas.batchVideoDone', { count: ok }))
+      else ElMessage.warning(i18nT('dramaCanvas.batchPartial', { ok, failed }))
     } finally {
       episodeGenerating.value = false
       episodeGenProgress.value = ''

@@ -56,12 +56,23 @@ export default {
     networkError: '网络请求异常，请稍后重试',
     project: '项目',
     generateScriptFor: '{name} 生成剧本',
+    failedFor: '{label}失败',
     dark: '深色',
     light: '浅色',
     title: '标题',
     unnamed: '未命名',
     deleted: '已删除',
     generating: '生成中',
+  },
+
+  routes: {
+    projectList: '项目列表',
+    dramaDetail: '剧集管理',
+    filmCreate: 'AI 视频生成',
+    canvas: '画布模式',
+    aiConfig: 'AI 配置',
+    freeCreate: '自由创作',
+    mediaLibrary: '媒体素材库',
   },
 
   header: {
@@ -365,6 +376,59 @@ export default {
     generateVideo: '生成视频片段',
     videoPlayer: '视频预览',
     exportStoryboardSheet: '导出分镜表',
+
+    // Task labels (generation panel)
+    charImageTaskLabel: '{episode} 角色图: {name}',
+    propImageTaskLabel: '{episode} 道具图: {name}',
+    sceneImageTaskLabel: '{episode} 场景图: {name}',
+
+    // Entity names used inside messages
+    entityCharacter: '角色',
+    entityProp: '道具',
+    entityScene: '场景',
+
+    // Delete confirmations
+    confirmDeletionTitle: '删除确认',
+    deleteCharacterPrompt: '确定要删除角色「{name}」吗？此操作不可恢复。',
+    deletePublicCharacterPrompt: '确定删除公共角色「{name}」吗？',
+    deletePropPrompt: '确定要删除道具「{name}」吗？此操作不可恢复。',
+    deletePublicPropPrompt: '确定删除公共道具「{name}」吗？',
+    deleteScenePrompt: '确定要删除场景「{name}」吗？此操作不可恢复。',
+    deletePublicScenePrompt: '确定删除公共场景「{name}」吗？',
+
+    // Scene / prop extraction
+    msgSceneExtractSubmitted: '场景提取任务已提交',
+    msgPropExtractSubmitted: '道具提取任务已提交',
+    msgScenePromptGenerated: '单图提示词已生成',
+    msgSceneDescExtracted: '已从图片提取场景描述',
+    msgPropDescExtracted: '已从图片提取道具描述',
+    msgFeatureDescExtracted: '已从参考图提取特征描述',
+    msgScriptSaveFirst: '请先完成剧本并保存',
+    msgVisionModelMissing: '提取失败，请检查 AI 配置中是否有支持视觉的模型',
+
+    // SD2 certification
+    sd2ActionViewCert: '查看认证',
+    sd2ActionRefreshCert: '刷新认证',
+    sd2ActionRecertify: '重新认证',
+    sd2ActionCertify: 'SD2 认证',
+    msgSd2CertSubmitted: 'SD2 认证请求已提交',
+    msgSd2CertRefreshed: 'SD2 认证状态已刷新',
+    msgSd2CertFailed: 'SD2 认证失败',
+
+    // Voice reference
+    voiceActionView: '音色参考',
+    voiceActionRefresh: '刷新音色',
+    voiceActionReupload: '重新上传',
+    voiceActionUpload: '上传音色',
+    msgRefreshFailed: '刷新失败',
+    msgVoiceRefSet: '音色参考已设置，将在 Seedance 2.0 模型中使用',
+    msgVoiceRefreshed: '音色状态已刷新',
+    msgVoiceUploaded: 'Seedance 2.0 音色参考已上传',
+    msgVoiceUploadFailed: '音色上传失败',
+    msgNoVoiceRef: '该角色暂无音色参考音频',
+    msgAudioPlaybackNotFound: '音频播放失败：文件可能不存在或路径不匹配，请尝试重新上传该音色参考',
+    msgAudioPlaybackFailed: '音频播放失败，请检查文件或稍后重试',
+    msgAudioUnplayable: '无法播放音频',
   },
 
   dramaCanvas: {
@@ -503,6 +567,26 @@ export default {
     extractProps: '提取道具',
     extractAll: '一键提取',
     fillScriptFirst: '请先填写剧本内容',
+
+    // Batch generation (episode-level actions)
+    episodeHasStoryboards: '第 {num} 集已有 {count} 个分镜。重新生成可能追加或覆盖内容，是否继续？',
+    storyboardsGenerated: '分镜生成完成，共 {count} 镜',
+    batchImageConfirm: '将为 {count} 个分镜依次生图，耗时可能较长，是否继续？',
+    batchImageProgress: '批量生图 {current}/{total}：分镜 #{id}',
+    shotImageFailed: '分镜 #{id} 生图失败：{error}',
+    batchImageDone: '批量生图完成，共 {count} 镜',
+    batchVideoConfirm: '将为 {count} 个分镜依次生视频，是否继续？',
+    batchVideoProgress: '批量生视频 {current}/{total}：分镜 #{id}',
+    shotVideoFailed: '分镜 #{id} 生视频失败：{error}',
+    batchVideoDone: '批量生视频完成，共 {count} 镜',
+    batchPartial: '完成 {ok} 镜，失败 {failed} 镜',
+    shotMissingPrompt: '分镜 #{id} 缺少图片提示词',
+    shotMissingImage: '分镜 #{id} 缺少分镜图，无法生成视频',
+    shotNotFound: '找不到分镜 {id}',
+    shotTitle: '镜头 {num}',
+    addedItem: '已添加{name}',
+    extractionSummary: '提取完成：{characters} 角色 · {scenes} 场景 · {props} 道具',
+    generationFailed: '生成失败',
   },
 
   dramaDetail: {

@@ -18,7 +18,7 @@ async function pollTask(taskId, onTick, maxAttempts = 450, interval = 2000) {
         return { status: 'failed', error: t.error?.message || t.error || i18nT('messages.taskFailed') }
       }
     } catch (e) {
-      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || '轮询失败' }
+      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || i18nT('dramaCanvas.pollingFailed') }
     }
   }
   return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
@@ -54,7 +54,7 @@ export async function generateAssetReferenceImage(ctx, { kind, entity, nodeId })
     const taskId = res?.image_generation?.task_id ?? res?.task_id
     if (taskId) {
       const polled = await pollTask(taskId, () => ctx?.refreshDrama?.(true))
-      if (polled.status !== 'completed') throw new Error(polled.error || '生成失败')
+      if (polled.status !== 'completed') throw new Error(polled.error || i18nT('dramaCanvas.generationFailed'))
     } else {
       await ctx?.refreshDrama?.(true)
       const ok = await pollUntilHasImage(() => {

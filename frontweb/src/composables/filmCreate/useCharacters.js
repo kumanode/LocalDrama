@@ -28,7 +28,8 @@ export function useCharacters(deps) {
   function buildCharImageMeta(char) {
     const dramaTitle = store.drama?.title || ''
     const epNum = store.currentEpisode?.episode_number
-    const epLabel = dramaTitle ? `${dramaTitle} · 第${epNum ?? ''}集` : `第${epNum ?? ''}集`
+    const episodeLabel = t('filmCreate.episodeNumber', { num: epNum ?? '' })
+    const epLabel = dramaTitle ? `${dramaTitle} · ${episodeLabel}` : episodeLabel
     return {
       dramaId: dramaId.value,
       episodeId: currentEpisodeId.value,
@@ -36,7 +37,7 @@ export function useCharacters(deps) {
       episodeNumber: epNum,
       resourceType: GEN_RESOURCE.CHAR_IMAGE,
       resourceId: char.id,
-      label: `${epLabel} 角色图: ${char.name || char.id}`,
+      label: t('filmCreate.charImageTaskLabel', { episode: epLabel, name: char.name || char.id }),
     }
   }
 
@@ -100,13 +101,10 @@ export function useCharacters(deps) {
 
 
   // ── 常量 ──────────────────────────────────────────────
-  const CHAR_ROLE_LABEL = {
-    zh: { main: '主角', supporting: '配角', minor: '次要角色' },
-    en: { main: 'Lead', supporting: 'Supporting', minor: 'Minor' },
-  }
+  const CHAR_ROLE_KEYS = { main: 'roleMain', supporting: 'roleSupporting', minor: 'roleMinor' }
   function charRoleLabel(role) {
-    const lang = currentLocale.value === 'en' ? 'en' : 'zh'
-    return CHAR_ROLE_LABEL[lang]?.[role] || role || ''
+    const key = CHAR_ROLE_KEYS[role]
+    return key ? t(`filmCreate.${key}`) : role || ''
   }
 
   // ── 核心函数 ──────────────────────────────────────────
@@ -117,7 +115,7 @@ export function useCharacters(deps) {
       ElMessage.warning(t('filmCreate.msgSelectEpisodeFirst'))
       return
     }
-    const meta = buildExtractTaskMeta(store, dramaId.value, epId, GEN_RESOURCE.EXTRACT_CHARACTERS, currentLocale.value === 'en' ? 'Extract Characters' : '提取角色')
+    const meta = buildExtractTaskMeta(store, dramaId.value, epId, GEN_RESOURCE.EXTRACT_CHARACTERS, t('dramaCanvas.extractChars'))
     genStore.markRunning(meta)
     try {
       const outline =
@@ -211,7 +209,7 @@ export function useCharacters(deps) {
       const refPath = uploadRes.local_path || uploadRes.url || ''
       await characterAPI.putRefImage(characterId, refPath)
     } catch (e) {
-      console.warn('[saveCharRefImage] 保存参考图失败:', e.message)
+      console.warn('[saveCharRefImage] failed to save reference image:', e.message)
     }
   }
 
@@ -326,10 +324,8 @@ export function useCharacters(deps) {
   async function onDeleteCharacter(char) {
     try {
       await ElMessageBox.confirm(
-        currentLocale.value === 'en'
-          ? `Are you sure you want to delete character "${(char.name || 'Untitled').slice(0, 20)}"? This action cannot be undone.`
-          : `确定要删除角色「${(char.name || '未命名').slice(0, 20)}」吗？此操作不可恢复。`,
-        currentLocale.value === 'en' ? 'Confirm Deletion' : '删除确认',
+        t('filmCreate.deleteCharacterPrompt', { name: (char.name || t('common.unnamed')).slice(0, 20) }),
+        t('filmCreate.confirmDeletionTitle'),
         { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
       )
       await characterAPI.delete(char.id)
@@ -501,10 +497,8 @@ export function useCharacters(deps) {
   async function onDeleteCharLibrary(item) {
     try {
       await ElMessageBox.confirm(
-        currentLocale.value === 'en'
-          ? `Are you sure you want to delete public character "${(item.name || 'Untitled').slice(0, 20)}"?`
-          : `确定删除公共角色「${(item.name || '未命名').slice(0, 20)}」吗？`,
-        currentLocale.value === 'en' ? 'Confirm Deletion' : '删除确认',
+        t('filmCreate.deletePublicCharacterPrompt', { name: (item.name || t('common.unnamed')).slice(0, 20) }),
+        t('filmCreate.confirmDeletionTitle'),
         { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
       )
       await characterLibraryAPI.delete(item.id)
@@ -562,8 +556,9 @@ export function useCharacters(deps) {
         image_url: c.image_url || undefined,
         local_path: c.local_path || undefined,
       }))
+      const fallbackName = t('common.unnamed')
       const newCharacters = [...existing]
-      const existingChar = newCharacters.find((c) => c.name === (item.name || (currentLocale.value === 'en' ? 'Untitled' : '未命名')))
+      const existingChar = newCharacters.find((c) => c.name === (item.name || fallbackName))
       if (existingChar) {
         existingChar.description = item.description || existingChar.description
         existingChar.appearance = item.appearance || existingChar.appearance
@@ -572,7 +567,7 @@ export function useCharacters(deps) {
         if (item.role && !existingChar.role) existingChar.role = item.role
       } else {
         newCharacters.push({
-          name: item.name || (currentLocale.value === 'en' ? 'Untitled' : '未命名'),
+          name: item.name || fallbackName,
           role: item.role || undefined,
           description: item.description || undefined,
           appearance: item.appearance || undefined,
@@ -586,7 +581,7 @@ export function useCharacters(deps) {
         episode_id: currentEpisodeId.value ?? undefined,
       })
       await loadDrama()
-      ElMessage.success(t('filmCreate.msgAddedToEpisode', { name: item.name || (currentLocale.value === 'en' ? 'Character' : '角色') }))
+      ElMessage.success(t('filmCreate.msgAddedToEpisode', { name: item.name || t('filmCreate.entityCharacter') }))
     } catch (e) {
       ElMessage.error(e.message || t('filmCreate.msgJoinFailed'))
     } finally {
@@ -649,20 +644,20 @@ export function useCharacters(deps) {
     try {
       await characterAPI.sd2Certify(char.id)
       await loadDrama()
-      ElMessage.success(currentLocale.value === 'en' ? 'SD2 certification request submitted' : 'SD2 认证请求已提交')
+      ElMessage.success(t('filmCreate.msgSd2CertSubmitted'))
     } catch (e) {
       const msg = e?.message || ''
-      if (/已存在|已认证|already/i.test(msg)) {
+      if (/已存在|已认证|already/i.test(msg)) { // i18n-scan-ignore: matches legacy backend text
         try {
           await characterAPI.sd2CertifyRefresh(char.id)
           await loadDrama()
-          ElMessage.success(currentLocale.value === 'en' ? 'SD2 certification status refreshed' : 'SD2 认证状态已刷新')
+          ElMessage.success(t('filmCreate.msgSd2CertRefreshed'))
           return
         } catch (_) {
           // fall through
         }
       }
-      ElMessage.error(msg || (currentLocale.value === 'en' ? 'SD2 certification failed' : 'SD2 认证失败'))
+      ElMessage.error(msg || t('filmCreate.msgSd2CertFailed'))
     } finally {
       sd2CertifyingId.value = null
     }
@@ -674,21 +669,20 @@ export function useCharacters(deps) {
     try {
       await characterAPI.sd2CertifyRefresh(char.id)
       await loadDrama()
-      ElMessage.success(currentLocale.value === 'en' ? 'SD2 certification status refreshed' : 'SD2 认证状态已刷新')
+      ElMessage.success(t('filmCreate.msgSd2CertRefreshed'))
     } catch (e) {
-      ElMessage.error(e?.message || (currentLocale.value === 'en' ? 'Refresh failed' : '刷新失败'))
+      ElMessage.error(e?.message || t('filmCreate.msgRefreshFailed'))
     } finally {
       sd2CertifyingId.value = null
     }
   }
 
   function sd2ActionLabel(char) {
-    const isEn = currentLocale.value === 'en'
     const status = String(char?.seedance2_asset?.status || '').toLowerCase()
-    if (status === 'active') return isEn ? 'View SD2 Cert' : '查看认证'
-    if (status === 'processing') return isEn ? 'Refresh SD2 Cert' : '刷新认证'
-    if (status === 'failed') return isEn ? 'Re-certify SD2' : '重新认证'
-    return isEn ? 'SD2 Certify' : 'sd2认证'
+    if (status === 'active') return t('filmCreate.sd2ActionViewCert')
+    if (status === 'processing') return t('filmCreate.sd2ActionRefreshCert')
+    if (status === 'failed') return t('filmCreate.sd2ActionRecertify')
+    return t('filmCreate.sd2ActionCertify')
   }
 
   async function onSd2PrimaryAction(char) {
@@ -710,18 +704,17 @@ export function useCharacters(deps) {
   }
 
   function sd2VoiceActionLabel(char) {
-    const isEn = currentLocale.value === 'en'
     const status = String(char?.seedance2_voice_asset?.status || '').toLowerCase()
-    if (status === 'active') return isEn ? 'Voice Ref' : '音色参考'
-    if (status === 'processing') return isEn ? 'Refresh Voice' : '刷新音色'
-    if (status === 'failed') return isEn ? 'Re-upload Voice' : '重新上传'
-    return isEn ? 'Upload Voice' : '上传音色'
+    if (status === 'active') return t('filmCreate.voiceActionView')
+    if (status === 'processing') return t('filmCreate.voiceActionRefresh')
+    if (status === 'failed') return t('filmCreate.voiceActionReupload')
+    return t('filmCreate.voiceActionUpload')
   }
 
   async function onSd2VoicePrimaryAction(char) {
     const status = String(char?.seedance2_voice_asset?.status || '').toLowerCase()
     if (status === 'active') {
-      ElMessage.info(currentLocale.value === 'en' ? 'Voice reference is set and will be used in Seedance 2.0' : '音色参考已设置，将在 Seedance 2.0 模型中使用')
+      ElMessage.info(t('filmCreate.msgVoiceRefSet'))
       return
     }
     if (status === 'processing' || status === 'stale') {
@@ -743,9 +736,9 @@ export function useCharacters(deps) {
     try {
       const res = await characterAPI.sd2VoiceRefresh(char.id)
       await loadDrama()
-      ElMessage.success(res?.data?.message || (currentLocale.value === 'en' ? 'Voice status refreshed' : '音色状态已刷新'))
+      ElMessage.success(res?.data?.message || t('filmCreate.msgVoiceRefreshed'))
     } catch (e) {
-      ElMessage.error(e?.message || (currentLocale.value === 'en' ? 'Refresh failed' : '刷新失败'))
+      ElMessage.error(e?.message || t('filmCreate.msgRefreshFailed'))
     } finally {
       sd2VoiceUploadingId.value = null
     }
@@ -763,11 +756,11 @@ export function useCharacters(deps) {
       sd2VoiceUploadingId.value = char.id
       try {
         const res = await characterAPI.sd2VoiceUpload(char.id, file)
-        ElMessage.success(currentLocale.value === 'en' ? 'Seedance 2.0 voice reference uploaded' : 'Seedance 2.0 音色参考已上传')
+        ElMessage.success(t('filmCreate.msgVoiceUploaded'))
         // 强制重新加载整个剧本数据，确保 seedance2_voice_asset 被正确解析并更新到 store
         await loadDrama()
       } catch (e) {
-        ElMessage.error(e?.message || (currentLocale.value === 'en' ? 'Voice upload failed' : '音色上传失败'))
+        ElMessage.error(e?.message || t('filmCreate.msgVoiceUploadFailed'))
       } finally {
         sd2VoiceUploadingId.value = null
       }
@@ -779,7 +772,7 @@ export function useCharacters(deps) {
   function playSd2Voice(char) {
     const url = char?.seedance2_voice_asset?.url
     if (!url) {
-      ElMessage.warning(currentLocale.value === 'en' ? 'No voice reference audio for this character' : '该角色暂无音色参考音频')
+      ElMessage.warning(t('filmCreate.msgNoVoiceRef'))
       return
     }
     try {
@@ -787,13 +780,13 @@ export function useCharacters(deps) {
       const audio = new Audio(url)
       audio.onerror = () => {
         // 常见原因：文件不在 static 根目录下（后端写盘路径与 express.static(storageRoot) 不一致）、404、格式不支持
-        ElMessage.error(currentLocale.value === 'en' ? 'Audio playback failed: file not found or path mismatch, please re-upload' : '音频播放失败：文件可能不存在或路径不匹配，请尝试重新上传该音色参考')
+        ElMessage.error(t('filmCreate.msgAudioPlaybackNotFound'))
       }
       audio.play().catch((err) => {
-        ElMessage.error(currentLocale.value === 'en' ? 'Audio playback failed, please check file or try again later' : '音频播放失败，请检查文件或稍后重试')
+        ElMessage.error(t('filmCreate.msgAudioPlaybackFailed'))
       })
     } catch (e) {
-      ElMessage.error(currentLocale.value === 'en' ? 'Unable to play audio' : '无法播放音频')
+      ElMessage.error(t('filmCreate.msgAudioUnplayable'))
     }
   }
 

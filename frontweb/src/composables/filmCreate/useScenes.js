@@ -28,7 +28,8 @@ export function useScenes(deps) {
   function buildSceneImageMeta(scene) {
     const dramaTitle = store.drama?.title || ''
     const epNum = store.currentEpisode?.episode_number
-    const epLabel = dramaTitle ? `${dramaTitle} · 第${epNum ?? ''}集` : `第${epNum ?? ''}集`
+    const episodeLabel = t('filmCreate.episodeNumber', { num: epNum ?? '' })
+    const epLabel = dramaTitle ? `${dramaTitle} · ${episodeLabel}` : episodeLabel
     return {
       dramaId: dramaId.value,
       episodeId: currentEpisodeId.value,
@@ -36,7 +37,7 @@ export function useScenes(deps) {
       episodeNumber: epNum,
       resourceType: GEN_RESOURCE.SCENE_IMAGE,
       resourceId: scene.id,
-      label: `${epLabel} 场景图: ${scene.location || scene.id}`,
+      label: t('filmCreate.sceneImageTaskLabel', { episode: epLabel, name: scene.location || scene.id }),
     }
   }
 
@@ -96,7 +97,7 @@ export function useScenes(deps) {
   async function onExtractScenes() {
     if (!currentEpisodeId.value) return
     const epId = currentEpisodeId.value
-    const meta = buildExtractTaskMeta(store, dramaId.value, epId, GEN_RESOURCE.EXTRACT_SCENES, currentLocale.value === 'en' ? 'Extract Scenes' : '提取场景')
+    const meta = buildExtractTaskMeta(store, dramaId.value, epId, GEN_RESOURCE.EXTRACT_SCENES, t('dramaCanvas.extractScenes'))
     genStore.markRunning(meta)
     try {
       const res = await dramaAPI.extractBackgrounds(epId, {
@@ -112,7 +113,7 @@ export function useScenes(deps) {
         }
       } else {
         await loadDrama()
-        ElMessage.success(currentLocale.value === 'en' ? 'Scene extraction task submitted' : '场景提取任务已提交')
+        ElMessage.success(t('filmCreate.msgSceneExtractSubmitted'))
       }
     } catch (e) {
       ElMessage.error(e.message || t('filmCreate.msgGenFailed'))
@@ -194,7 +195,7 @@ export function useScenes(deps) {
       const res = await sceneAPI.generatePrompt(form.id, undefined, undefined, 'single')
       if (res?.polished_prompt_single) {
         form.polished_prompt_single = res.polished_prompt_single
-        ElMessage.success(currentLocale.value === 'en' ? 'Single frame prompt generated' : '单图提示词已生成')
+        ElMessage.success(t('filmCreate.msgScenePromptGenerated'))
         await loadDrama()
       }
     } catch (e) {
@@ -213,7 +214,7 @@ export function useScenes(deps) {
       const refPath = uploadRes.local_path || uploadRes.url || ''
       await sceneAPI.putRefImage(sceneId, refPath)
     } catch (e) {
-      console.warn('[saveSceneRefImage] 保存参考图失败:', e.message)
+      console.warn('[saveSceneRefImage] failed to save reference image:', e.message)
     }
   }
 
@@ -237,7 +238,7 @@ export function useScenes(deps) {
       const res = await sceneAPI.extractFromImage(form.id)
       if (res?.prompt) {
         form.prompt = res.prompt
-        ElMessage.success(currentLocale.value === 'en' ? 'Scene description extracted from image' : '已从图片提取场景描述')
+        ElMessage.success(t('filmCreate.msgSceneDescExtracted'))
       }
     } catch (e) {
       ElMessage.error(e.message || t('filmCreate.msgExtractFailedCheckImage'))
@@ -297,10 +298,10 @@ export function useScenes(deps) {
   async function onDeleteScene(scene) {
     try {
       await ElMessageBox.confirm(
-        currentLocale.value === 'en'
-          ? `Are you sure you want to delete scene "${(scene.location || scene.time || 'Untitled').slice(0, 20)}"? This action cannot be undone.`
-          : `确定要删除场景「${(scene.location || scene.time || '未命名').slice(0, 20)}」吗？此操作不可恢复。`,
-        currentLocale.value === 'en' ? 'Confirm Deletion' : '删除确认',
+        t('filmCreate.deleteScenePrompt', {
+          name: (scene.location || scene.time || t('common.unnamed')).slice(0, 20),
+        }),
+        t('filmCreate.confirmDeletionTitle'),
         { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
       )
       await sceneAPI.delete(scene.id)
@@ -479,12 +480,10 @@ export function useScenes(deps) {
 
   async function onDeleteSceneLibrary(item) {
     try {
-      const name = (item.location || item.time || (currentLocale.value === 'en' ? 'Untitled' : '未命名')).slice(0, 20)
+      const name = (item.location || item.time || t('common.unnamed')).slice(0, 20)
       await ElMessageBox.confirm(
-        currentLocale.value === 'en'
-          ? `Are you sure you want to delete public scene "${name}"?`
-          : `确定删除公共场景「${name}」吗？`,
-        currentLocale.value === 'en' ? 'Confirm Deletion' : '删除确认',
+        t('filmCreate.deletePublicScenePrompt', { name }),
+        t('filmCreate.confirmDeletionTitle'),
         { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') }
       )
       await sceneLibraryAPI.delete(item.id)
@@ -540,7 +539,7 @@ export function useScenes(deps) {
           image_url: item.image_url || existingScene.image_url || undefined,
           local_path: item.local_path || existingScene.local_path || undefined,
         })
-        ElMessage.success(t('filmCreate.msgSceneUpdatedToEpisode', { name: item.location || (currentLocale.value === 'en' ? 'Scene' : '场景') }))
+        ElMessage.success(t('filmCreate.msgSceneUpdatedToEpisode', { name: item.location || t('filmCreate.entityScene') }))
       } else {
         await sceneAPI.create({
           drama_id: store.dramaId,
@@ -551,7 +550,7 @@ export function useScenes(deps) {
           image_url: item.image_url || undefined,
           local_path: item.local_path || undefined,
         })
-        ElMessage.success(t('filmCreate.msgAddedToEpisode', { name: item.location || (currentLocale.value === 'en' ? 'Scene' : '场景') }))
+        ElMessage.success(t('filmCreate.msgAddedToEpisode', { name: item.location || t('filmCreate.entityScene') }))
       }
       await loadDrama()
     } catch (e) {

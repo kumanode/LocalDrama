@@ -95,7 +95,7 @@ export function useCanvasCrud(deps) {
       .find((ep) => ep.id === episodeId)?.storyboards || []
     const maxNum = boards.reduce((max, sb) => Math.max(max, sb.storyboard_number || 0), 0)
     const nextNum = maxNum + 1
-    const title = (form.title || '').trim() || `镜头 ${nextNum}`
+    const title = (form.title || '').trim() || t('dramaCanvas.shotTitle', { num: nextNum })
 
     const sb = await storyboardsAPI.create({
       episode_id: episodeId,
@@ -120,11 +120,11 @@ export function useCanvasCrud(deps) {
     const nextNum = list.length > 0
       ? Math.max(...list.map((ep) => Number(ep.episode_number) || 0), 0) + 1
       : 1
-    const title = (form.title || '').trim() || `第${nextNum}集`
+    const title = (form.title || '').trim() || t('filmCreate.episodeNumber', { num: nextNum })
 
     const updated = list.map((ep, i) => ({
       episode_number: ep.episode_number ?? i + 1,
-      title: ep.title || `第${ep.episode_number ?? i + 1}集`,
+      title: ep.title || t('filmCreate.episodeNumber', { num: ep.episode_number ?? i + 1 }),
       script_content: ep.script_content || '',
       description: ep.description ?? null,
       duration: ep.duration ?? 0,
@@ -148,7 +148,7 @@ export function useCanvasCrud(deps) {
       await refreshCanvas()
     }
     pendingFlowPosition.value = null
-    ElMessage.success(`已添加${title}`)
+    ElMessage.success(t('dramaCanvas.addedItem', { name: title }))
   }
 
   async function createCharacter(form) {

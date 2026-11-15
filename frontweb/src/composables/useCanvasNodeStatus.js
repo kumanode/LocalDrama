@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import { currentLocale, t } from '../i18n/index.js'
+import { t } from '../i18n/index.js'
 
 /** 画布节点操作状态（生图/生视频/生成参考图等） */
 export function createCanvasNodeStatusStore() {
@@ -11,7 +11,7 @@ export function createCanvasNodeStatusStore() {
       delete map[nodeId]
       return
     }
-    const defaultMsg = currentLocale.value === 'en' ? 'Processing…' : '处理中…'
+    const defaultMsg = t('dramaCanvas.processing2')
     map[nodeId] = {
       step: payload.step || 'busy',
       message: payload.message || defaultMsg,

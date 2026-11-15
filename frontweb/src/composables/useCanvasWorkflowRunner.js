@@ -25,7 +25,7 @@ async function pollTaskSimple(taskId, options = {}) {
         return { status: 'failed', error: t.error?.message || t.error || i18nT('messages.taskFailed') }
       }
     } catch (e) {
-      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || '轮询失败' }
+      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || i18nT('dramaCanvas.pollingFailed') }
     }
   }
   return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
@@ -33,7 +33,9 @@ async function pollTaskSimple(taskId, options = {}) {
 
 export async function runImageStep(drama, sb, genOpts) {
   const prompt = sb.polished_prompt || sb.image_prompt || sb.description || sb.action || ''
-  if (!prompt.trim()) throw new Error(`分镜 #${sb.storyboard_number ?? sb.id} 缺少图片提示词`)
+  if (!prompt.trim()) {
+    throw new Error(i18nT('dramaCanvas.shotMissingPrompt', { id: sb.storyboard_number ?? sb.id }))
+  }
   const res = await imagesAPI.create({
     storyboard_id: sb.id,
     drama_id: drama.id,
@@ -43,7 +45,7 @@ export async function runImageStep(drama, sb, genOpts) {
   })
   if (res?.task_id) {
     const polled = await pollTaskSimple(res.task_id)
-    if (polled.status !== 'completed') throw new Error(polled.error || '分镜图生成失败')
+    if (polled.status !== 'completed') throw new Error(polled.error || i18nT('dramaCanvas.storyboardImageGenerationFailed'))
   }
 }
 
@@ -53,7 +55,7 @@ export async function runVideoStep(drama, sb, genOpts) {
   const { first, last } = sbVideoFirstLastUrls(sb, imagesBySbId, useFirstLast)
   const imgPath = first || storyboardImageUrl(sb)
   if (!imgPath && !sb.video_prompt && !last) {
-    throw new Error(`分镜 #${sb.storyboard_number ?? sb.id} 缺少分镜图，无法生成视频`)
+    throw new Error(i18nT('dramaCanvas.shotMissingImage', { id: sb.storyboard_number ?? sb.id }))
   }
   const absoluteFirst = toAbsoluteMediaUrl(imgPath)
   const absoluteLast = last ? toAbsoluteMediaUrl(last) : undefined
@@ -72,7 +74,7 @@ export async function runVideoStep(drama, sb, genOpts) {
   })
   if (res?.task_id) {
     const polled = await pollTaskSimple(res.task_id)
-    if (polled.status !== 'completed') throw new Error(polled.error || '视频生成失败')
+    if (polled.status !== 'completed') throw new Error(polled.error || i18nT('dramaCanvas.videoGenerationFailed'))
   }
 }
 
@@ -93,7 +95,7 @@ export async function runAudioStep(sb) {
  */
 export async function runStoryboardPipeline(drama, storyboardId, pipeline, hooks = {}) {
   const found = findStoryboardInDrama(drama, storyboardId)
-  if (!found) throw new Error(`找不到分镜 ${storyboardId}`)
+  if (!found) throw new Error(i18nT('dramaCanvas.shotNotFound', { id: storyboardId }))
   let { storyboard: sb } = found
   const genOpts = {
     ...getDramaGenerationOptions(drama),

@@ -20,7 +20,7 @@ async function pollTask(taskId, onTick, maxAttempts = 450, interval = 2000) {
         return { status: 'failed', error: t.error?.message || t.error || i18nT('messages.taskFailed') }
       }
     } catch (e) {
-      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || '轮询失败' }
+      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || i18nT('dramaCanvas.pollingFailed') }
     }
   }
   return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
@@ -34,7 +34,7 @@ function buildEpisodesPayload(drama, episodeId, patch) {
   return (drama?.episodes || []).map((ep, i) => {
     const base = {
       episode_number: ep.episode_number ?? i + 1,
-      title: ep.title || `第${ep.episode_number ?? i + 1}集`,
+      title: ep.title || i18nT('filmCreate.episodeNumber', { num: ep.episode_number ?? i + 1 }),
       script_content: ep.script_content || '',
       description: ep.description ?? null,
       duration: ep.duration ?? 0,
@@ -66,7 +66,7 @@ export function useCanvasScript(deps) {
     }
     const polled = await pollTask(taskId, () => refreshCanvas(true))
     if (polled.status !== 'completed') {
-      throw new Error(polled.error || `${label}失败`)
+      throw new Error(polled.error || i18nT('common.failedFor', { label }))
     }
     await refreshCanvas(true)
   }
@@ -184,7 +184,11 @@ export function useCanvasScript(deps) {
         ElMessage.info(i18nT('dramaCanvas.charactersScenesAndPropsAlreadyExistNothingT'))
       } else {
         ElMessage.success(
-          `提取完成：${(drama.value?.characters || []).length} 角色 · ${(drama.value?.scenes || []).length} 场景 · ${(drama.value?.props || []).length} 道具`
+          i18nT('dramaCanvas.extractionSummary', {
+            characters: (drama.value?.characters || []).length,
+            scenes: (drama.value?.scenes || []).length,
+            props: (drama.value?.props || []).length,
+          })
         )
       }
     } catch (e) {

@@ -3,8 +3,8 @@
     <header class="header">
       <div class="header-inner">
         <h1 class="logo" @click="router.push('/')">
-          <span class="logo-main">本地短剧助手</span>
-          <span class="logo-sub">LocalMiniDrama</span>
+          <span class="logo-main">{{ t('header.appTitle') }}</span>
+          <span class="logo-sub">{{ t('header.appSubtitle') }}</span>
         </h1>
         <span class="breadcrumb-sep">›</span>
         <span class="page-title">{{ drama?.title || t('dramaDetail.title') }}</span>
@@ -553,7 +553,7 @@ import {
 } from '@/constants/styleOptions'
 
 const route = useRoute()
-const { t, currentLocale } = useI18n()
+const { t } = useI18n()
 const { isDark, toggle: toggleTheme } = useTheme()
 const router = useRouter()
 const dramaId = Number(route.params.id)

@@ -117,12 +117,18 @@ export function walkSourceFiles(dir, extensions = ['.vue', '.js'], acc = []) {
 /**
  * Scan a single file, returning [{ line, column, text }] for every line that
  * still contains CJK characters after comments are removed.
+ *
+ * A line carrying the `i18n-scan-ignore` directive is skipped. Use it only for
+ * text that is genuinely not UI copy — for example a regex that has to keep
+ * matching legacy Chinese data written by older versions.
  */
 export function scanFile(filePath) {
   const source = fs.readFileSync(filePath, 'utf8')
+  const rawLines = source.split(/\r?\n/)
   const lines = stripComments(source).split(/\r?\n/)
   const hits = []
   lines.forEach((line, index) => {
+    if (rawLines[index]?.includes('i18n-scan-ignore')) return
     const match = CJK_PATTERN.exec(line)
     if (match) {
       hits.push({ line: index + 1, column: match.index + 1, text: line.trim() })
