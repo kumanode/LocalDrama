@@ -9,8 +9,8 @@
     <el-form v-if="target" label-width="0" class="sb-prompt-dialog-form">
       <div class="sb-prompt-section-title">{{ $t('filmCreate.imagePromptSectionTitle') }}</div>
       <el-form-item label="">
-        <div style="width:100%">
-          <div style="font-size:12px; color:#6b7280; margin-bottom:4px;">{{ $t('filmCreate.originalPromptHint') }}</div>
+        <div class="sb-prompt-fullwidth">
+          <div class="sb-prompt-hint">{{ $t('filmCreate.originalPromptHint') }}</div>
           <el-input
             :model-value="imageText"
             type="textarea"
@@ -21,9 +21,9 @@
         </div>
       </el-form-item>
       <el-form-item label="">
-        <div style="width:100%">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-            <span style="font-size:12px; color:#6b7280;">{{ $t('filmCreate.polishedPromptHint') }}</span>
+        <div class="sb-prompt-fullwidth">
+          <div class="sb-prompt-header-row">
+            <span class="sb-prompt-hint">{{ $t('filmCreate.polishedPromptHint') }}</span>
             <el-button
               size="small"
               type="warning"
@@ -41,7 +41,7 @@
           />
         </div>
       </el-form-item>
-      <div class="sb-prompt-section-title" style="margin-top:12px;">{{ $t('filmCreate.videoPromptSectionTitle') }}</div>
+      <div class="sb-prompt-section-title sb-prompt-section-title--video">{{ $t('filmCreate.videoPromptSectionTitle') }}</div>
       <el-form-item label="">
         <el-input
           :model-value="videoText"
@@ -98,11 +98,28 @@ defineEmits(['update:modelValue', 'update:imageText', 'update:polishedText', 'up
 .sb-prompt-dialog-form .el-form-item {
   margin-bottom: 10px;
 }
+.sb-prompt-fullwidth {
+  width: 100%;
+}
+.sb-prompt-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.sb-prompt-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
 .sb-prompt-section-title {
   font-size: 0.9rem;
   font-weight: 600;
   color: #e4e4e7;
   margin-bottom: 8px;
+}
+.sb-prompt-section-title--video {
+  margin-top: 12px;
 }
 html.light .sb-prompt-section-title {
   color: #18181b;

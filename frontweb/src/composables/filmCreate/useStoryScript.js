@@ -39,11 +39,11 @@ export function useStoryScript({
   sbTruncatedDismissed,
   trackFilmCreateAction,
   onEpisodeSelect,
+  storyboardIncludeNarration = ref(false),
+  storyboardUniversalOmni = ref(false),
 }) {
   const storyboardCount = ref(null)
   const videoDuration = ref(null)
-  const storyboardIncludeNarration = ref(false)
-  const storyboardUniversalOmni = ref(false)
 
   const storyGenerating = ref(false)
   const scriptGenerating = ref(false)

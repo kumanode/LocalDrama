@@ -4,6 +4,7 @@ import { t } from '@/i18n'
 import { storyboardsAPI } from '@/api/storyboards'
 import { imagesAPI } from '@/api/images'
 import { GEN_RESOURCE } from '@/stores/generationTaskStore'
+import { getStoryboardAspectRatio } from '@/utils/storyboardAspectRatio'
 
 export function useStoryboardAssociations({
   storyboards,
@@ -187,7 +188,7 @@ export function useStoryboardAssociations({
             prompt,
             style: getSelectedStyle ? getSelectedStyle() : undefined,
             frame_type: frameTypeForCreate,
-            aspect_ratio: projectAspectRatio?.value || '16:9',
+            aspect_ratio: getStoryboardAspectRatio(sb, projectAspectRatio?.value),
           })
           if (res?.task_id) {
             const pollRes = await pollTask(res.task_id, () => loadSingleStoryboardMedia(sb.id), {

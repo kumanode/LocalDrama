@@ -4,6 +4,7 @@ import { videosAPI } from '@/api/videos'
 import { storyboardsAPI } from '@/api/storyboards'
 import { aiAPI } from '@/api/ai'
 import { GEN_RESOURCE } from '@/stores/generationTaskStore'
+import { getStoryboardAspectRatio } from '@/utils/storyboardAspectRatio'
 import { canUseUniversalOmniVideoApi } from '@/utils/videoOmniSupport'
 
 export function useStoryboardVideo({
@@ -280,7 +281,7 @@ export function useStoryboardVideo({
         last_frame_url: universalOmniApi ? undefined : vLast,
         reference_image_urls: referenceUrls,
         style: getSelectedStyle ? getSelectedStyle() : undefined,
-        aspect_ratio: projectAspectRatio?.value || '16:9',
+        aspect_ratio: getStoryboardAspectRatio(sb, projectAspectRatio?.value),
         resolution: videoResolution?.value || undefined,
         duration: getSbVideoDurationForApi ? getSbVideoDurationForApi(sb) : undefined,
       })

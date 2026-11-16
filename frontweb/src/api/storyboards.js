@@ -1,4 +1,4 @@
-import { t as i18nT } from '../i18n/index.js'
+import { t as i18nT, te as i18nHas, currentLocale } from '../i18n/index.js'
 import request from '@/utils/request'
 
 /**
@@ -8,16 +8,22 @@ import request from '@/utils/request'
  * @returns {Promise<{ universal_segment_text: string }>}
  */
 function postUniversalSegmentNdjsonStream(url, body, onDelta) {
+  const language = currentLocale.value === 'en' ? 'en' : 'zh'
   return fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/x-ndjson' },
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/x-ndjson',
+      'Accept-Language': language,
+    },
     body: JSON.stringify(body || {}),
   }).then(async (res) => {
     if (!res.ok) {
       let msg = i18nT('common.requestFailedStatus', { status: res.status })
       try {
         const j = await res.json()
-        if (j?.error?.message) msg = j.error.message
+        if (j?.error?.code && i18nHas(`errors.${j.error.code}`)) msg = i18nT(`errors.${j.error.code}`)
+        else if (j?.error?.message) msg = j.error.message
       } catch (_) {
         try {
           const t = await res.text()
@@ -47,7 +53,7 @@ function postUniversalSegmentNdjsonStream(url, body, onDelta) {
           continue
         }
         if (obj.type === 'delta' && obj.text && typeof onDelta === 'function') onDelta(String(obj.text))
-        if (obj.type === 'error') throw new Error(obj.message || i18nT('common.requestFailed'))
+        if (obj.type === 'error') throw new Error(streamErrorMessage(obj))
         if (obj.type === 'done') {
           finalText = (obj.universal_segment_text && String(obj.universal_segment_text).trim()) || ''
         }
@@ -57,7 +63,7 @@ function postUniversalSegmentNdjsonStream(url, body, onDelta) {
     if (tail) {
       try {
         const obj = JSON.parse(tail)
-        if (obj.type === 'error') throw new Error(obj.message || i18nT('common.requestFailed'))
+        if (obj.type === 'error') throw new Error(streamErrorMessage(obj))
         if (obj.type === 'done') finalText = (obj.universal_segment_text && String(obj.universal_segment_text).trim()) || finalText
       } catch (e) {
         if (e instanceof Error && e.message && !e.message.includes('JSON')) throw e
@@ -65,6 +71,11 @@ function postUniversalSegmentNdjsonStream(url, body, onDelta) {
     }
     return { universal_segment_text: finalText }
   })
+}
+
+function streamErrorMessage(event) {
+  if (event.code && i18nHas(`errors.${event.code}`)) return i18nT(`errors.${event.code}`)
+  return event.message || i18nT('common.requestFailed')
 }
 
 export const storyboardsAPI = {

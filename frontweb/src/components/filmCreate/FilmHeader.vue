@@ -2,10 +2,10 @@
   <!-- 顶部 -->
   <header class="header">
     <div class="header-inner">
-      <h1 class="logo" @click="goList">
+      <button type="button" class="logo" @click="goList">
         <span class="logo-main">{{ $t('header.appTitle') }}</span>
         <span class="logo-sub">{{ $t('header.appSubtitle') }}</span>
-      </h1>
+      </button>
       <span class="breadcrumb-sep">›</span>
       <span class="page-title">{{ dramaId ? (dramaTitle || $t('common.project')) : $t('filmCreate.newStoryTitle') }}</span>
       <el-select
@@ -15,7 +15,6 @@
         :placeholder="$t('filmCreate.selectEpisode')"
         clearable
         size="small"
-        style="width: 130px"
         @update:model-value="$emit('update:selectedEpisodeId', $event)"
         @change="$emit('episodeSelect', $event)"
       >
@@ -52,18 +51,26 @@
   <nav class="quick-nav" :class="{ collapsed: navCollapsed }" :aria-label="$t('filmCreate.quickNav')">
     <div class="nav-sidebar-header">
       <span v-if="!navCollapsed" class="nav-sidebar-title">{{ $t('filmCreate.quickNav') }}</span>
-      <div class="nav-toggle" :title="navCollapsed ? $t('filmCreate.expandNav') : $t('filmCreate.collapseNav')" @click="$emit('toggleNav')">
+      <button
+        type="button"
+        class="nav-toggle"
+        :title="navCollapsed ? $t('filmCreate.expandNav') : $t('filmCreate.collapseNav')"
+        :aria-label="navCollapsed ? $t('filmCreate.expandNav') : $t('filmCreate.collapseNav')"
+        @click="$emit('toggleNav')"
+      >
         <el-icon><Expand v-if="navCollapsed" /><Fold v-else /></el-icon>
-      </div>
+      </button>
     </div>
 
     <!-- 步骤列表 -->
     <div class="nav-steps">
-      <div
+      <button
+        type="button"
         v-for="(step, idx) in navSteps"
         :key="step.key"
         class="nav-step"
-        :class="['status-' + step.status]"
+        :class="['status-' + step.status, { 'is-active': step.anchor === activeStepAnchor }]"
+        :aria-label="step.label"
         @click="$emit('scrollToAnchor', step.anchor)"
       >
         <!-- 左侧连接线 -->
@@ -91,15 +98,20 @@
             <el-icon class="spin"><Loading /></el-icon>
           </span>
         </div>
-      </div>
+      </button>
     </div>
 
     <!-- 分镜子列表 -->
     <div v-if="!navCollapsed && storyboards.length > 0" class="nav-group">
-      <div class="nav-sub-toggle" @click="$emit('update:storyboardMenuExpanded', !storyboardMenuExpanded)">
+      <button
+        type="button"
+        class="nav-sub-toggle"
+        :aria-expanded="storyboardMenuExpanded"
+        @click="$emit('update:storyboardMenuExpanded', !storyboardMenuExpanded)"
+      >
         <el-icon><Minus v-if="storyboardMenuExpanded" /><Plus v-else /></el-icon>
         <span>{{ $t('filmCreate.storyboardList') }}</span>
-      </div>
+      </button>
       <div v-show="storyboardMenuExpanded" class="nav-sub-list">
         <template v-for="(sb, i) in storyboards" :key="sb.id">
           <!-- 段落标题行 -->
@@ -110,13 +122,15 @@
             <span class="nav-segment-dot" />
             {{ sb.segment_title }}
           </div>
-          <div
+          <button
+            type="button"
             class="nav-sub-item"
             :title="sb.title || $t('filmCreate.shotIndex', { num: i + 1 })"
+            :aria-label="$t('filmCreate.shotIndex', { num: i + 1 }) + ': ' + (sb.title || $t('filmCreate.shot'))"
             @click="$emit('scrollToAnchor', 'sb-' + sb.id)"
           >
             {{ i + 1 }}. {{ sb.title || $t('filmCreate.shot') }}
-          </div>
+          </button>
         </template>
       </div>
     </div>
@@ -198,6 +212,7 @@ const props = defineProps({
   selectedEpisodeId: { type: [Number, String], default: null },
   navCollapsed: { type: Boolean, default: false },
   navSteps: { type: Array, default: () => [] },
+  activeStepAnchor: { type: String, default: '' },
   storyboards: { type: Array, default: () => [] },
   storyboardMenuExpanded: { type: Boolean, default: false },
   allActiveTaskItems: { type: Array, default: () => [] },
@@ -263,8 +278,22 @@ function goCanvasMode() {
   gap: 1px;
   line-height: 1;
   transition: filter 0.3s;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
 }
 .logo:hover { filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5)); }
+.logo:focus-visible,
+.nav-toggle:focus-visible,
+.nav-step:focus-visible,
+.nav-sub-toggle:focus-visible,
+.nav-sub-item:focus-visible,
+.atp-item-close:focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 2px;
+}
 .logo-main {
   font-size: 1.05rem;
   font-weight: 700;
@@ -321,6 +350,9 @@ function goCanvasMode() {
 }
 .header-episode-select {
   flex-shrink: 0;
+  min-width: 130px;
+  width: auto;
+  max-width: 200px;
 }
 .btn-back-drama {
   flex-shrink: 0;
@@ -559,6 +591,9 @@ function goCanvasMode() {
   border-radius: 6px;
   flex-shrink: 0;
   font-size: 16px;
+  border: 0;
+  padding: 0;
+  background: transparent;
 }
 .nav-toggle:hover { color: #c8c8d0; background: rgba(255,255,255,0.06); }
 :global(html.light) .nav-toggle { color: #9ca3af; }
@@ -579,9 +614,19 @@ function goCanvasMode() {
   padding: 3px 6px 3px 0;
   transition: background 0.2s ease;
   user-select: none;
+  width: 100%;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: transparent;
 }
 .nav-step:hover { background: rgba(255,255,255,0.04); }
 :global(html.light) .nav-step:hover { background: rgba(99,102,241,0.05); }
+.nav-step.is-active { background: rgba(139,92,246,0.08); }
+:global(html.light) .nav-step.is-active { background: rgba(139,92,246,0.07); }
+.nav-step.is-active .step-label { color: #c4b5fd !important; }
+:global(html.light) .nav-step.is-active .step-label { color: #7c3aed !important; }
 
 /* connector column */
 .step-connector-wrap {
@@ -712,6 +757,11 @@ function goCanvasMode() {
   font-size: 12px;
   color: #5a5a66;
   cursor: pointer;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
   transition: color 0.15s;
   border-top: 1px solid rgba(255,255,255,0.04);
 }
@@ -729,6 +779,11 @@ function goCanvasMode() {
   font-size: 11.5px;
   color: #52525b;
   cursor: pointer;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

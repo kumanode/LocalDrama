@@ -10,6 +10,7 @@ import { imagesAPI } from '@/api/images'
 import { videosAPI } from '@/api/videos'
 import { generationSettingsAPI } from '@/api/prompts'
 import { GEN_RESOURCE } from '@/stores/generationTaskStore'
+import { getStoryboardAspectRatio } from '@/utils/storyboardAspectRatio'
 
 export function usePipeline({
   store,
@@ -533,7 +534,7 @@ export function usePipeline({
                 model: undefined,
                 style,
                 frame_type: frameTypeForCreate,
-                aspect_ratio: projectAspectRatio.value || '16:9',
+                aspect_ratio: getStoryboardAspectRatio(sb, projectAspectRatio.value),
               })
               if (res?.task_id) {
                 const result = await pollTaskWithPause(res.task_id, () => loadSingleStoryboardMedia(sb.id))
@@ -592,7 +593,7 @@ export function usePipeline({
                 last_frame_url: vLast,
                 reference_image_urls: refUrls,
                 style,
-                aspect_ratio: projectAspectRatio.value || '16:9',
+                aspect_ratio: getStoryboardAspectRatio(sb, projectAspectRatio.value),
                 resolution: videoResolution.value || undefined,
                 duration: getSbVideoDurationForApi(sb),
               })
@@ -889,7 +890,7 @@ export function usePipeline({
               model: undefined,
               style,
               frame_type: frameTypeForCreate,
-              aspect_ratio: projectAspectRatio.value || '16:9',
+              aspect_ratio: getStoryboardAspectRatio(sb, projectAspectRatio.value),
             })
             if (res?.task_id) {
               const result = await pollTaskWithPause(res.task_id, () => loadSingleStoryboardMedia(sb.id))
@@ -939,7 +940,7 @@ export function usePipeline({
                 first_frame_url: vFirst,
                 last_frame_url: vLast,
                 reference_image_urls: refUrls,
-                aspect_ratio: projectAspectRatio.value || '16:9',
+                aspect_ratio: getStoryboardAspectRatio(sb, projectAspectRatio.value),
                 resolution: videoResolution.value || undefined,
                 duration: getSbVideoDurationForApi(sb),
               })

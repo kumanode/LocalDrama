@@ -1,6 +1,14 @@
 <template>
   <div id="anchor-characters" class="resource-block card">
-    <div class="collapse-header resource-block-header" @click="charactersBlockCollapsed = !charactersBlockCollapsed">
+    <div
+      class="collapse-header resource-block-header"
+      role="button"
+      tabindex="0"
+      :aria-expanded="!charactersBlockCollapsed"
+      @click="charactersBlockCollapsed = !charactersBlockCollapsed"
+      @keydown.enter.prevent="charactersBlockCollapsed = !charactersBlockCollapsed"
+      @keydown.space.prevent="charactersBlockCollapsed = !charactersBlockCollapsed"
+    >
       <h3 class="resource-block-title">{{ $t('filmCreate.charactersBlock') }}</h3>
       <el-icon class="collapse-icon"><ArrowUp v-if="!charactersBlockCollapsed" /><ArrowDown v-else /></el-icon>
     </div>
@@ -16,13 +24,16 @@
         <div v-for="char in characters" :key="char.id" class="asset-item asset-item-left-right">
           <div class="asset-info">
             <div class="asset-name">
-              <span style="display:inline-flex;align-items:center;gap:4px;flex:1;min-width:0;overflow:hidden">
-                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ char.name }}</span>
-                <el-tag v-if="char.role" size="small" effect="plain" :type="char.role === 'main' ? 'danger' : char.role === 'supporting' ? 'warning' : 'info'" style="flex-shrink:0;padding:0 5px;font-size:11px;height:18px;line-height:18px">{{ charRoleLabel(char.role) }}</el-tag>
+              <span class="asset-name-inner">
+                <span class="asset-name-text">{{ char.name }}</span>
+                <el-tag v-if="char.role" size="small" effect="plain" :type="char.role === 'main' ? 'danger' : char.role === 'supporting' ? 'warning' : 'info'" class="char-role-tag">{{ charRoleLabel(char.role) }}</el-tag>
               </span>
-              <el-button type="danger" text size="small" class="btn-delete-icon" :title="$t('common.delete')" @click="onDeleteCharacter(char)">
-                <el-icon><Delete /></el-icon>
-              </el-button>
+              <el-dropdown trigger="click" @command="(command) => command === 'delete' && onDeleteCharacter(char)">
+                <el-button text size="small" class="btn-delete-icon" :title="$t('common.actions')" :aria-label="$t('common.actions')">
+                  <el-icon><MoreFilled /></el-icon>
+                </el-button>
+                <template #dropdown><el-dropdown-menu><el-dropdown-item command="delete" class="text-danger">{{ $t('common.delete') }}</el-dropdown-item></el-dropdown-menu></template>
+              </el-dropdown>
             </div>
             <div class="asset-desc-full">{{ char.appearance || char.description || $t('common.noDescription') }}</div>
             <div class="asset-btns">
@@ -46,16 +57,16 @@
             </div>
 
             <!-- Seedance 2.0 音色参考 -->
-            <div class="sd2-voice-row" style="margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <div class="sd2-voice-row">
               <template v-if="char.seedance2_voice_asset?.status === 'active'">
                 <el-button size="small" type="success" plain @click="playSd2Voice(char)">
                   <el-icon><VideoPlay /></el-icon>
-                  <span style="margin-left:4px">{{ $t('filmCreate.voiceSample') }}</span>
+                  <span class="sd2-voice-btn-text">{{ $t('filmCreate.voiceSample') }}</span>
                 </el-button>
                 <el-button size="small" type="primary" plain :loading="sd2VoiceUploadingId === char.id" @click="onSd2VoiceReplace(char)">
                   {{ $t('filmCreate.replaceVoice') }}
                 </el-button>
-                <span style="font-size:11px;color:#67c23a">{{ $t('filmCreate.voiceConfigured') }}</span>
+                <span class="sd2-voice-status--active">{{ $t('filmCreate.voiceConfigured') }}</span>
               </template>
               <template v-else>
                 <el-button
@@ -67,9 +78,9 @@
                 >
                   {{ sd2VoiceActionLabel(char) }}
                 </el-button>
-                <span v-if="char.seedance2_voice_asset?.status === 'stale'" style="font-size:11px;color:#e6a23c">{{ $t('filmCreate.needRefresh') }}</span>
+                <span v-if="char.seedance2_voice_asset?.status === 'stale'" class="sd2-voice-status--stale">{{ $t('filmCreate.needRefresh') }}</span>
               </template>
-              <span style="font-size:10px;color:#909399">{{ $t('filmCreate.seedance2Only') }}</span>
+              <span class="sd2-voice-note">{{ $t('filmCreate.seedance2Only') }}</span>
             </div>
             <div v-if="getAffectedStoryboards(char.id).length" class="asset-storyboard-link">
               <span class="asl-label">{{ $t('filmCreate.affectedStoryboards') }}</span>
@@ -113,7 +124,7 @@
             <div v-if="mediaComposable.parseExtraImages(char).length" class="extra-images-strip">
               <div v-for="ep in mediaComposable.parseExtraImages(char)" :key="ep" class="extra-thumb" :title="$t('filmCreate.setAsMainImageTip')">
                 <img :src="mediaComposable.localPathToUrl(ep)" alt="" @click="mediaComposable.onSetPrimaryImage('character', char, ep)" />
-                <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" @click.stop="mediaComposable.openImagePreview(mediaComposable.localPathToUrl(ep))">
+                <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" :aria-label="$t('filmCreate.zoomPreview')" @click.stop="mediaComposable.openImagePreview(mediaComposable.localPathToUrl(ep))">
                   <el-icon :size="10"><ZoomIn /></el-icon>
                 </button>
                 <button class="extra-thumb-remove" :title="$t('common.remove')" @click.stop="mediaComposable.onRemoveExtraImage('character', char, ep)">×</button>
@@ -124,19 +135,19 @@
                 <el-icon v-if="!generatingCharIds.has(char.id)"><MagicStick /></el-icon>
                 {{ $t('filmCreate.aiGenerate') }}
               </el-button>
-              <el-button type="success" size="small" :loading="mediaComposable.uploadingResourceId.value === 'char-' + char.id" @click="mediaComposable.onUploadResourceClick('character', char.id)">
+              <el-button plain size="small" :loading="mediaComposable.uploadingResourceId.value === 'char-' + char.id" @click="mediaComposable.onUploadResourceClick('character', char.id)">
                 <el-icon v-if="mediaComposable.uploadingResourceId.value !== 'char-' + char.id"><Upload /></el-icon>
                 {{ $t('common.upload') }}
               </el-button>
             </div>
           </div>
         </div>
-        <div v-if="characters.length === 0" class="empty-tip">{{ $t('filmCreate.noCharsEmptyTip') }}</div>
+        <EmptyState v-if="characters.length === 0" :description="$t('filmCreate.noCharsEmptyTip')" :action-label="$t('filmCreate.autoExtractCharacters')" @action="$emit('generate-characters')" />
       </div>
     </div>
 
     <!-- 隐藏参考图上传输入框 -->
-    <input ref="addCharRefFileInput" type="file" accept="image/*" style="display:none" @change="onRefImageFileChange" />
+    <input ref="addCharRefFileInput" type="file" accept="image/*" class="hidden-file-input" @change="onRefImageFileChange" />
 
     <!-- 添加/编辑角色弹窗 -->
     <el-dialog v-model="showEditCharacter" :title="editCharacterForm?.id ? $t('filmCreate.editCharacter') : $t('filmCreate.addCharacter')" width="75%" @close="onCloseCharDialog">
@@ -150,7 +161,7 @@
                 class="ref-preview-img" />
               <img v-else-if="editCharacterForm.id && (editCharacterForm.image_url || editCharacterForm.local_path)"
                 :src="mediaComposable.assetImageUrl(editCharacterForm)"
-                class="ref-preview-img" style="opacity:0.5" />
+                class="ref-preview-img ref-preview-img--dim" />
               <div v-else class="ref-upload-hint"><span class="ref-upload-icon">🖼</span><span>{{ $t('filmCreate.clickOrDragRefImage') }}</span></div>
             </div>
             <div v-if="addCharRefImage" class="ref-actions">
@@ -170,7 +181,7 @@
           <el-input v-model="editCharacterForm.name" :placeholder="$t('filmCreate.charNamePlaceholder')" />
         </el-form-item>
         <el-form-item :label="$t('filmCreate.charRoleLabel')">
-          <el-select v-model="editCharacterForm.role" :placeholder="$t('filmCreate.selectCharRolePlaceholder')" style="width:200px">
+          <el-select v-model="editCharacterForm.role" :placeholder="$t('filmCreate.selectCharRolePlaceholder')" class="char-role-select">
             <el-option value="main" :label="$t('filmCreate.roleMainOption')" />
             <el-option value="supporting" :label="$t('filmCreate.roleSupportingOption')" />
             <el-option value="minor" :label="$t('filmCreate.roleMinorOption')" />
@@ -184,11 +195,11 @@
         </el-form-item>
         <el-form-item v-if="editCharacterForm.id">
           <template #label>
-            <span style="font-size:12px;line-height:1.4;white-space:normal;word-break:break-all;display:inline-block;width:90px">{{ $t('filmCreate.imageToImagePrompt') }}</span>
+            <span class="char-form-item-label">{{ $t('filmCreate.imageToImagePrompt') }}</span>
           </template>
-          <div style="width:100%">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:12px;color:#909399">{{ $t('filmCreate.charPromptTip') }}</span>
+          <div class="char-prompt-wrapper">
+            <div class="char-prompt-header">
+              <span class="char-prompt-tip">{{ $t('filmCreate.charPromptTip') }}</span>
               <el-button
                 size="small"
                 :loading="editCharacterPromptGenerating"
@@ -201,14 +212,14 @@
               :autosize="{ minRows: 5, maxRows: 16 }"
               :placeholder="editCharacterPromptGenerating ? $t('filmCreate.generatingPromptWait') : $t('filmCreate.regenPromptOrInputPlaceholder')"
               :disabled="editCharacterPromptGenerating"
-              style="font-size:12px"
+              class="char-prompt-input"
             />
           </div>
         </el-form-item>
         <el-form-item v-if="editCharacterForm.id" :label="$t('filmCreate.visualAnchors')">
-          <div style="width:100%">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:12px;color:#909399">{{ $t('filmCreate.visualAnchorsTip') }}</span>
+          <div class="char-prompt-wrapper">
+            <div class="char-prompt-header">
+              <span class="char-prompt-tip">{{ $t('filmCreate.visualAnchorsTip') }}</span>
               <el-button
                 size="small"
                 :loading="extractingAnchors"
@@ -224,15 +235,15 @@
               type="textarea"
               :rows="4"
               readonly
-              style="font-size:11px;font-family:monospace"
+              class="char-code-textarea"
               :placeholder="$t('filmCreate.extractVisualAnchorsPlaceholder')"
             />
-            <div v-else style="font-size:12px;color:#c0c4cc;padding:4px 0">{{ $t('filmCreate.noAnchorsTip') }}</div>
+            <div v-else class="char-no-anchors-tip">{{ $t('filmCreate.noAnchorsTip') }}</div>
           </div>
         </el-form-item>
         <el-form-item v-if="editCharacterForm.id" :label="$t('filmCreate.multiStageLooks')">
-          <div style="width:100%">
-            <div style="font-size:12px;color:#909399;margin-bottom:6px">
+          <div class="char-prompt-wrapper">
+            <div class="char-stage-tip">
               {{ $t('filmCreate.multiStageLooksTip') }}
             </div>
             <el-input
@@ -240,7 +251,7 @@
               type="textarea"
               :rows="4"
               :placeholder="$t('filmCreate.multiStageLooksPlaceholder')"
-              style="font-size:12px;font-family:monospace"
+              class="char-code-textarea"
             />
           </div>
         </el-form-item>
@@ -288,7 +299,7 @@
       <el-tabs v-model="charLibraryTab" class="char-library-tabs" @tab-change="onCharLibraryTabChange">
         <el-tab-pane :label="$t('filmCreate.dramaCharLibTab')" name="library">
           <div class="library-toolbar">
-            <el-input v-model="charLibraryKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable style="width: 200px" @input="debouncedLoadCharLibrary()" />
+            <el-input v-model="charLibraryKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable class="library-search-input" @input="debouncedLoadCharLibrary()" />
           </div>
           <div v-loading="charLibraryLoading" class="library-list">
             <div v-for="item in charLibraryList" :key="'lib-' + item.id" class="library-item">
@@ -323,7 +334,7 @@
 
         <el-tab-pane :label="$t('filmCreate.dramaAllCharTab')" name="drama">
           <div class="library-toolbar">
-            <el-input v-model="dramaAllCharKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable style="width: 200px" @input="debouncedLoadDramaAllCharList()" />
+            <el-input v-model="dramaAllCharKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable class="library-search-input" @input="debouncedLoadDramaAllCharList()" />
           </div>
           <div v-loading="dramaAllCharLoading" class="library-list">
             <div v-for="item in dramaAllCharList" :key="'drama-' + item.id" class="library-item">
@@ -334,7 +345,7 @@
               <div class="library-item-info">
                 <div class="library-item-name">
                   {{ item.name || $t('library.unnamed') }}
-                  <el-tag v-if="item.role" size="small" type="info" style="margin-left: 6px">{{ charRoleLabel(item.role) }}</el-tag>
+                  <el-tag v-if="item.role" size="small" type="info" class="library-role-tag">{{ charRoleLabel(item.role) }}</el-tag>
                 </div>
                 <div class="library-item-desc">{{ (item.description || item.appearance || '').slice(0, 60) }}{{ (item.description || item.appearance || '').length > 60 ? '…' : '' }}</div>
                 <div class="library-item-actions">
@@ -389,7 +400,8 @@
 <script setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { ArrowUp, ArrowDown, Delete, VideoPlay, ZoomIn, MagicStick, Upload } from '@element-plus/icons-vue'
+import { ArrowUp, ArrowDown, Delete, MoreFilled, VideoPlay, ZoomIn, MagicStick, Upload } from '@element-plus/icons-vue'
+import EmptyState from './EmptyState.vue'
 import { t } from '@/i18n'
 import { uploadAPI } from '@/api/upload'
 
@@ -463,3 +475,94 @@ async function doExtractFromRef() {
   }
 }
 </script>
+
+<style scoped>
+.asset-name-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.asset-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.char-role-tag {
+  flex-shrink: 0;
+  padding: 0 5px;
+  font-size: 11px;
+  height: 18px;
+  line-height: 18px;
+}
+.sd2-voice-row {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sd2-voice-btn-text {
+  margin-left: 4px;
+}
+.sd2-voice-status--active {
+  font-size: 11px;
+  color: var(--el-color-success, #67c23a);
+}
+.sd2-voice-status--stale {
+  font-size: 11px;
+  color: var(--el-color-warning, #e6a23c);
+}
+.sd2-voice-note {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.char-role-select {
+  width: 200px;
+  max-width: 100%;
+}
+.char-form-item-label {
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+  display: inline-block;
+  min-width: 90px;
+  max-width: 130px;
+}
+.char-prompt-wrapper {
+  width: 100%;
+}
+.char-prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.char-prompt-tip {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.char-prompt-input {
+  font-size: 12px;
+}
+.char-code-textarea {
+  font-size: 11px;
+  font-family: monospace;
+}
+.char-no-anchors-tip {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+.char-stage-tip {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.library-role-tag {
+  margin-left: 6px;
+}
+</style>

@@ -257,14 +257,14 @@ export function useProjectSettings({
     ElMessage.success(t('filmCreate.exportedStoryboardSheetCount', { count: result.count }))
   }
 
-  function applyRouteToStore() {
+  async function applyRouteToStore() {
     const id = route?.params?.id
     if (id && id !== 'new') {
       store.setDrama({ id: Number(id) })
       if (route?.query?.episode) {
         selectedEpisodeId.value = Number(route.query.episode)
       }
-      loadDrama()
+      await loadDrama()
     } else {
       store.reset()
       storyInput.value = ''

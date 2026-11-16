@@ -53,7 +53,7 @@
       :ref="(el) => { if (mediaComposable) mediaComposable.resourceImageFileInput.value = el }"
       type="file"
       accept="image/jpeg,image/png,image/gif,image/webp"
-      style="display: none"
+      class="hidden-file-input"
       @change="mediaComposable.onResourceImageFileChange"
     />
   </section>
@@ -459,7 +459,7 @@ const resourcePanelCollapsed = ref(false)
   transition: border-color 0.2s;
 }
 :deep(.ref-image-box:hover) {
-  border-color: #409eff;
+  border-color: var(--el-color-primary);
 }
 :deep(.ref-preview-img) {
   width: 100%;
@@ -471,7 +471,7 @@ const resourcePanelCollapsed = ref(false)
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  color: #909399;
+  color: var(--text-muted);
   font-size: 12px;
   text-align: center;
   padding: 8px;

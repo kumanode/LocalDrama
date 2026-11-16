@@ -27,6 +27,17 @@ html.light .film-create {
   padding: 24px 32px 48px;
   transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
 }
+@media (min-width: 1280px) {
+  .main { padding-left: clamp(24px, 2.5vw, 48px); padding-right: clamp(24px, 2.5vw, 48px); }
+}
+@media (min-width: 960px) and (max-width: 1279px) {
+  .main { padding: 20px 20px 40px; }
+  .card { padding: 18px; }
+}
+@media (max-width: 959px) {
+  .main { margin-left: 48px !important; padding: 16px 12px 40px; }
+  .card { padding: 14px; }
+}
 .sidebar-collapsed .main {
   margin-left: 48px;
 }
@@ -85,10 +96,24 @@ html.light .section-title { color: #1e1b4b; }
   pointer-events: auto;
 }
 .empty-tip {
-  color: #5a5a66;
+  color: var(--text-muted);
   font-size: 0.9rem;
   padding: 16px 0;
 }
 html.light .empty-tip {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
+
+.hidden-file-input {
+  display: none !important;
+}
+
+.library-search-input {
+  width: 200px;
+  max-width: 100%;
+}
+
+.ref-preview-img--dim {
+  opacity: 0.5;
+}
+

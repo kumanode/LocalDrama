@@ -44,6 +44,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from '@/i18n'
+import { te } from '@/i18n/index.js'
 import { agentAPI } from '@/api/agent'
 import { taskAPI } from '@/api/task'
 import { useAgentContext } from '@/stores/agentContext'
@@ -150,7 +151,9 @@ function onEvent(event) {
       },
     })
   } else if (event.type === 'error') {
-    errorText.value = event.message || t('agent.chatFailed')
+    errorText.value = event.code && te(`errors.${event.code}`)
+      ? t(`errors.${event.code}`)
+      : t('agent.chatFailed')
   }
   scrollDown()
 }

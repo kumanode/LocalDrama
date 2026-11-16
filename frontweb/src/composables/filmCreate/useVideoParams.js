@@ -32,6 +32,7 @@ export function useVideoParams({ store, dramaId, currentEpisodeId, loadDrama, re
   const sbLayoutDescription = ref({})
   const sbCreationMode = ref({})
   const sbUniversalSegmentText = ref({})
+  const sbSeed = ref({})
 
   function getMovementLabel(m) {
     if (!m) return ''
@@ -113,6 +114,7 @@ export function useVideoParams({ store, dramaId, currentEpisodeId, loadDrama, re
     const nextLayoutDescription = {}
     const nextCreationMode = {}
     const nextUniversalSegment = {}
+    const nextSeed = {}
     for (const sb of boards) {
       nextDialogue[sb.id] = sb.dialogue ?? ''
       nextNarration[sb.id] = sb.narration ?? ''
@@ -134,6 +136,7 @@ export function useVideoParams({ store, dramaId, currentEpisodeId, loadDrama, re
       nextLayoutDescription[sb.id] = (sb.layout_description ?? '').toString()
       nextCreationMode[sb.id] = sb.creation_mode === 'universal' ? 'universal' : 'classic'
       nextUniversalSegment[sb.id] = (sb.universal_segment_text ?? '').toString()
+      nextSeed[sb.id] = sb.seed != null ? Number(sb.seed) : null
     }
     sbDialogue.value = nextDialogue
     sbNarration.value = nextNarration
@@ -155,6 +158,7 @@ export function useVideoParams({ store, dramaId, currentEpisodeId, loadDrama, re
     sbLayoutDescription.value = nextLayoutDescription
     sbCreationMode.value = nextCreationMode
     sbUniversalSegmentText.value = nextUniversalSegment
+    sbSeed.value = nextSeed
   }
 
   function setSbCreationModeId(sbId, v) {
@@ -202,6 +206,7 @@ export function useVideoParams({ store, dramaId, currentEpisodeId, loadDrama, re
         layout_description: (sbLayoutDescription.value[sb.id] || '').toString().trim() || null,
         creation_mode: sbCreationMode.value[sb.id] === 'universal' ? 'universal' : 'classic',
         universal_segment_text: (sbUniversalSegmentText.value[sb.id] || '').toString().trim() || null,
+        seed: sbSeed.value[sb.id] != null && !Number.isNaN(Number(sbSeed.value[sb.id])) ? Number(sbSeed.value[sb.id]) : null,
       })
       const rebuilt = await storyboardsAPI.rebuildVideoPrompt(sb.id)
       const newVp = (rebuilt?.video_prompt && String(rebuilt.video_prompt).trim()) || ''
@@ -371,6 +376,7 @@ export function useVideoParams({ store, dramaId, currentEpisodeId, loadDrama, re
     sbLayoutDescription,
     sbCreationMode,
     sbUniversalSegmentText,
+    sbSeed,
     isSbUniversalMode,
     onToggleSbUniversalMode,
     onSaveUniversalSegmentField,

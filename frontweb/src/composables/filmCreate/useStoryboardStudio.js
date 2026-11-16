@@ -212,6 +212,7 @@ export function useStoryboardStudio({
   } = mediaGenerators
 
   const { sbCardState, sbCardActions } = useStoryboardCardBindings({
+    genStore,
     sbCharacterIds,
     sbPropIds,
     sbSceneId,

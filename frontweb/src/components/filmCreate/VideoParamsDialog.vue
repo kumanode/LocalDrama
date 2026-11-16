@@ -20,31 +20,43 @@
         <div class="vp-mode-hint">{{ $t('filmCreate.vpModeHint') }}</div>
       </el-form-item>
       <el-row :gutter="12">
-        <el-col :span="12">
+        <el-col :span="8">
           <el-form-item :label="$t('filmCreate.titleLabel')">
             <el-input v-model="params.sbTitle[target.id]" :placeholder="$t('filmCreate.shotTitlePlaceholder')" />
           </el-form-item>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="5">
           <el-form-item :label="$t('filmCreate.locationLabel')">
             <el-input v-model="params.sbLocation[target.id]" :placeholder="$t('filmCreate.sceneLocationPlaceholder')" />
           </el-form-item>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="5">
           <el-form-item :label="$t('filmCreate.timeLabel')">
             <el-input v-model="params.sbTime[target.id]" :placeholder="$t('filmCreate.timeOfDayPlaceholder')" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="6">
+          <el-form-item :label="$t('filmCreate.seedLabel')">
+            <el-input-number
+              v-model="params.sbSeed[target.id]"
+              :placeholder="$t('filmCreate.seedPlaceholder')"
+              :min="0"
+              :max="2147483647"
+              :controls="false"
+              class="vp-fullwidth"
+            />
           </el-form-item>
         </el-col>
       </el-row>
       <el-row :gutter="12">
         <el-col :span="6">
           <el-form-item :label="$t('filmCreate.durationSecondsLabel')">
-            <el-input-number v-model="params.sbDuration[target.id]" :min="1" :max="60" style="width:100%" />
+            <el-input-number v-model="params.sbDuration[target.id]" :min="1" :max="60" class="vp-fullwidth" />
           </el-form-item>
         </el-col>
         <el-col :span="6">
           <el-form-item :label="$t('filmCreate.shotTypeLabel')">
-            <el-select v-model="params.sbShotType[target.id]" :placeholder="$t('filmCreate.shotTypeLabel')" style="width:100%">
+            <el-select v-model="params.sbShotType[target.id]" :placeholder="$t('filmCreate.shotTypeLabel')" class="vp-fullwidth">
               <el-option :label="$t('filmCreate.shotExtremeWide')" value="大远景" /><!-- i18n-scan-ignore: DB enum value -->
               <el-option :label="$t('filmCreate.shotWide')" value="远景" /><!-- i18n-scan-ignore: DB enum value -->
               <el-option :label="$t('filmCreate.shotMedium')" value="中景" /><!-- i18n-scan-ignore: DB enum value -->
@@ -55,7 +67,7 @@
         </el-col>
         <el-col :span="6">
           <el-form-item :label="$t('filmCreate.movementLabel')">
-            <el-select v-model="params.sbMovement[target.id]" :placeholder="$t('filmCreate.movementPlaceholder')" style="width:100%" clearable filterable>
+            <el-select v-model="params.sbMovement[target.id]" :placeholder="$t('filmCreate.movementPlaceholder')" class="vp-fullwidth" clearable filterable>
               <el-option-group :label="$t('filmCreate.movementGroupBasic')">
                 <el-option :label="$t('filmCreate.movementStatic')" value="static" />
                 <el-option :label="$t('filmCreate.movementPush')" value="push" />
@@ -93,19 +105,19 @@
       <el-row :gutter="12">
         <el-col :span="8">
           <el-form-item :label="$t('filmCreate.cameraAngleLabel')">
-            <div style="display:flex;gap:4px;flex-wrap:wrap">
-              <el-select v-model="params.sbAngleS[target.id]" :placeholder="$t('filmCreate.shotTypeLabel')" style="width:76px">
+            <div class="video-angle-row">
+              <el-select v-model="params.sbAngleS[target.id]" :placeholder="$t('filmCreate.shotTypeLabel')" class="video-angle-select video-angle-select--shot">
                 <el-option :label="$t('filmCreate.shotCloseUp')" value="close_up" />
                 <el-option :label="$t('filmCreate.shotMedium')" value="medium" />
                 <el-option :label="$t('filmCreate.shotWide')" value="wide" />
               </el-select>
-              <el-select v-model="params.sbAngleV[target.id]" :placeholder="$t('filmCreate.anglePitch')" style="width:86px">
+              <el-select v-model="params.sbAngleV[target.id]" :placeholder="$t('filmCreate.anglePitch')" class="video-angle-select video-angle-select--pitch">
                 <el-option :label="$t('filmCreate.angleEyeLevel')" value="eye_level" />
                 <el-option :label="$t('filmCreate.angleLow')" value="low" />
                 <el-option :label="$t('filmCreate.angleHigh')" value="high" />
                 <el-option :label="$t('filmCreate.angleWorm')" value="worm" />
               </el-select>
-              <el-select v-model="params.sbAngleH[target.id]" :placeholder="$t('filmCreate.angleDirection')" style="width:80px">
+              <el-select v-model="params.sbAngleH[target.id]" :placeholder="$t('filmCreate.angleDirection')" class="video-angle-select video-angle-select--direction">
                 <el-option :label="$t('filmCreate.angleFront')" value="front" />
                 <el-option :label="$t('filmCreate.angleFrontLeft')" value="front_left" />
                 <el-option :label="$t('filmCreate.angleLeft')" value="left" />
@@ -117,7 +129,7 @@
               </el-select>
               <span
                 v-if="params.sbAngleS[target.id] && params.sbAngleV[target.id] && params.sbAngleH[target.id]"
-                style="font-size:11px;color:#6b7280;background:#f3f4f6;padding:2px 6px;border-radius:4px;white-space:nowrap"
+                class="vp-angle-badge"
               >
                 {{ params.angleToPromptFragment(params.sbAngleH[target.id], params.sbAngleV[target.id], params.sbAngleS[target.id]).label }}
               </span>
@@ -126,7 +138,7 @@
         </el-col>
         <el-col :span="8">
           <el-form-item :label="$t('filmCreate.lightingLabel')">
-            <el-select v-model="params.sbLighting[target.id]" :placeholder="$t('filmCreate.lightingPlaceholder')" style="width:100%" clearable>
+            <el-select v-model="params.sbLighting[target.id]" :placeholder="$t('filmCreate.lightingPlaceholder')" class="vp-fullwidth" clearable>
               <el-option :label="$t('filmCreate.lightNatural')" value="natural" />
               <el-option :label="$t('filmCreate.lightFront')" value="front" />
               <el-option :label="$t('filmCreate.lightSide')" value="side" />
@@ -144,7 +156,7 @@
         </el-col>
         <el-col :span="8">
           <el-form-item :label="$t('filmCreate.dofLabel')">
-            <el-select v-model="params.sbDof[target.id]" :placeholder="$t('filmCreate.dofPlaceholder')" style="width:100%" clearable>
+            <el-select v-model="params.sbDof[target.id]" :placeholder="$t('filmCreate.dofPlaceholder')" class="vp-fullwidth" clearable>
               <el-option :label="$t('filmCreate.dofExtremeShallow')" value="extreme_shallow" />
               <el-option :label="$t('filmCreate.dofShallow')" value="shallow" />
               <el-option :label="$t('filmCreate.dofMedium')" value="medium" />
@@ -155,24 +167,24 @@
       </el-row>
 
       <el-form-item :label="$t('filmCreate.spatialLayoutAnchorLabel')">
-        <div style="display:flex; gap:8px; align-items:flex-start; width:100%">
+        <div class="vp-layout-row">
           <el-input
             v-model="params.sbLayoutDescription[target.id]"
             type="textarea"
             :rows="3"
             :placeholder="$t('filmCreate.spatialLayoutAnchorPlaceholder')"
-            style="flex:1"
+            class="vp-layout-input"
           />
           <el-button
             size="small"
             :loading="regeneratingLayoutSbIds.has(target.id)"
-            style="margin-top:4px; white-space:nowrap"
+            class="vp-regen-btn"
             @click="$emit('regen-layout', target)"
           >
             {{ $t('filmCreate.aiRegenOrOptimize') }}
           </el-button>
         </div>
-        <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.35">
+        <div class="vp-layout-note">
           {{ $t('filmCreate.spatialLayoutAnchorNote') }}
         </div>
       </el-form-item>
@@ -212,7 +224,7 @@
           type="textarea"
           :rows="3"
           readonly
-          style="color:#6b7280;margin-top:8px"
+          class="vp-video-prompt-display"
         />
       </el-form-item>
     </el-form>
@@ -258,21 +270,72 @@ defineEmits(['update:modelValue', 'close', 'save', 'regen-layout', 'split-audio'
 .vp-dialog-form .el-form-item {
   margin-bottom: 12px;
 }
+.vp-fullwidth {
+  width: 100%;
+}
+.video-angle-select--pitch {
+  min-width: 96px;
+  flex: 1 1 96px;
+}
+.video-angle-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.video-angle-select--shot {
+  min-width: 96px;
+  flex: 1 1 96px;
+}
+.video-angle-select--direction {
+  min-width: 104px;
+  flex: 1 1 104px;
+}
+.vp-angle-badge {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface-2, rgba(255, 255, 255, 0.06));
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.vp-layout-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  width: 100%;
+}
+.vp-layout-input {
+  flex: 1;
+}
+.vp-regen-btn {
+  margin-top: 4px;
+  white-space: nowrap;
+}
+.vp-layout-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.35;
+}
+.vp-video-prompt-display {
+  color: var(--text-muted);
+  margin-top: 8px;
+}
 .vp-mode-hint {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-muted);
   line-height: 1.45;
   margin-top: 8px;
   max-width: 520px;
 }
 .vp-video-prompt-hint {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-muted);
   line-height: 1.5;
 }
 .sb-split-audio-tip {
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-muted);
   line-height: 1.45;
   margin: 0 0 8px;
 }

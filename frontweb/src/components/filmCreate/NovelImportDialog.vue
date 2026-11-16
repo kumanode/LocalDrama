@@ -7,7 +7,7 @@
     @close="novelImportReset"
   >
     <div class="novel-import-dialog">
-      <p style="color:#6b7280;font-size:13px;margin-bottom:12px">{{ $t('filmCreate.novelImportDesc') }}</p>
+      <p class="novel-import-desc">{{ $t('filmCreate.novelImportDesc') }}</p>
       <el-tabs v-model="novelImportMode">
         <el-tab-pane :label="$t('filmCreate.pasteTextTab')" name="text">
           <el-input
@@ -28,15 +28,15 @@
             <el-icon class="el-icon--upload"><DocumentAdd /></el-icon>
             <div class="el-upload__text">{{ $t('filmCreate.dragFileHint') }}<em>{{ $t('filmCreate.clickToUpload') }}</em></div>
           </el-upload>
-          <div v-if="novelFileName" style="margin-top:8px;font-size:13px;color:#409eff">
+          <div v-if="novelFileName" class="novel-file-selected">
             {{ $t('filmCreate.selectedFilePrefix') }}{{ novelFileName }}
           </div>
         </el-tab-pane>
       </el-tabs>
-      <div class="novel-import-options" style="margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:6px;font-size:13px">
+      <div class="novel-import-options">
+        <div class="novel-option-item">
           <span>{{ $t('filmCreate.maxImportEpisodes') }}</span>
-          <el-input-number v-model="novelMaxChapters" :min="1" :max="20" size="small" style="width:100px" />
+          <el-input-number v-model="novelMaxChapters" :min="1" :max="20" size="small" class="novel-chapter-input" />
         </div>
         <el-checkbox v-model="novelAiSummarize" size="small">{{ $t('filmCreate.aiConvertToScriptFormat') }}</el-checkbox>
       </div>
@@ -175,3 +175,33 @@ async function onImportNovel() {
   }
 }
 </script>
+
+<style scoped>
+.novel-import-desc {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.novel-file-selected {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--el-color-primary);
+}
+.novel-import-options {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.novel-option-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.novel-chapter-input {
+  width: 100px;
+}
+</style>
+

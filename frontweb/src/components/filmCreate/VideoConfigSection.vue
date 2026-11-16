@@ -5,7 +5,7 @@
       <el-form-item :label="$t('filmCreate.resolution')">
         <el-select
           :model-value="videoResolution"
-          style="width: 160px"
+          class="video-select-resolution"
           @update:model-value="$emit('update:videoResolution', $event)"
         >
           <el-option label="480p" value="480p" />
@@ -115,10 +115,15 @@ defineEmits([
   min-width: 200px;
   max-width: 360px;
 }
+.video-select-resolution {
+  width: 100%;
+  max-width: 160px;
+  min-width: 120px;
+}
 .config-tip {
   margin: 12px 0 0;
   font-size: 0.9rem;
-  color: #a1a1aa;
+  color: var(--text-muted);
 }
 .config-tip .el-link {
   font-size: inherit;

@@ -98,13 +98,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Lock } from '@element-plus/icons-vue'
 import { useI18n } from '@/i18n'
 import { promptsAPI } from '@/api/prompts'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const loading = ref(false)
 const prompts = ref([])
 const editState = ref({})
@@ -191,6 +191,12 @@ async function reset(p) {
 }
 
 onMounted(() => load())
+
+// Labels and default prompt bodies come from the backend in the request language,
+// so reload on language switch (unless that would discard unsaved edits).
+watch(locale, () => {
+  if (!Object.values(isDirty.value).some(Boolean)) load()
+})
 </script>
 
 <style scoped>

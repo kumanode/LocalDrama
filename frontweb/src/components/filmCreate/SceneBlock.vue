@@ -1,6 +1,14 @@
 <template>
   <div id="anchor-scenes" class="resource-block card">
-    <div class="collapse-header resource-block-header" @click="scenesBlockCollapsed = !scenesBlockCollapsed">
+    <div
+      class="collapse-header resource-block-header"
+      role="button"
+      tabindex="0"
+      :aria-expanded="!scenesBlockCollapsed"
+      @click="scenesBlockCollapsed = !scenesBlockCollapsed"
+      @keydown.enter.prevent="scenesBlockCollapsed = !scenesBlockCollapsed"
+      @keydown.space.prevent="scenesBlockCollapsed = !scenesBlockCollapsed"
+    >
       <h3 class="resource-block-title">{{ $t('filmCreate.scenesBlock') }}</h3>
       <el-icon class="collapse-icon"><ArrowUp v-if="!scenesBlockCollapsed" /><ArrowDown v-else /></el-icon>
     </div>
@@ -12,7 +20,7 @@
         <el-button size="small" :disabled="!dramaId" @click="openAddScene">{{ $t('filmCreate.addScene') }}</el-button>
         <el-button size="small" @click="showSceneLibrary = true">{{ $t('filmCreate.dramaSceneLib') }}</el-button>
       </div>
-      <div class="scene-gen-mode" style="margin: 8px 0; font-size: 13px;">
+      <div class="scene-gen-mode">
         <el-checkbox v-model="sceneUseQuadGrid">{{ $t('filmCreate.sceneQuadGridCheckbox') }}</el-checkbox>
       </div>
       <div class="asset-list asset-list-two">
@@ -20,9 +28,10 @@
           <div class="asset-info">
             <div class="asset-name">
               <span>{{ scene.location }}</span>
-              <el-button type="danger" text size="small" class="btn-delete-icon" :title="$t('common.delete')" @click="onDeleteScene(scene)">
-                <el-icon><Delete /></el-icon>
-              </el-button>
+              <el-dropdown trigger="click" @command="(command) => command === 'delete' && onDeleteScene(scene)">
+                <el-button text size="small" class="btn-delete-icon" :title="$t('common.actions')" :aria-label="$t('common.actions')"><el-icon><MoreFilled /></el-icon></el-button>
+                <template #dropdown><el-dropdown-menu><el-dropdown-item command="delete">{{ $t('common.delete') }}</el-dropdown-item></el-dropdown-menu></template>
+              </el-dropdown>
             </div>
             <div class="asset-desc-full">{{ scene.description || scene.prompt || scene.time || $t('common.noDescription') }}</div>
             <div class="asset-btns">
@@ -75,7 +84,7 @@
             <div v-if="mediaComposable.parseExtraImages(scene).length" class="extra-images-strip">
               <div v-for="ep in mediaComposable.parseExtraImages(scene)" :key="ep" class="extra-thumb" :title="$t('filmCreate.setAsMainImageTip')">
                 <img :src="mediaComposable.localPathToUrl(ep)" alt="" @click="mediaComposable.onSetPrimaryImage('scene', scene, ep)" />
-                <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" @click.stop="mediaComposable.openImagePreview(mediaComposable.localPathToUrl(ep))">
+                <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" :aria-label="$t('filmCreate.zoomPreview')" @click.stop="mediaComposable.openImagePreview(mediaComposable.localPathToUrl(ep))">
                   <el-icon :size="10"><ZoomIn /></el-icon>
                 </button>
                 <button class="extra-thumb-remove" :title="$t('common.remove')" @click.stop="mediaComposable.onRemoveExtraImage('scene', scene, ep)">×</button>
@@ -88,19 +97,19 @@
                   {{ $t('filmCreate.aiGenerate') }}
                 </el-button>
               </el-tooltip>
-              <el-button type="success" size="small" :loading="mediaComposable.uploadingResourceId.value === 'scene-' + scene.id" @click="mediaComposable.onUploadResourceClick('scene', scene.id)">
+              <el-button plain size="small" :loading="mediaComposable.uploadingResourceId.value === 'scene-' + scene.id" @click="mediaComposable.onUploadResourceClick('scene', scene.id)">
                 <el-icon v-if="mediaComposable.uploadingResourceId.value !== 'scene-' + scene.id"><Upload /></el-icon>
                 {{ $t('common.upload') }}
               </el-button>
             </div>
           </div>
         </div>
-        <div v-if="scenes.length === 0" class="empty-tip">{{ $t('filmCreate.noScenesEmptyTip') }}</div>
+        <EmptyState v-if="scenes.length === 0" :description="$t('filmCreate.noScenesEmptyTip')" :action-label="$t('filmCreate.extractScenes')" @action="$emit('extract-scenes')" />
       </div>
     </div>
 
     <!-- 隐藏参考图上传输入框 -->
-    <input ref="addSceneRefFileInput" type="file" accept="image/*" style="display:none" @change="onRefImageFileChange" />
+    <input ref="addSceneRefFileInput" type="file" accept="image/*" class="hidden-file-input" @change="onRefImageFileChange" />
 
     <!-- 添加/编辑场景弹窗 -->
     <el-dialog v-model="showEditScene" :title="editSceneForm?.id ? $t('filmCreate.editScene') : $t('filmCreate.addScene')" width="75%" @close="onCloseSceneDialog">
@@ -113,7 +122,7 @@
                 :src="editSceneForm.ref_image.startsWith('http') ? editSceneForm.ref_image : '/static/' + editSceneForm.ref_image"
                 class="ref-preview-img" />
               <img v-else-if="editSceneForm.id && (editSceneForm.image_url || editSceneForm.local_path)"
-                :src="mediaComposable.assetImageUrl(editSceneForm)" class="ref-preview-img" style="opacity:0.5" />
+                :src="mediaComposable.assetImageUrl(editSceneForm)" class="ref-preview-img ref-preview-img--dim" />
               <div v-else class="ref-upload-hint"><span class="ref-upload-icon">🖼</span><span>{{ $t('filmCreate.clickOrDragRefImage') }}</span></div>
             </div>
             <div v-if="addSceneRefImage" class="ref-actions">
@@ -140,11 +149,11 @@
         </el-form-item>
         <el-form-item v-if="editSceneForm.id">
           <template #label>
-            <span style="font-size:12px;line-height:1.4;white-space:normal;word-break:break-all;display:inline-block;width:90px">{{ $t('filmCreate.singleImagePrompt') }}</span>
+            <span class="scene-form-item-label">{{ $t('filmCreate.singleImagePrompt') }}</span>
           </template>
-          <div style="width:100%">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:12px;color:#909399">{{ $t('filmCreate.singleImagePromptTip') }}</span>
+          <div class="scene-prompt-wrapper">
+            <div class="scene-prompt-header">
+              <span class="scene-prompt-tip">{{ $t('filmCreate.singleImagePromptTip') }}</span>
               <el-button size="small" :loading="editScenePromptGenerating" @click="doGenerateSceneSinglePrompt">{{ $t('filmCreate.regenPrompt') }}</el-button>
             </div>
             <el-input
@@ -152,17 +161,17 @@
               type="textarea"
               :autosize="{ minRows: 5, maxRows: 16 }"
               :placeholder="$t('filmCreate.singleScenePromptPlaceholder')"
-              style="font-size:12px"
+              class="scene-prompt-input"
             />
           </div>
         </el-form-item>
         <el-form-item v-if="editSceneForm.id">
           <template #label>
-            <span style="font-size:12px;line-height:1.4;white-space:normal;word-break:break-all;display:inline-block;width:90px">{{ $t('filmCreate.quadViewPrompt') }}</span>
+            <span class="scene-form-item-label">{{ $t('filmCreate.quadViewPrompt') }}</span>
           </template>
-          <div style="width:100%">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:12px;color:#909399">{{ $t('filmCreate.quadViewPromptTip') }}</span>
+          <div class="scene-prompt-wrapper">
+            <div class="scene-prompt-header">
+              <span class="scene-prompt-tip">{{ $t('filmCreate.quadViewPromptTip') }}</span>
               <el-button size="small" :loading="editScenePromptGenerating" @click="doGenerateScenePrompt">{{ $t('filmCreate.regenPrompt') }}</el-button>
             </div>
             <el-input
@@ -171,7 +180,7 @@
               :autosize="{ minRows: 5, maxRows: 16 }"
               :placeholder="editScenePromptGenerating ? $t('filmCreate.generatingQuadPromptWait') : $t('filmCreate.regenPromptOrInputPlaceholder')"
               :disabled="editScenePromptGenerating"
-              style="font-size:12px"
+              class="scene-prompt-input"
             />
           </div>
         </el-form-item>
@@ -187,7 +196,7 @@
       <el-tabs v-model="sceneLibraryTab" class="char-library-tabs" @tab-change="onSceneLibraryTabChange">
         <el-tab-pane :label="$t('filmCreate.dramaSceneLibTab')" name="library">
           <div class="library-toolbar">
-            <el-input v-model="sceneLibraryKeyword" :placeholder="$t('filmCreate.searchLocationOrDesc')" clearable style="width: 200px" @input="debouncedLoadSceneLibrary()" />
+            <el-input v-model="sceneLibraryKeyword" :placeholder="$t('filmCreate.searchLocationOrDesc')" clearable class="library-search-input" @input="debouncedLoadSceneLibrary()" />
           </div>
           <div v-loading="sceneLibraryLoading" class="library-list">
             <div v-for="item in sceneLibraryList" :key="'slib-' + item.id" class="library-item">
@@ -213,7 +222,7 @@
         </el-tab-pane>
         <el-tab-pane :label="$t('filmCreate.dramaAllSceneTab')" name="drama">
           <div class="library-toolbar">
-            <el-input v-model="dramaAllSceneKeyword" :placeholder="$t('filmCreate.searchLocationOrDesc')" clearable style="width: 200px" @input="debouncedLoadDramaAllSceneList()" />
+            <el-input v-model="dramaAllSceneKeyword" :placeholder="$t('filmCreate.searchLocationOrDesc')" clearable class="library-search-input" @input="debouncedLoadDramaAllSceneList()" />
           </div>
           <div v-loading="dramaAllSceneLoading" class="library-list">
             <div v-for="item in dramaAllSceneList" :key="'sdr-' + item.id" class="library-item">
@@ -271,7 +280,8 @@
 <script setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { ArrowUp, ArrowDown, Delete, ZoomIn, MagicStick, Upload } from '@element-plus/icons-vue'
+import { ArrowUp, ArrowDown, Delete, MoreFilled, ZoomIn, MagicStick, Upload } from '@element-plus/icons-vue'
+import EmptyState from './EmptyState.vue'
 import { t } from '@/i18n'
 import { uploadAPI } from '@/api/upload'
 
@@ -343,3 +353,36 @@ async function doExtractFromRef() {
   }
 }
 </script>
+
+<style scoped>
+.scene-gen-mode {
+  margin: 8px 0;
+  font-size: 13px;
+}
+.scene-form-item-label {
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+  display: inline-block;
+  min-width: 90px;
+  max-width: 130px;
+}
+.scene-prompt-wrapper {
+  width: 100%;
+}
+.scene-prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.scene-prompt-tip {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.scene-prompt-input {
+  font-size: 12px;
+}
+</style>
+

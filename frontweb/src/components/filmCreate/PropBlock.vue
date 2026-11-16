@@ -1,6 +1,14 @@
 <template>
   <div id="anchor-props" class="resource-block card">
-    <div class="collapse-header resource-block-header" @click="propsBlockCollapsed = !propsBlockCollapsed">
+    <div
+      class="collapse-header resource-block-header"
+      role="button"
+      tabindex="0"
+      :aria-expanded="!propsBlockCollapsed"
+      @click="propsBlockCollapsed = !propsBlockCollapsed"
+      @keydown.enter.prevent="propsBlockCollapsed = !propsBlockCollapsed"
+      @keydown.space.prevent="propsBlockCollapsed = !propsBlockCollapsed"
+    >
       <h3 class="resource-block-title">{{ $t('filmCreate.propsBlock') }}</h3>
       <el-icon class="collapse-icon"><ArrowUp v-if="!propsBlockCollapsed" /><ArrowDown v-else /></el-icon>
     </div>
@@ -12,7 +20,7 @@
         <el-button size="small" :disabled="!dramaId" @click="showAddProp = true">{{ $t('filmCreate.addProp') }}</el-button>
         <el-button size="small" @click="showPropLibrary = true">{{ $t('filmCreate.dramaPropLib') }}</el-button>
       </div>
-      <div class="prop-gen-mode" style="margin: 8px 0; font-size: 13px;">
+      <div class="prop-gen-mode">
         <el-checkbox v-model="propUseQuadGrid">{{ $t('filmCreate.propQuadGridCheckbox') }}</el-checkbox>
       </div>
       <div class="asset-list asset-list-two">
@@ -20,9 +28,10 @@
           <div class="asset-info">
             <div class="asset-name">
               <span>{{ prop.name }}</span>
-              <el-button type="danger" text size="small" class="btn-delete-icon" :title="$t('common.delete')" @click="onDeleteProp(prop)">
-                <el-icon><Delete /></el-icon>
-              </el-button>
+              <el-dropdown trigger="click" @command="(command) => command === 'delete' && onDeleteProp(prop)">
+                <el-button text size="small" class="btn-delete-icon" :title="$t('common.actions')" :aria-label="$t('common.actions')"><el-icon><MoreFilled /></el-icon></el-button>
+                <template #dropdown><el-dropdown-menu><el-dropdown-item command="delete">{{ $t('common.delete') }}</el-dropdown-item></el-dropdown-menu></template>
+              </el-dropdown>
             </div>
             <div class="asset-desc-full">{{ prop.description || prop.prompt || $t('common.noDescription') }}</div>
             <div class="asset-btns">
@@ -75,7 +84,7 @@
             <div v-if="mediaComposable.parseExtraImages(prop).length" class="extra-images-strip">
               <div v-for="ep in mediaComposable.parseExtraImages(prop)" :key="ep" class="extra-thumb" :title="$t('filmCreate.setAsMainImageTip')">
                 <img :src="mediaComposable.localPathToUrl(ep)" alt="" @click="mediaComposable.onSetPrimaryImage('prop', prop, ep)" />
-                <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" @click.stop="mediaComposable.openImagePreview(mediaComposable.localPathToUrl(ep))">
+                <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" :aria-label="$t('filmCreate.zoomPreview')" @click.stop="mediaComposable.openImagePreview(mediaComposable.localPathToUrl(ep))">
                   <el-icon :size="10"><ZoomIn /></el-icon>
                 </button>
                 <button class="extra-thumb-remove" :title="$t('common.remove')" @click.stop="mediaComposable.onRemoveExtraImage('prop', prop, ep)">×</button>
@@ -88,20 +97,20 @@
                   {{ $t('filmCreate.aiGenerate') }}
                 </el-button>
               </el-tooltip>
-              <el-button type="success" size="small" :loading="mediaComposable.uploadingResourceId.value === 'prop-' + prop.id" @click="mediaComposable.onUploadResourceClick('prop', prop.id)">
+              <el-button plain size="small" :loading="mediaComposable.uploadingResourceId.value === 'prop-' + prop.id" @click="mediaComposable.onUploadResourceClick('prop', prop.id)">
                 <el-icon v-if="mediaComposable.uploadingResourceId.value !== 'prop-' + prop.id"><Upload /></el-icon>
                 {{ $t('common.upload') }}
               </el-button>
             </div>
           </div>
         </div>
-        <div v-if="propsList.length === 0" class="empty-tip">{{ $t('filmCreate.noPropsEmptyTip') }}</div>
+        <EmptyState v-if="propsList.length === 0" :description="$t('filmCreate.noPropsEmptyTip')" :action-label="$t('filmCreate.extractProps')" @action="$emit('extract-props')" />
       </div>
     </div>
 
     <!-- 隐藏参考图上传输入框 -->
-    <input ref="addPropRefFileInput" type="file" accept="image/*" style="display:none" @change="onRefImageFileChange" />
-    <input ref="addPropAddRefFileInput" type="file" accept="image/*" style="display:none" @change="onRefImageFileChange2" />
+    <input ref="addPropRefFileInput" type="file" accept="image/*" class="hidden-file-input" @change="onRefImageFileChange" />
+    <input ref="addPropAddRefFileInput" type="file" accept="image/*" class="hidden-file-input" @change="onRefImageFileChange2" />
 
     <!-- 添加道具弹窗 -->
     <el-dialog v-model="showAddProp" :title="$t('filmCreate.addProp')" width="600px" @close="() => { addPropForm = { name: '', type: '', description: '', prompt: '' }; addPropAddRefImage = null }">
@@ -148,7 +157,7 @@
                 :src="editPropForm.ref_image.startsWith('http') ? editPropForm.ref_image : '/static/' + editPropForm.ref_image"
                 class="ref-preview-img" />
               <img v-else-if="editPropForm.id && (editPropForm.image_url || editPropForm.local_path)"
-                :src="mediaComposable.assetImageUrl(editPropForm)" class="ref-preview-img" style="opacity:0.5" />
+                :src="mediaComposable.assetImageUrl(editPropForm)" class="ref-preview-img ref-preview-img--dim" />
               <div v-else class="ref-upload-hint"><span class="ref-upload-icon">🖼</span><span>{{ $t('filmCreate.clickOrDragRefImage') }}</span></div>
             </div>
             <div v-if="addPropRefImage" class="ref-actions">
@@ -174,9 +183,9 @@
           <el-input v-model="editPropForm.description" type="textarea" :autosize="{ minRows: 3, maxRows: 8 }" :placeholder="$t('filmCreate.propDescPlaceholder')" />
         </el-form-item>
         <el-form-item :label="$t('filmCreate.imageToImagePrompt')">
-          <div style="width:100%">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:12px;color:#909399">{{ $t('filmCreate.propPromptTip') }}</span>
+          <div class="prop-prompt-wrapper">
+            <div class="prop-prompt-header">
+              <span class="prop-prompt-tip">{{ $t('filmCreate.propPromptTip') }}</span>
               <el-button size="small" :loading="editPropPromptGenerating" @click="doGeneratePropPrompt">{{ $t('filmCreate.regenPrompt') }}</el-button>
             </div>
             <el-input
@@ -200,7 +209,7 @@
       <el-tabs v-model="propLibraryTab" class="char-library-tabs" @tab-change="onPropLibraryTabChange">
         <el-tab-pane :label="$t('filmCreate.dramaPropLibTab')" name="library">
           <div class="library-toolbar">
-            <el-input v-model="propLibraryKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable style="width: 200px" @input="debouncedLoadPropLibrary()" />
+            <el-input v-model="propLibraryKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable class="library-search-input" @input="debouncedLoadPropLibrary()" />
           </div>
           <div v-loading="propLibraryLoading" class="library-list">
             <div v-for="item in propLibraryList" :key="'plib-' + item.id" class="library-item">
@@ -226,7 +235,7 @@
         </el-tab-pane>
         <el-tab-pane :label="$t('filmCreate.dramaAllPropTab')" name="drama">
           <div class="library-toolbar">
-            <el-input v-model="dramaAllPropKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable style="width: 200px" @input="debouncedLoadDramaAllPropList()" />
+            <el-input v-model="dramaAllPropKeyword" :placeholder="$t('filmCreate.searchNameOrDesc')" clearable class="library-search-input" @input="debouncedLoadDramaAllPropList()" />
           </div>
           <div v-loading="dramaAllPropLoading" class="library-list">
             <div v-for="item in dramaAllPropList" :key="'pdr-' + item.id" class="library-item">
@@ -281,7 +290,8 @@
 <script setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { ArrowUp, ArrowDown, Delete, ZoomIn, MagicStick, Upload } from '@element-plus/icons-vue'
+import { ArrowUp, ArrowDown, Delete, MoreFilled, ZoomIn, MagicStick, Upload } from '@element-plus/icons-vue'
+import EmptyState from './EmptyState.vue'
 import { t } from '@/i18n'
 import { uploadAPI } from '@/api/upload'
 
@@ -370,3 +380,24 @@ async function doExtractFromRef() {
   }
 }
 </script>
+
+<style scoped>
+.prop-gen-mode {
+  margin: 8px 0;
+  font-size: 13px;
+}
+.prop-prompt-wrapper {
+  width: 100%;
+}
+.prop-prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.prop-prompt-tip {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+</style>
+

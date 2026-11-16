@@ -1,12 +1,37 @@
 <template>
   <div class="sb-card-wrapper">
     <!-- 分镜控制栏（卡片外，缩进表示属于当前幕） -->
-    <div class="sb-ctrl-bar">
-      <span class="sb-ctrl-num">{{ index + 1 }}</span>
-      <span class="sb-ctrl-title">{{ sb.title || $t('filmCreate.unnamedStoryboard') }}</span>
-      <el-tag v-if="sb.movement" size="small" effect="plain" type="info" class="sb-movement-tag">{{ actions.getMovementLabel(sb.movement) }}</el-tag>
-      <el-button size="small" plain class="sb-ctrl-btn sb-ctrl-config-btn" @click="actions.onOpenVideoParamsDialog(sb)">{{ $t('filmCreate.storyboardConfig') }}</el-button>
+    <div class="sb-ctrl-bar" :class="{ 'sb-ctrl-bar--compact': compact }">
+      <el-checkbox
+        :model-value="selected"
+        :aria-label="$t('filmCreate.selectShot', { num: index + 1 })"
+        @update:model-value="$emit('toggle-selected')"
+      />
+      <span v-if="!compact" class="sb-ctrl-num">{{ index + 1 }}</span>
+      <span v-if="!compact" class="sb-ctrl-title">{{ sb.title || $t('filmCreate.unnamedStoryboard') }}</span>
+      <el-tooltip v-if="storyboardStatus.error" :content="storyboardStatus.error" placement="top">
+        <el-tag size="small" type="danger" tabindex="0">{{ $t('filmCreate.failedStatus') }}</el-tag>
+      </el-tooltip>
+      <el-tag v-else size="small" :type="storyboardStatus.status === 'done' ? 'success' : storyboardStatus.status === 'running' ? 'warning' : 'info'">
+        <el-icon v-if="storyboardStatus.status === 'running'" class="is-loading" aria-hidden="true"><Loading /></el-icon>
+        {{ $t(`filmCreate.${storyboardStatus.status}Status`) }}
+      </el-tag>
+      <span
+        v-if="storyboardStatus.status === 'running' && storyboardProgress != null"
+        class="sb-task-progress"
+        role="status"
+        aria-live="polite"
+      >{{ storyboardProgress }}%</span>
       <el-button
+        v-if="storyboardStatus.status === 'failed'"
+        size="small"
+        class="sb-status-retry"
+        @click="actions.getSbVideoError(sb.id) ? actions.onGenerateSbVideo(sb) : actions.onGenerateSbImage(sb)"
+      >{{ $t('common.retry') }}</el-button>
+      <el-tag v-if="!compact && sb.movement" size="small" effect="plain" type="info" class="sb-movement-tag">{{ actions.getMovementLabel(sb.movement) }}</el-tag>
+      <el-button v-if="!compact" size="small" plain class="sb-ctrl-btn sb-ctrl-config-btn" @click="actions.onOpenVideoParamsDialog(sb)">{{ $t('filmCreate.storyboardConfig') }}</el-button>
+      <el-button
+        v-if="!compact"
         size="small"
         plain
         class="sb-ctrl-btn sb-ctrl-mode-btn"
@@ -15,20 +40,28 @@
       >
         {{ actions.isSbUniversalMode(sb.id) ? $t('filmCreate.classicMode') : $t('filmCreate.universalMode') }}
       </el-button>
-      <el-button size="small" plain class="sb-ctrl-btn" :title="$t('filmCreate.insertStoryboardBefore')" @click="actions.onInsertStoryboardBefore(sb)">{{ $t('filmCreate.addShort') }}</el-button>
+      <el-button v-if="!compact" size="small" plain class="sb-ctrl-btn" :title="$t('filmCreate.insertStoryboardBefore')" @click="actions.onInsertStoryboardBefore(sb)">{{ $t('filmCreate.addShort') }}</el-button>
       <el-button
+        v-if="!compact"
         class="sb-ctrl-delete"
         type="danger"
         text
         size="small"
         :title="$t('filmCreate.deleteStoryboardN', { num: index + 1 })"
+        :aria-label="$t('filmCreate.deleteStoryboardN', { num: index + 1 })"
         @click="actions.onDeleteSingleStoryboard(sb.id)"
       >
         <el-icon><Delete /></el-icon>
       </el-button>
     </div>
 
-    <div :id="'sb-' + sb.id" class="storyboard-row">
+    <div v-if="compact" :id="'sb-' + sb.id" class="storyboard-row storyboard-row--compact">
+      <img v-if="actions.getSbImage(sb.id)" :src="assetImageUrl(actions.getSbImage(sb.id))" alt="" class="sb-compact-thumb" />
+      <span v-else class="sb-compact-thumb sb-compact-thumb--empty" aria-hidden="true">{{ index + 1 }}</span>
+      <span class="sb-compact-title">{{ sb.title || $t('filmCreate.unnamedStoryboard') }}</span>
+      <el-button v-if="actions.getSbVideoError(sb.id)" size="small" @click="actions.onGenerateSbVideo(sb)">{{ $t('common.retry') }}</el-button>
+    </div>
+    <div v-else :id="'sb-' + sb.id" class="storyboard-row">
       <!-- 左：分镜脚本 -->
       <div class="sb-panel sb-script">
         <div class="sb-script-row sb-script-selects">
@@ -116,13 +149,14 @@
                 v-for="c in getSbSelectedCharacters(sb.id)"
                 :key="c.id"
                 class="sb-thumb-item sb-thumb-avatar"
-                :class="{ 'sb-thumb-clickable': hasAssetImage(c) }"
-                :title="c.name"
+                :class="{ 'sb-thumb-clickable': hasAssetImage(c), 'is-missing-ref': !hasAssetImage(c) }"
+                :title="!hasAssetImage(c) ? `${c.name} (${$t('filmCreate.missingCharRefWarning')})` : c.name"
                 role="button"
                 @click="hasAssetImage(c) && actions.openImagePreview(assetImageUrl(c))"
               >
                 <img v-if="hasAssetImage(c)" :src="assetImageUrl(c)" alt="" />
                 <span v-else class="sb-thumb-placeholder">{{ (c.name || '')[0] }}</span>
+                <span v-if="!hasAssetImage(c)" class="char-missing-badge" :title="$t('filmCreate.missingCharRefWarning')">!</span>
               </div>
               <el-dropdown trigger="click" @command="(cmd) => actions.onSbAddCharacterCommand(sb.id, cmd)">
                 <div
@@ -179,32 +213,17 @@
           <el-button size="small" link type="primary" @click="actions.onOpenSbPromptDialog(sb)">{{ $t('common.edit') }}</el-button>
         </div>
 
-        <template v-if="storyboardIncludeNarration || (state.sbNarration?.[sb.id] || '').trim() || (sb.narration || '').trim()">
-          <div class="sb-prompt-label">
-            <span class="sb-dot"></span>
-            <span>{{ $t('filmCreate.narrationLabel') }}</span>
-          </div>
-          <el-input
-            v-model="state.sbNarration[sb.id]"
-            type="textarea"
-            :rows="2"
-            :placeholder="$t('filmCreate.narrationPlaceholder')"
-            class="sb-narration-input"
-            @blur="() => actions.onSaveSbNarrationField(sb)"
-          />
-          <div v-if="(state.sbNarration?.[sb.id] || sb.narration || '').toString().trim()" class="sb-narration-actions">
-            <el-tooltip :content="$t('filmCreate.narrationTtsTooltip')" placement="top">
-              <el-button size="small" :loading="state.ttsSbNarrationIds?.has(sb.id)" @click="actions.onTtsSbNarration(sb)">
-                {{ $t('filmCreate.narrationDubbing') }}
-              </el-button>
-            </el-tooltip>
-            <el-tooltip v-if="actions.sbNarrationAudioRelPath(sb)" :content="$t('filmCreate.playNarrationDubbing')" placement="top">
-              <el-button size="small" @click="actions.playSbNarrationTts(sb)">
-                <el-icon><VideoPlay /></el-icon>
-              </el-button>
-            </el-tooltip>
-          </div>
-        </template>
+        <NarrationSection
+          :storyboard-include-narration="storyboardIncludeNarration"
+          :draft="state.sbNarration?.[sb.id] || ''"
+          :saved="sb.narration || ''"
+          :tts-running="state.ttsSbNarrationIds?.has(sb.id)"
+          :audio-path="actions.sbNarrationAudioRelPath(sb)"
+          @update:draft="state.sbNarration[sb.id] = $event"
+          @save="actions.onSaveSbNarrationField(sb)"
+          @generate="actions.onTtsSbNarration(sb)"
+          @play="actions.playSbNarrationTts(sb)"
+        />
       </div>
 
       <!-- 中：经典模式=分镜参考图；全能模式=片段描述（独立字段，与参考图并存） -->
@@ -378,7 +397,7 @@
                   <img :src="item.src" alt="" />
                   <span v-if="item.frameBadge" class="sb-img-thumb-label">{{ item.frameBadge }}</span>
                   <span v-else-if="item.label" class="sb-img-thumb-label">{{ item.label }}</span>
-                  <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" @click.stop="actions.openImagePreview(item.src)">
+                  <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" :aria-label="$t('filmCreate.zoomPreview')" @click.stop="actions.openImagePreview(item.src)">
                     <el-icon :size="10"><ZoomIn /></el-icon>
                   </button>
                   <button v-if="item.img?.id" class="extra-thumb-remove" :title="$t('filmCreate.deleteHistoryImage')" @click.stop="actions.onRemoveSbHistoryImage(sb.id, item.img.id)">×</button>
@@ -414,6 +433,15 @@
                   </el-button>
                   <el-button size="small" :loading="state.uploadingSbImageId === sb.id" @click="actions.onUploadSbImageClick(sb)">{{ $t('common.upload') }}</el-button>
                 </template>
+                <template v-else-if="state.generatingSbImageIds?.has(sb.id)">
+                  <el-skeleton class="sb-image-skeleton" animated aria-hidden="true">
+                    <template #template>
+                      <el-skeleton-item variant="image" class="sb-image-skeleton__image" />
+                      <el-skeleton-item variant="text" class="sb-image-skeleton__line" />
+                    </template>
+                  </el-skeleton>
+                  <span class="sr-only" role="status">{{ $t('filmCreate.generatingStoryboardImage') }}</span>
+                </template>
                 <template v-else>
                   <el-button type="primary" size="small" class="sb-gen-btn" :loading="state.generatingSbImageIds?.has(sb.id)" @click="actions.onGenerateSbImage(sb)">
                     <el-icon><MagicStick /></el-icon>
@@ -435,7 +463,7 @@
                 >
                   <img :src="item.src" alt="" />
                   <span v-if="item.label" class="sb-img-thumb-label">{{ item.label }}</span>
-                  <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" @click.stop="actions.openImagePreview(item.src)">
+                  <button class="thumb-preview-btn" :title="$t('filmCreate.zoomPreview')" :aria-label="$t('filmCreate.zoomPreview')" @click.stop="actions.openImagePreview(item.src)">
                     <el-icon :size="10"><ZoomIn /></el-icon>
                   </button>
                   <button v-if="item.img?.id" class="extra-thumb-remove" :title="$t('filmCreate.deleteHistoryImage')" @click.stop="actions.onRemoveSbHistoryImage(sb.id, item.img.id)">×</button>
@@ -566,8 +594,8 @@
             </el-button>
           </el-tooltip>
           <el-tooltip v-if="sb.dialogue && actions.sbDialogueAudioRelPath(sb)" :content="$t('filmCreate.playDialogueDubbing')" placement="top">
-            <el-button size="small" @click="actions.playSbDialogueTts(sb)">
-              <el-icon><VideoPlay /></el-icon>
+            <el-button size="small" :aria-label="$t('filmCreate.playDialogueDubbing')" @click="actions.playSbDialogueTts(sb)">
+              <el-icon aria-hidden="true"><VideoPlay /></el-icon>
             </el-button>
           </el-tooltip>
         </div>
@@ -577,7 +605,10 @@
           <span>{{ $t('filmCreate.videoPrompt') }}</span>
         </div>
         <div class="sb-video-params-bar">
-          <span class="sb-video-prompt-text sb-video-prompt-text--preview">{{ sb.video_prompt || $t('filmCreate.noVideoPromptPlaceholder') }}</span>
+          <span :class="['sb-video-prompt-text', 'sb-video-prompt-text--preview', { 'is-expanded': videoPromptExpanded }]">{{ sb.video_prompt || $t('filmCreate.noVideoPromptPlaceholder') }}</span>
+          <el-button v-if="(sb.video_prompt || '').length > 160" size="small" link type="primary" @click="videoPromptExpanded = !videoPromptExpanded">
+            {{ videoPromptExpanded ? $t('filmCreate.showLess') : $t('filmCreate.showMore') }}
+          </el-button>
           <el-button size="small" link type="primary" @click="actions.onOpenSbPromptDialog(sb)">{{ $t('filmCreate.manualEdit') }}</el-button>
         </div>
       </div>
@@ -590,8 +621,11 @@ import {
   Delete, Plus, QuestionFilled, ArrowDown, InfoFilled, ZoomIn,
   Refresh, MagicStick, VideoPlay, Loading
 } from '@element-plus/icons-vue'
+import { computed, ref } from 'vue'
 import UniversalSegmentOmniAtEditor from '@/components/UniversalSegmentOmniAtEditor.vue'
+import NarrationSection from './NarrationSection.vue'
 import { assetImageUrl, hasAssetImage, assetVideoUrl, imageUrl } from '@/utils/mediaUrl'
+import { getStoryboardStatus } from '@/utils/storyboardStatus'
 
 const props = defineProps({
   sb: { type: Object, required: true },
@@ -604,7 +638,22 @@ const props = defineProps({
   lastFrameUseFirstLayoutLock: { type: Boolean, default: false },
   state: { type: Object, required: true },
   actions: { type: Object, required: true },
+  compact: { type: Boolean, default: false },
+  selected: { type: Boolean, default: false },
 })
+defineEmits(['toggle-selected'])
+const videoPromptExpanded = ref(false)
+const storyboardStatus = computed(() => getStoryboardStatus({
+  error: props.actions.getSbVideoError(props.sb.id) || props.sb.error_msg || props.sb.errorMsg || '',
+  hasVideo: Boolean(props.actions.getSbVideo(props.sb.id)),
+  isRunning: Boolean(
+    props.actions.isSbVideoGenerating(props.sb.id)
+    || props.state.generatingSbImageIds?.has(props.sb.id)
+    || props.state.generatingSbFirstImageIds?.has(props.sb.id)
+    || props.state.generatingSbLastImageIds?.has(props.sb.id)
+  ),
+}))
+const storyboardProgress = computed(() => props.actions.getStoryboardTaskProgress?.(props.sb.id) ?? null)
 
 function getSbCharacterIds(sbId) {
   const arr = props.state.sbCharacterIds?.[sbId]
@@ -646,9 +695,32 @@ function uploadingSbImageSlot(sbId) {
 </script>
 
 <style scoped>
+.sb-image-skeleton { width:100%; display:grid; gap:8px; }
+.sb-image-skeleton__image { width:100%; height:220px; }
+.sb-image-skeleton__line { width:72%; }
+.sr-only {
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0, 0, 0, 0);
+  white-space:nowrap;
+  border:0;
+}
 .sb-card-wrapper {
   margin-bottom: 24px;
 }
+.sb-task-progress {
+  color: var(--text-muted);
+  font-size: var(--font-xs);
+  font-variant-numeric: tabular-nums;
+}
+.storyboard-row--compact { align-items:center; gap:var(--space-3); min-height:58px; padding:var(--space-2) var(--space-3); }
+.sb-compact-thumb { width:48px; height:40px; object-fit:cover; border-radius:var(--radius-sm); flex:none; }
+.sb-compact-thumb--empty { display:grid; place-items:center; color:var(--text-muted); background:var(--surface-2); }
+.sb-compact-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .sb-ctrl-bar {
   display: flex;
   align-items: center;
@@ -657,6 +729,7 @@ function uploadingSbImageSlot(sbId) {
   margin-bottom: 4px;
   height: 26px;
 }
+.sb-ctrl-bar--compact { height:auto; min-height:48px; margin:0; padding:var(--space-2); }
 .sb-ctrl-num {
   background: var(--el-color-primary);
   color: #fff;
@@ -807,6 +880,26 @@ html.light .sb-panel {
   width: 32px;
   height: 32px;
   border-radius: 50%;
+  position: relative;
+}
+.sb-thumb-avatar.is-missing-ref {
+  box-shadow: 0 0 0 1.5px var(--el-color-warning);
+}
+.char-missing-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: var(--el-color-warning);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 .sb-thumb-scene {
   width: 48px;
@@ -1239,6 +1332,12 @@ html.light .sb-image-area:hover {
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-all;
+}
+.sb-video-prompt-text--preview.is-expanded {
+  display: block;
+  overflow: visible;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 .sb-ctrl-mode-btn.el-button {
   border-color: rgba(34, 197, 94, 0.35);

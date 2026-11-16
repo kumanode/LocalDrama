@@ -42,7 +42,7 @@
         <el-select
           :model-value="gridMode"
           size="small"
-          style="width:110px"
+          class="sb-grid-mode-select"
           :disabled="storyboardUseFirstLastFrame"
           @update:model-value="(v) => $emit('update:gridMode', v)"
         >
@@ -53,7 +53,39 @@
         <span class="sb-config-hint">{{ $t('filmCreate.gridSplitHint') }}</span>
       </label>
     </div>
-    <div class="sb-config-row sb-narration-export-row" style="margin-top:10px;flex-wrap:wrap;align-items:center;gap:12px">
+    <div v-if="storyboards.length" class="sb-view-tools">
+      <el-checkbox :model-value="selectedIds.size === storyboards.length" @change="toggleAll">
+        {{ $t('filmCreate.selectAllShots') }}
+      </el-checkbox>
+      <span v-if="selectedIds.size" class="sb-selection-count">
+        {{ $t('filmCreate.shotsSelected', { count: selectedIds.size }) }}
+      </span>
+      <el-button size="small" :aria-pressed="compactMode" @click="compactMode = !compactMode">
+        {{ compactMode ? $t('filmCreate.expandShots') : $t('filmCreate.compactShots') }}
+      </el-button>
+      <el-button v-if="selectedIds.size" size="small" :loading="selectedAction === 'image'" @click="runSelected('image')">
+        {{ $t('filmCreate.generateSelectedImages') }}
+      </el-button>
+      <el-button v-if="selectedIds.size" size="small" :loading="selectedAction === 'video'" @click="runSelected('video')">
+        {{ $t('filmCreate.generateSelectedVideos') }}
+      </el-button>
+      <el-select
+        v-if="selectedIds.size"
+        v-model="selectedAspectRatio"
+        size="small"
+        class="sb-bulk-ratio"
+        :aria-label="$t('filmCreate.bulkAspectRatio')"
+      >
+        <el-option v-for="ratio in aspectRatios" :key="ratio" :label="ratio" :value="ratio" />
+      </el-select>
+      <el-button v-if="selectedIds.size" size="small" :loading="selectedAction === 'ratio'" @click="runSelected('ratio')">
+        {{ $t('filmCreate.applyAspectRatio') }}
+      </el-button>
+      <el-button v-if="selectedIds.size" size="small" type="danger" plain @click="runSelected('delete')">
+        {{ $t('filmCreate.deleteSelectedShots') }}
+      </el-button>
+    </div>
+    <div id="anchor-export" class="sb-config-row sb-narration-export-row">
       <el-checkbox
         :model-value="storyboardUseFirstLastFrame"
         @update:model-value="(v) => $emit('update:storyboardUseFirstLastFrame', v)"
@@ -214,6 +246,9 @@
           :last-frame-use-first-layout-lock="lastFrameUseFirstLayoutLock"
           :state="cardState"
           :actions="cardActions"
+          :compact="compactMode"
+          :selected="selectedIds.has(sb.id)"
+          @toggle-selected="toggleSelected(sb.id)"
         />
       </template>
     </template>
@@ -227,15 +262,28 @@
       </span>
       <span v-else class="sb-gen-text">{{ $t('filmCreate.storyboardGeneratingWait') }}</span>
     </div>
-    <div v-else-if="storyboards.length === 0" class="empty-tip">{{ $t('filmCreate.pleaseGenStoryboardsFirst') }}</div>
+    <EmptyState
+      v-else-if="storyboards.length === 0"
+      :description="$t('filmCreate.pleaseGenStoryboardsFirst')"
+      :action-label="$t('filmCreate.aiGenerateStoryboards')"
+      @action="$emit('generate-storyboard')"
+    />
   </section>
 </template>
 
 <script setup>
+import { computed, ref, watch } from 'vue'
 import { Loading, WarningFilled } from '@element-plus/icons-vue'
 import StoryboardCard from './StoryboardCard.vue'
+import EmptyState from './EmptyState.vue'
+import { storyboardsAPI } from '@/api/storyboards'
+import {
+  getSelectedStoryboards,
+  selectAllStoryboards,
+  toggleStoryboardSelection,
+} from '@/utils/storyboardSelection'
 
-defineProps({
+const props = defineProps({
   storyboardCount: { type: Number, default: undefined },
   videoDuration: { type: Number, default: undefined },
   gridMode: { type: String, default: 'single' },
@@ -290,15 +338,56 @@ defineEmits([
   'stop-batch-image',
   'stop-batch-video',
 ])
+const selectedIds = ref(new Set())
+const compactMode = ref(false)
+const selectedAction = ref('')
+const selectedAspectRatio = ref('16:9')
+const aspectRatios = ['16:9', '9:16', '1:1', '4:3', '3:4']
+const selectedStoryboards = computed(() => getSelectedStoryboards(props.storyboards, selectedIds.value))
+
+watch(() => props.storyboards.map(({ id }) => id), (ids) => {
+  selectedIds.value = new Set([...selectedIds.value].filter((id) => ids.includes(id)))
+})
+
+function toggleSelected(id) {
+  selectedIds.value = toggleStoryboardSelection(selectedIds.value, id)
+}
+
+function toggleAll(selected) {
+  selectedIds.value = selectAllStoryboards(props.storyboards, selected)
+}
+
+async function runSelected(action) {
+  selectedAction.value = action
+  try {
+    for (const storyboard of selectedStoryboards.value) {
+      if (action === 'image') await props.cardActions.onGenerateSbImage(storyboard)
+      else if (action === 'video') await props.cardActions.onGenerateSbVideo(storyboard)
+      else if (action === 'ratio') {
+        await storyboardsAPI.update(storyboard.id, { aspect_ratio: selectedAspectRatio.value })
+        storyboard.aspect_ratio = selectedAspectRatio.value
+      }
+      else await props.cardActions.onDeleteSingleStoryboard(storyboard.id)
+    }
+    if (action === 'delete') selectedIds.value = new Set()
+  } finally {
+    selectedAction.value = ''
+  }
+}
 </script>
 
 <style scoped>
+.sb-bulk-ratio { min-width: 96px; width: auto; }
+.sb-grid-mode-select { min-width:110px; width:auto; }
+.sb-narration-export-row { margin-top:10px; flex-wrap:wrap; align-items:center; gap:12px; }
 .sb-config-row {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
 }
+.sb-view-tools { display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-2); margin:var(--space-3) 0; }
+.sb-selection-count { color:var(--text-muted); font-size:var(--font-sm); }
 .sb-config-item {
   display: flex;
   align-items: center;

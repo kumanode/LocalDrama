@@ -3,6 +3,7 @@ import { t } from '@/i18n'
 import { imagesAPI } from '@/api/images'
 import { storyboardsAPI } from '@/api/storyboards'
 import { GEN_RESOURCE } from '@/stores/generationTaskStore'
+import { getStoryboardAspectRatio } from '@/utils/storyboardAspectRatio'
 
 export function useStoryboardImages({
   store,
@@ -95,7 +96,7 @@ export function useStoryboardImages({
         model: undefined,
         style: getSelectedStyle ? getSelectedStyle() : undefined,
         frame_type: frameTypeForSlot ? frameTypeForSlot(slot) : undefined,
-        aspect_ratio: projectAspectRatio.value || '16:9',
+        aspect_ratio: getStoryboardAspectRatio(sb, projectAspectRatio.value),
         reference_images: refImagesForCreate,
         use_first_frame_layout_lock: isLast ? !!lastFrameUseFirstLayoutLock.value : undefined,
       })
@@ -173,7 +174,7 @@ export function useStoryboardImages({
         model: undefined,
         style: getSelectedStyle ? getSelectedStyle() : undefined,
         frame_type: gridMode.value !== 'single' ? gridMode.value : undefined,
-        aspect_ratio: projectAspectRatio.value || '16:9',
+        aspect_ratio: getStoryboardAspectRatio(sb, projectAspectRatio.value),
       })
       ElMessage.success(t('filmCreate.sbImageTaskSubmitted'))
       if (res?.task_id) {

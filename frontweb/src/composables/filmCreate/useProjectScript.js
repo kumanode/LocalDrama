@@ -1,4 +1,4 @@
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useProjectSettings } from './useProjectSettings'
 import { useStoryScript } from './useStoryScript'
 
@@ -16,8 +16,6 @@ export function useProjectScript({
   customStylePrompt,
   projectAspectRatio,
   videoClipDuration,
-  storyboardIncludeNarration,
-  storyboardUniversalOmni,
   storyboardUseFirstLastFrame,
   lastFrameUseFirstLayoutLock,
   gridMode,
@@ -50,6 +48,9 @@ export function useProjectScript({
   trackFilmCreateAction,
   pollTask,
 }) {
+  // Created here (not in useStoryScript) because useProjectSettings needs them before useStoryScript runs.
+  const storyboardIncludeNarration = ref(false)
+  const storyboardUniversalOmni = ref(false)
   const projectSettings = useProjectSettings({
     store,
     route,
@@ -132,6 +133,8 @@ export function useProjectScript({
     sbTruncatedDismissed,
     trackFilmCreateAction,
     onEpisodeSelect: (...args) => onEpisodeSelect(...args),
+    storyboardIncludeNarration,
+    storyboardUniversalOmni,
   })
 
   const selectableScriptDramas = computed(() => {

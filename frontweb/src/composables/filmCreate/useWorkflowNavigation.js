@@ -38,7 +38,7 @@ export function useWorkflowNavigation({
   getSbAllVideos,
   generatingSbVideoIds,
 }) {
-  const navigation = useNavigation()
+  const navigation = useNavigation({ dramaId })
 
   const activeTasks = useActiveTasks({
     dramaId,

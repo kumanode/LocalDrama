@@ -396,7 +396,7 @@ onMounted(loadMedia)
 }
 .media-meta {
   font-size: 11px;
-  color: var(--text-secondary, #909399);
+  color: var(--text-secondary);
 }
 .empty-media {
   grid-column: 1 / -1;
@@ -405,7 +405,7 @@ onMounted(loadMedia)
   align-items: center;
   justify-content: center;
   padding: 60px 0;
-  color: var(--text-secondary, #909399);
+  color: var(--text-secondary);
 }
 .empty-icon {
   font-size: 48px;
@@ -452,7 +452,7 @@ onMounted(loadMedia)
   flex-direction: column;
   gap: 6px;
   font-size: 13px;
-  color: var(--text-secondary, #909399);
+  color: var(--text-secondary);
 }
 .meta-row span {
   font-weight: 500;

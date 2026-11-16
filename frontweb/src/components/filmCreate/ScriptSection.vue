@@ -18,12 +18,12 @@
               class="story-textarea"
               @update:model-value="$emit('update:storyInput', $event)"
             />
-            <div class="row gap" style="margin-top: 10px; flex-wrap: wrap;">
+            <div class="row gap mt-10 fw">
               <el-select
                 :model-value="storyStyle"
                 :placeholder="$t('filmCreate.storyStyle')"
                 clearable
-                style="width: 120px"
+                class="sel-120"
                 @update:model-value="$emit('update:storyStyle', $event)"
                 @change="$emit('saveProjectSettings', false)"
               >
@@ -36,7 +36,7 @@
                 :model-value="storyType"
                 :placeholder="$t('filmCreate.storyType')"
                 clearable
-                style="width: 120px"
+                class="sel-120"
                 @update:model-value="$emit('update:storyType', $event)"
                 @change="$emit('saveProjectSettings', false)"
               >
@@ -44,7 +44,7 @@
                 <el-option :label="$t('filmCreate.typeComedy')" value="comedy" />
                 <el-option :label="$t('filmCreate.typeAdventure')" value="adventure" />
               </el-select>
-              <div style="display:flex;align-items:center;gap:6px;font-size:13px">
+              <div class="inline-row-sm">
                 <span>{{ $t('filmCreate.episodes') }}</span>
                 <el-input-number
                   :model-value="storyEpisodeCount"
@@ -52,7 +52,7 @@
                   :step="1"
                   :precision="0"
                   controls-position="right"
-                  style="width: 100px"
+                  class="inp-num-100"
                   @update:model-value="$emit('update:storyEpisodeCount', $event)"
                 />
               </div>
@@ -68,12 +68,12 @@
           <div class="script-sub-divider" />
           <div id="anchor-script" class="script-sub-block">
             <h2 class="section-title">{{ $t('filmCreate.scriptSection') }}</h2>
-            <div class="row gap" style="margin-bottom: 10px; flex-wrap: wrap;">
+            <div class="row gap mb-10 fw">
               <el-select
                 :model-value="selectedEpisodeId"
                 :placeholder="$t('filmCreate.selectEpisode')"
                 clearable
-                style="width: 130px"
+                class="sel-130"
                 :disabled="!dramaId"
                 @update:model-value="$emit('update:selectedEpisodeId', $event)"
                 @change="$emit('episodeSelect', $event)"
@@ -88,10 +88,10 @@
               <el-input
                 :model-value="scriptTitle"
                 :placeholder="$t('filmCreate.episodeTitlePlaceholder')"
-                style="width: 150px"
+                class="sel-150"
                 @update:model-value="$emit('update:scriptTitle', $event)"
               />
-              <el-button v-if="dramaId" style="margin-left: auto" @click="$emit('addEpisode')">
+              <el-button v-if="dramaId" class="btn-add-episode" @click="$emit('addEpisode')">
                 <el-icon><Plus /></el-icon>{{ $t('filmCreate.addEpisode') }}
               </el-button>
             </div>
@@ -103,7 +103,7 @@
               class="story-textarea"
               @update:model-value="$emit('update:scriptContent', $event)"
             />
-            <div class="row gap" style="margin-top: 8px; flex-wrap: wrap;">
+            <div class="row gap mt-8 fw">
               <el-button
                 :loading="scriptGenerating"
                 :disabled="!!dramaId && (episodes?.length > 0) && !currentEpisodeId"
@@ -253,6 +253,16 @@ defineEmits([
 .script-workbench-unified {
   margin-bottom: 0;
 }
+.mt-10 { margin-top: 10px; }
+.mb-10 { margin-bottom: 10px; }
+.mt-8 { margin-top: 8px; }
+.fw { flex-wrap: wrap; }
+.sel-120 { min-width: 120px; width: auto; }
+.sel-130 { min-width: 130px; width: auto; }
+.sel-150 { min-width: 150px; width: auto; }
+.inp-num-100 { min-width: 100px; width: auto; }
+.inline-row-sm { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.btn-add-episode { margin-left: auto; }
 .script-workbench-tabs :deep(.el-tabs__header) {
   margin-bottom: 16px;
 }

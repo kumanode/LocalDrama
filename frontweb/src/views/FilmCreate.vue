@@ -7,6 +7,7 @@
       v-model:selected-episode-id="selectedEpisodeId"
       :nav-collapsed="navCollapsed"
       :nav-steps="navSteps"
+      :active-step-anchor="activeStepAnchor"
       :storyboards="storyboards"
       v-model:storyboard-menu-expanded="storyboardMenuExpanded"
       :all-active-task-items="allActiveTaskItems"
@@ -24,7 +25,7 @@
         ref="sbImageFileInput"
         type="file"
         accept="image/jpeg,image/png,image/gif,image/webp"
-        style="display: none"
+        class="hidden-file-input"
         @change="onSbImageFileChange"
       />
       <!-- 剧本工作台：单卡片 + 选项卡（创作 / 选择） -->
@@ -58,6 +59,11 @@
         @load-select-script-list="loadSelectScriptList"
         @pick-script="onPickScriptFromDialog"
       />
+      <div class="script-save-status" role="status" aria-live="polite" :class="`is-${scriptSaveState}`">
+        {{ scriptSaveState === 'saved'
+          ? $t('filmCreate.savedChanges', { seconds: Math.floor((saveClock - scriptSavedAt) / 1000) })
+          : $t(`filmCreate.${scriptSaveState}Changes`) }}
+      </div>
 
       <!-- 一键全流程生成 -->
       <PipelinePanel
@@ -77,6 +83,8 @@
         :pipeline-countdown="pipelineCountdown"
         :pipeline-countdown-msg="pipelineCountdownMsg"
         :pipeline-active-tasks="pipelineActiveTasks"
+        :readiness="pipelineReadiness"
+        :cost-estimate="costEstimate"
         @save-project-settings="saveProjectSettings"
         @start-one-click="startOneClickPipeline"
         @start-text-framework="startTextFrameworkPipeline"
@@ -186,7 +194,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useAgentContext } from '@/stores/agentContext'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -196,6 +204,9 @@ import { useGenerationTaskStore, GEN_RESOURCE } from '@/stores/generationTaskSto
 import { isEpisodeExtractRunning } from '@/composables/useGenerationTaskSync'
 import { dramaAPI } from '@/api/drama'
 import { storyboardsAPI } from '@/api/storyboards'
+import { aiAPI } from '@/api/ai'
+import { systemSettingsAPI } from '@/api/prompts'
+import { calculatePipelineReadiness, calculatePipelineCost } from '@/utils/pipelineReadinessAndCost'
 import FilmHeader from '@/components/filmCreate/FilmHeader.vue'
 import ScriptSection from '@/components/filmCreate/ScriptSection.vue'
 import PipelinePanel from '@/components/filmCreate/PipelinePanel.vue'
@@ -206,6 +217,7 @@ import VideoConfigSection from '@/components/filmCreate/VideoConfigSection.vue'
 import FilmCreateDialogs from '@/components/filmCreate/FilmCreateDialogs.vue'
 import { useAssetMedia } from '@/composables/filmCreate/useAssetMedia'
 import { useI18n } from '@/i18n'
+import { useFilmCreateProductivity } from '@/composables/filmCreate/useFilmCreateProductivity'
 import { generationStyleOptions } from '@/constants/styleOptions'
 import { useWorkflowNavigation } from '@/composables/filmCreate/useWorkflowNavigation'
 import { useProjectScript } from '@/composables/filmCreate/useProjectScript'
@@ -226,8 +238,21 @@ const { videoResolution: storeVideoResolution } = storeToRefs(store)
 
 const showAiConfigDialog = ref(false)
 watch(showAiConfigDialog, (open) => {
-  if (!open) invalidateActiveVideoAiConfigCache()
+  if (!open) {
+    invalidateActiveVideoAiConfigCache()
+    loadSystemAndConfigs()
+  }
 })
+const aiConfigs = ref([])
+const systemStatus = ref(null)
+
+async function loadSystemAndConfigs() {
+  try {
+    const [cfg, sys] = await Promise.allSettled([aiAPI.list(), systemSettingsAPI.getSystemStatus()])
+    if (cfg.status === 'fulfilled') aiConfigs.value = Array.isArray(cfg.value) ? cfg.value : []
+    if (sys.status === 'fulfilled') systemStatus.value = sys.value || null
+  } catch (_) {}
+}
 const storyInput = ref('')
 const storyStyle = ref('')
 const storyType = ref('')
@@ -256,7 +281,7 @@ const {
 
 const scriptContent = computed({
   get: () => store.scriptContent,
-  set: (v) => store.setScriptContent(v)
+  set: (v) => store.setScriptContent(v),
 })
 const videoResolution = storeVideoResolution
 
@@ -267,6 +292,24 @@ const props = computed(() => store.props)
 const storyboards = computed(() => store.storyboards)
 const currentEpisode = computed(() => store.currentEpisode)
 const currentEpisodeId = computed(() => store.currentEpisode?.id ?? null)
+const pipelineReadiness = computed(() => calculatePipelineReadiness({
+  currentEpisodeId: currentEpisodeId.value,
+  scriptContent: scriptContent.value,
+  aiConfigs: aiConfigs.value,
+  systemStatus: systemStatus.value,
+  characters: characters.value,
+  storyboards: storyboards.value,
+}))
+const costEstimate = computed(() => calculatePipelineCost({
+  storyboards: storyboards.value,
+  characters: characters.value,
+  scenes: scenes.value,
+  aiConfigs: aiConfigs.value,
+  // Shot media lives in per-shot maps, not only on the storyboard row.
+  hasShotImage: (sb) => sbData.hasSbImage(sb),
+  hasShotVideo: (sb) => sbData.getSbAllVideos(sb.id).length > 0 || Boolean(sb.video_url),
+  expectedShotCount: storyboardCount.value,
+}))
 const videoProgress = computed(() => store.videoProgress)
 const videoStatus = computed(() => store.videoStatus)
 
@@ -301,7 +344,7 @@ const sbTruncatedWarning = ref(false)
 const sbTruncatedDismissed = ref(false)
 
 // ── Composable: Asset Media ───────────────────────────
-const assetMedia = useAssetMedia({ store, dramaId, loadDrama })
+const assetMedia = useAssetMedia({ store, dramaId, loadDrama: (...args) => loadDrama(...args) })
 const {
   assetImageUrl,
   hasAssetImage,
@@ -413,55 +456,20 @@ const {
 
 // ── Composable: Project Script & Settings ─────────────
 const {
-  exportingStoryboardSheet,
-  syncStoryboardStateFromEpisode,
-  onEpisodeSelect,
-  loadDrama,
-  onLastFrameLayoutLockChange,
-  onStoryboardUseFirstLastFrameChange,
-  onNovelImported,
-  updateStoryboardDialogue,
-  saveProjectSettings,
-  onExportStoryboardSheet,
-  applyRouteToStore,
-  storyboardCount,
-  videoDuration,
-  storyboardIncludeNarration,
-  storyboardUniversalOmni,
-  storyGenerating,
-  scriptGenerating,
-  showSelectScriptDialog,
-  selectScriptLoading,
-  selectScriptImporting,
-  selectScriptDramas,
-  selectPreviewEpisodeId,
-  clipSecondsForStoryboardEstimate,
-  shotCountEstimateFromDurationSec,
-  estimateVideoDurationSecFromCharLen,
-  scriptStoryboardEstimate,
-  scriptEstimateVideoDurationHint,
-  scriptEstimateVideoDurationTitle,
-  scriptEstimateStoryboardHint,
-  scriptEstimateStoryboardTitle,
-  scriptTextTrimmedForEstimate,
-  userFilledStoryboardCount,
-  userFilledVideoDuration,
-  getVideoDurationForApi,
-  getStoryboardCountForApi,
-  saveScriptToBackend,
-  onGenerateStory,
-  openSelectScriptDialog,
-  loadSelectScriptList,
-  onPickScriptFromDialog,
-  onGenerateScript,
-  onAddEpisode,
-  refreshStoryboardsForEpisode,
-  refreshStoryboardsOnly,
-  onGenerateStoryboard,
-  onAddSingleStoryboard,
-  onDeleteSingleStoryboard,
-  onInsertStoryboardBefore,
-  selectableScriptDramas,
+  exportingStoryboardSheet, syncStoryboardStateFromEpisode, onEpisodeSelect, loadDrama,
+  onLastFrameLayoutLockChange, onStoryboardUseFirstLastFrameChange, onNovelImported,
+  updateStoryboardDialogue, saveProjectSettings, onExportStoryboardSheet, applyRouteToStore,
+  storyboardCount, videoDuration, storyboardIncludeNarration, storyboardUniversalOmni,
+  storyGenerating, scriptGenerating, showSelectScriptDialog, selectScriptLoading,
+  selectScriptImporting, selectScriptDramas, selectPreviewEpisodeId,
+  clipSecondsForStoryboardEstimate, shotCountEstimateFromDurationSec, estimateVideoDurationSecFromCharLen,
+  scriptStoryboardEstimate, scriptEstimateVideoDurationHint, scriptEstimateVideoDurationTitle,
+  scriptEstimateStoryboardHint, scriptEstimateStoryboardTitle, scriptTextTrimmedForEstimate,
+  userFilledStoryboardCount, userFilledVideoDuration, getVideoDurationForApi, getStoryboardCountForApi,
+  saveScriptToBackend, onGenerateStory, openSelectScriptDialog, loadSelectScriptList,
+  onPickScriptFromDialog, onGenerateScript, onAddEpisode, refreshStoryboardsForEpisode,
+  refreshStoryboardsOnly, onGenerateStoryboard, onAddSingleStoryboard, onDeleteSingleStoryboard,
+  onInsertStoryboardBefore, selectableScriptDramas,
 } = useProjectScript({
   store,
   route,
@@ -476,8 +484,6 @@ const {
   customStylePrompt,
   projectAspectRatio,
   videoClipDuration,
-  storyboardIncludeNarration,
-  storyboardUniversalOmni,
   storyboardUseFirstLastFrame,
   lastFrameUseFirstLayoutLock,
   gridMode,
@@ -651,17 +657,14 @@ function onAgentChanged(event) {
 }
 window.addEventListener('lmd-agent-changed', onAgentChanged)
 
-onBeforeUnmount(() => {
-  window.removeEventListener('lmd-agent-changed', onAgentChanged)
-  agentContext.clear()
-})
-
 // ── Composable: Workflow Navigation & Active Tasks ───
 const {
   navCollapsed,
   storyboardMenuExpanded,
   toggleNav,
   scrollToAnchor,
+  restoreScrollPosition,
+  activeStepAnchor,
   allActiveTaskItems,
   allActiveTaskLabels,
   cancelActiveTask,
@@ -723,13 +726,50 @@ const dialogsActions = {
   closeImagePreview,
 }
 
-onMounted(async () => {
-  loadPipelineConcurrency()
-  applyRouteToStore()
+const { scriptSaveState, scriptSavedAt, saveClock } = useFilmCreateProductivity({
+  t,
+  store,
+  dramaId,
+  currentEpisode,
+  currentEpisodeId,
+  scriptContent,
+  saveScriptToBackend,
+  storyboards,
+  generateStoryboardImage: (sb) => sbCardActions.onGenerateSbImage(sb),
 })
 
-watch(() => route.params.id, () => {
-  applyRouteToStore()
+onMounted(async () => {
+  loadPipelineConcurrency()
+  loadSystemAndConfigs()
+  await applyRouteToStore()
+  await nextTick()
+  restoreScrollPosition()
+
+  // Esc closes any open dialog
+  window.addEventListener('keydown', onGlobalKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('lmd-agent-changed', onAgentChanged)
+  window.removeEventListener('keydown', onGlobalKeydown)
+  agentContext.clear()
+})
+
+function onGlobalKeydown(e) {
+  if (e.key !== 'Escape') return
+  const d = dialogsState
+  if (d.showSbPromptDialog) d.showSbPromptDialog = false
+  else if (d.showFramePromptEditor) d.showFramePromptEditor = false
+  else if (d.showVideoParamsDialog) d.showVideoParamsDialog = false
+  else if (d.showNovelImport) d.showNovelImport = false
+  else if (d.showAiConfigDialog) d.showAiConfigDialog = false
+  else if (d.previewImageUrl) closeImagePreview()
+}
+
+watch(() => route.params.id, async () => {
+  await applyRouteToStore()
+  await nextTick()
+  restoreScrollPosition()
 })
 </script>
 

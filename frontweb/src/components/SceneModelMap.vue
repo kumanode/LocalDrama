@@ -392,7 +392,7 @@ onMounted(() => {
   border-radius: 4px;
   font-family: 'Courier New', monospace;
   font-size: 13px;
-  color: #409eff;
+  color: var(--el-color-primary);
   width: fit-content;
 }
 

@@ -20,3 +20,18 @@ export const generationSettingsAPI = {
     return request.put('/settings/generation', data)
   },
 }
+
+export const contentLanguageAPI = {
+  get() {
+    return request.get('/settings/content-language')
+  },
+  update(language) {
+    return request.put('/settings/content-language', { language })
+  },
+}
+
+export const systemSettingsAPI = {
+  getSystemStatus() {
+    return request.get('/settings/system')
+  },
+}

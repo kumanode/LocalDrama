@@ -4,7 +4,7 @@
       <span class="one-click-label">🚀 {{ $t('filmCreate.oneClickFull') }}</span>
       <el-select
         :model-value="projectAspectRatio"
-        style="width: 130px"
+        class="sel-130"
         @update:model-value="$emit('update:projectAspectRatio', $event)"
         @change="$emit('saveProjectSettings', false)"
       >
@@ -17,7 +17,7 @@
       </el-select>
       <el-select
         :model-value="videoClipDuration"
-        style="width: 105px"
+        class="sel-105"
         @update:model-value="$emit('update:videoClipDuration', $event)"
         @change="$emit('saveProjectSettings', false)"
       >
@@ -32,7 +32,7 @@
         :model-value="scriptLanguage"
         :placeholder="$t('filmCreate.storyboardLanguage')"
         clearable
-        style="width: 105px"
+        class="sel-105"
         @update:model-value="$emit('update:scriptLanguage', $event)"
       >
         <el-option :label="$t('filmCreate.langZh')" value="zh" />
@@ -70,6 +70,26 @@
           ▶ {{ $t('filmCreate.resume') }}
         </el-button>
       </template>
+    </div>
+    <div class="pipeline-readiness" role="status" :aria-label="$t('filmCreate.pipelineReadiness')">
+      <span :class="['readiness-item', readiness.episode ? 'is-ready' : 'is-missing']">
+        <span aria-hidden="true">{{ readiness.episode ? '✓' : '!' }}</span>{{ $t('filmCreate.readinessEpisode') }}
+      </span>
+      <span :class="['readiness-item', readiness.script ? 'is-ready' : 'is-missing']">
+        <span aria-hidden="true">{{ readiness.script ? '✓' : '!' }}</span>{{ $t('filmCreate.readinessScript') }}
+      </span>
+      <span :class="['readiness-item', readiness.models ? 'is-ready' : 'is-missing']">
+        <span aria-hidden="true">{{ readiness.models ? '✓' : '!' }}</span>{{ $t('filmCreate.readinessModels') }}
+      </span>
+      <span :class="['readiness-item', readiness.ffmpeg ? 'is-ready' : 'is-missing']">
+        <span aria-hidden="true">{{ readiness.ffmpeg ? '✓' : '!' }}</span>{{ $t('filmCreate.readinessFfmpeg') }}
+      </span>
+      <span :class="['readiness-item', readiness.characterRefs ? 'is-ready' : 'is-missing']">
+        <span aria-hidden="true">{{ readiness.characterRefs ? '✓' : '!' }}</span>{{ $t('filmCreate.readinessCharRefs') }}
+      </span>
+      <span v-if="costEstimate" class="readiness-item cost-estimate-tag" :title="costTitle">
+        <span aria-hidden="true">💰</span>{{ costLabel }}
+      </span>
     </div>
     <div v-if="pipelineRunning || (pipelineErrorLog && pipelineErrorLog.length > 0)" class="pipeline-status">
       <div v-if="pipelineCurrentStep" class="pipeline-current-step">
@@ -115,9 +135,11 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import StylePickerButton from '@/components/StylePickerButton.vue'
+import { t } from '@/i18n'
 
-defineProps({
+const props = defineProps({
   projectAspectRatio: { type: String, default: '16:9' },
   videoClipDuration: { type: Number, default: 5 },
   scriptLanguage: { type: String, default: '' },
@@ -134,6 +156,27 @@ defineProps({
   pipelineCountdown: { type: Number, default: 0 },
   pipelineCountdownMsg: { type: String, default: '' },
   pipelineActiveTasks: { type: [Object, Array], default: () => new Set() },
+  readiness: { type: Object, default: () => ({ episode: false, script: false, models: false, ffmpeg: false, characterRefs: false }) },
+  costEstimate: { type: Object, default: null },
+})
+
+const costLabel = computed(() => {
+  const c = props.costEstimate
+  if (!c) return ''
+  const approx = c.partial ? '≥' : '~'
+  if (c.priced) return `${t('filmCreate.costEstimate')}: ${approx}${c.totalCost}`
+  return t('filmCreate.costCallsOnly', { count: c.totalCalls, approx })
+})
+const costTitle = computed(() => {
+  const c = props.costEstimate
+  if (!c) return ''
+  const price = (v) => (v == null ? t('filmCreate.costNoPrice') : v)
+  const lines = [
+    t('filmCreate.costBreakdown', { text: c.textCalls, image: c.imageCalls, video: c.videoCalls, textPrice: price(c.textPrice), imagePrice: price(c.imagePrice), videoPrice: price(c.videoPrice) }),
+  ]
+  if (c.partial) lines.push(t('filmCreate.costPartial'))
+  if (!c.priced) lines.push(t('filmCreate.costSetPrice'))
+  return lines.join('\n')
 })
 
 defineEmits([
@@ -155,6 +198,17 @@ defineEmits([
 .pipeline-section {
   padding: 12px 16px !important;
 }
+.sel-105 { width: 105px; min-width: 80px; }
+.sel-130 { width: 130px; min-width: 100px; }
+@media (max-width: 959px) {
+  .sel-105 { width: auto; min-width: 80px; }
+  .sel-130 { width: auto; min-width: 100px; }
+}
+.pipeline-readiness { display:flex; flex-wrap:wrap; gap:var(--space-3); margin-top:var(--space-2); font-size:var(--font-xs); }
+.readiness-item { display:inline-flex; align-items:center; gap:var(--space-1); }
+.readiness-item.is-ready { color:var(--el-color-success); }
+.readiness-item.is-missing { color:var(--text-muted); }
+.cost-estimate-tag { color:var(--el-color-primary); font-weight:500; cursor:help; }
 .one-click-actions {
   display: flex;
   align-items: center;

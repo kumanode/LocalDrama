@@ -1,6 +1,8 @@
 import { reactive, ref } from 'vue'
+import { getStoryboardTaskProgress } from '@/utils/storyboardStatus'
 
 export function useStoryboardCardBindings({
+  genStore,
   sbCharacterIds,
   sbPropIds,
   sbSceneId,
@@ -120,6 +122,7 @@ export function useStoryboardCardBindings({
   })
 
   const sbCardActions = {
+    getStoryboardTaskProgress: (storyboardId) => getStoryboardTaskProgress(genStore?.tasks, storyboardId),
     getMovementLabel,
     onOpenVideoParamsDialog,
     isSbUniversalMode,

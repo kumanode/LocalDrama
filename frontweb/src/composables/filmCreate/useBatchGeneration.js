@@ -5,6 +5,7 @@ import { videosAPI } from '@/api/videos'
 import { storyboardsAPI } from '@/api/storyboards'
 import { uploadAPI } from '@/api/upload'
 import { GEN_RESOURCE } from '@/stores/generationTaskStore'
+import { getStoryboardAspectRatio } from '@/utils/storyboardAspectRatio'
 
 export async function captureVideoLastFrame(videoUrl) {
   return new Promise((resolve) => {
@@ -120,7 +121,7 @@ export function useBatchGeneration({
               prompt,
               style: getSelectedStyle(),
               frame_type: frameTypeForCreate,
-              aspect_ratio: projectAspectRatio.value || '16:9',
+              aspect_ratio: getStoryboardAspectRatio(sb, projectAspectRatio.value),
             })
             if (res?.task_id) {
               const pollRes = await pollTask(res.task_id, () => loadSingleStoryboardMedia(sb.id))
@@ -245,7 +246,7 @@ export function useBatchGeneration({
               last_frame_url: vLast,
               reference_image_urls: refUrls,
               style: getSelectedStyle(),
-              aspect_ratio: projectAspectRatio.value || '16:9',
+              aspect_ratio: getStoryboardAspectRatio(sb, projectAspectRatio.value),
               resolution: videoResolution.value || undefined,
               duration: getSbVideoDurationForApi(sb),
             })
