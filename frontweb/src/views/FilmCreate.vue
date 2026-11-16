@@ -177,75 +177,16 @@
       />
     </main>
 
-    <!-- 分镜提示词编辑弹窗 -->
-    <SbPromptDialog
-      v-model="showSbPromptDialog"
-      :target="sbPromptTarget"
-      v-model:image-text="sbPromptImageText"
-      v-model:polished-text="sbPromptPolishedText"
-      v-model:video-text="sbPromptVideoText"
-      :polishing="sbPromptPolishing"
-      :saving="sbPromptSaving"
-      @polish="onPolishSbPrompt"
-      @save="onSaveSbPromptDialog"
-      @close="sbPromptTarget = null"
+    <!-- Dialog Overlays & Image Preview -->
+    <FilmCreateDialogs
+      :state="dialogsState"
+      :actions="dialogsActions"
     />
-
-    <!-- 首尾帧提示词编辑器 -->
-    <FramePromptEditor
-      v-model="showFramePromptEditor"
-      :slot="editingFramePromptSlot"
-      :storyboard="editingFramePromptSb"
-      v-model:prompt-text="editingFramePromptText"
-      :saving="editingFramePromptSaving"
-      :regenerating="editingFramePromptRegenerating"
-      @save="saveEditingFramePrompt"
-      @regenerate="regenerateEditingFramePrompt"
-    />
-
-    <!-- 分镜视频参数编辑弹窗 -->
-    <VideoParamsDialog
-      v-model="showVideoParamsDialog"
-      :target="videoParamsTarget"
-      :params="videoParamsComposable"
-      :saving="videoParamsSaving"
-      :regenerating-layout-sb-ids="regeneratingLayoutSbIds"
-      :split-by-audio-loading="splitByAudioLoading"
-      @close="onVideoParamsDialogClosed"
-      @save="onSaveVideoParams"
-      @regen-layout="onRegenerateLayoutDescription"
-      @split-audio="onSplitSbByAudio"
-    />
-
-    <!-- P1-2: 导入小说弹窗 -->
-    <NovelImportDialog
-      v-model="showNovelImport"
-      :drama-id="dramaId"
-      :script-title="scriptTitle"
-      :store="store"
-      @imported="onNovelImported"
-    />
-
-    <!-- AI 配置弹窗（不跳转，避免本页内容丢失） -->
-    <el-dialog v-model="showAiConfigDialog" :title="$t('routes.aiConfig')" width="90%" destroy-on-close class="ai-config-dialog">
-      <AIConfigContent v-if="showAiConfigDialog" />
-    </el-dialog>
-
-    <!-- 图片放大预览：点击遮罩或图片关闭 -->
-    <Teleport to="body">
-      <div
-        v-if="previewImageUrl"
-        class="image-preview-overlay"
-        @click="closeImagePreview"
-      >
-        <img :src="previewImageUrl" alt="" class="image-preview-img" @click.stop="closeImagePreview" />
-      </div>
-    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useAgentContext } from '@/stores/agentContext'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -255,18 +196,14 @@ import { useGenerationTaskStore, GEN_RESOURCE } from '@/stores/generationTaskSto
 import { isEpisodeExtractRunning } from '@/composables/useGenerationTaskSync'
 import { dramaAPI } from '@/api/drama'
 import { storyboardsAPI } from '@/api/storyboards'
-import AIConfigContent from '@/components/AIConfigContent.vue'
 import FilmHeader from '@/components/filmCreate/FilmHeader.vue'
 import ScriptSection from '@/components/filmCreate/ScriptSection.vue'
 import PipelinePanel from '@/components/filmCreate/PipelinePanel.vue'
 import ResourceSection from '@/components/filmCreate/ResourceSection.vue'
 import StoryboardSection from '@/components/filmCreate/StoryboardSection.vue'
 import MergeExportSection from '@/components/filmCreate/MergeExportSection.vue'
-import SbPromptDialog from '@/components/filmCreate/SbPromptDialog.vue'
-import FramePromptEditor from '@/components/filmCreate/FramePromptEditor.vue'
-import VideoParamsDialog from '@/components/filmCreate/VideoParamsDialog.vue'
 import VideoConfigSection from '@/components/filmCreate/VideoConfigSection.vue'
-import NovelImportDialog from '@/components/filmCreate/NovelImportDialog.vue'
+import FilmCreateDialogs from '@/components/filmCreate/FilmCreateDialogs.vue'
 import { useVideoParams } from '@/composables/filmCreate/useVideoParams'
 import { useAssetMedia } from '@/composables/filmCreate/useAssetMedia'
 import { useI18n } from '@/i18n'
@@ -1075,6 +1012,51 @@ const {
   generatingSbVideoIds,
   batchVideoRunning,
 })
+
+// ── Dialog Overlays State & Actions ─────────────────
+const dialogsState = reactive({
+  showSbPromptDialog,
+  sbPromptTarget,
+  sbPromptImageText,
+  sbPromptPolishedText,
+  sbPromptVideoText,
+  sbPromptPolishing,
+  sbPromptSaving,
+  showFramePromptEditor,
+  editingFramePromptSlot,
+  editingFramePromptSb,
+  editingFramePromptText,
+  editingFramePromptSaving,
+  editingFramePromptRegenerating,
+  showVideoParamsDialog,
+  videoParamsTarget,
+  videoParamsComposable,
+  videoParamsSaving,
+  regeneratingLayoutSbIds,
+  splitByAudioLoading,
+  showNovelImport,
+  dramaId,
+  scriptTitle,
+  store,
+  showAiConfigDialog,
+  previewImageUrl,
+})
+
+const dialogsActions = {
+  onPolishSbPrompt,
+  onSaveSbPromptDialog,
+  onCloseSbPrompt: () => {
+    sbPromptTarget.value = null
+  },
+  saveEditingFramePrompt,
+  regenerateEditingFramePrompt,
+  onVideoParamsDialogClosed,
+  onSaveVideoParams,
+  onRegenerateLayoutDescription,
+  onSplitSbByAudio,
+  onNovelImported,
+  closeImagePreview,
+}
 
 onMounted(async () => {
   loadPipelineConcurrency()
