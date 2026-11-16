@@ -531,12 +531,12 @@ async function runSelected(action) {
   white-space: nowrap;
 }
 html.light .segment-header-inner {
-  background: linear-gradient(90deg, rgba(139,92,246,0.07) 0%, transparent 80%);
-  border-left-color: rgba(124,58,237,0.5);
+  background: var(--bg-inner);
+  border-left-color: var(--border-muted);
 }
-html.light .segment-title-text { color: #1e1b4b; }
-html.light .segment-index-badge { color: #7c3aed; background: rgba(124,58,237,0.08); }
-html.light .segment-shot-range { color: #9ca3af; }
+html.light .segment-title-text { color: var(--text-bright); }
+html.light .segment-index-badge { color: var(--text-primary); background: var(--bg-inner); border: 1px solid var(--border-muted); }
+html.light .segment-shot-range { color: var(--text-muted); }
 
 .sb-generating-tip {
   display: flex;

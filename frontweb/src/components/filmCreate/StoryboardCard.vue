@@ -779,14 +779,14 @@ html.light .sb-ctrl-title {
   background: rgba(139,92,246,0.6);
 }
 html.light .sb-ctrl-config-btn.el-button {
-  border-color: rgba(124,58,237,0.35);
-  color: #7c3aed;
-  background: rgba(124,58,237,0.06);
+  border-color: var(--border-muted);
+  color: var(--text-primary);
+  background: transparent;
 }
 html.light .sb-ctrl-config-btn.el-button:hover {
-  border-color: #7c3aed;
-  color: #fff;
-  background: #7c3aed;
+  border-color: var(--text-bright);
+  color: var(--text-bright);
+  background: var(--bg-hover);
 }
 .sb-ctrl-delete {
   margin-left: auto;

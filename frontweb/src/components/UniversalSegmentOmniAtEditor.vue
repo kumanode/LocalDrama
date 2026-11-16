@@ -551,7 +551,7 @@ html.light .omni-at-editor {
   border-color: var(--el-border-color, #dcdfe6);
 }
 html.light .omni-at-editor:focus {
-  border-color: #7c3aed;
+  border-color: var(--text-bright);
   box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.2) inset;
 }
 html.light :deep(.omni-at-chip) {

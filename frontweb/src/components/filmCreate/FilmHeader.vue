@@ -617,7 +617,7 @@ function goCanvasMode() {
 .nav-step.is-active { background: rgba(139,92,246,0.08); }
 :global(html.light) .nav-step.is-active { background: rgba(139,92,246,0.07); }
 .nav-step.is-active .step-label { color: #c4b5fd !important; }
-:global(html.light) .nav-step.is-active .step-label { color: #7c3aed !important; }
+:global(html.light) .nav-step.is-active .step-label { color: var(--text-bright) !important; font-weight: 700; }
 
 /* connector column */
 .step-connector-wrap {

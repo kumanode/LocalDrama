@@ -1279,7 +1279,7 @@ html.light .drama-detail .header {
   -webkit-text-fill-color: #6d6d7a;
 }
 html.light .drama-detail .logo-main {
-  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  background: linear-gradient(135deg, var(--text-bright), #6366f1);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1503,8 +1503,8 @@ html.light .episode-title { color: #18181b; }
 html.light .res-tab:hover { background: rgba(0,0,0,0.04); }
 html.light .res-tab--lib.active { color: #2563eb; }
 html.light .res-tab--lib.active::after { background: #2563eb; }
-html.light .res-tab--drama.active { color: #7c3aed; }
-html.light .res-tab--drama.active::after { background: #7c3aed; }
+html.light .res-tab--drama.active { color: var(--text-bright); }
+html.light .res-tab--drama.active::after { background: var(--text-bright); }
 
 /* 本剧制作资源列表 */
 .drama-res-list { display: flex; flex-wrap: wrap; gap: 12px; padding: 4px 0 8px; }

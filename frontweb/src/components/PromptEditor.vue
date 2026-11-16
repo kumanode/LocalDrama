@@ -260,7 +260,7 @@ watch(locale, () => {
 }
 
 .menu-item.active .menu-label {
-  color: var(--el-color-primary, #7c3aed);
+  color: var(--el-color-primary, var(--text-bright));
   font-weight: 600;
 }
 
@@ -308,7 +308,7 @@ watch(locale, () => {
   padding: 10px 14px;
   background: var(--bg-inner, #f8f8f8);
   border-radius: 8px;
-  border-left: 3px solid var(--el-color-primary, #7c3aed);
+  border-left: 3px solid var(--el-color-primary, var(--text-bright));
 }
 
 .prompt-card {
