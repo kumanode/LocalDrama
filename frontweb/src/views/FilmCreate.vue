@@ -101,9 +101,9 @@
         :get-scene-affected-storyboards="getSceneAffectedStoryboards"
         :regen-sb-images-for-asset="regenSbImagesForAsset"
         :regen-sb-images-progress="regenSbImagesProgress"
-        @generate-characters="onGenerateCharacters"
-        @extract-props="onExtractProps"
-        @extract-scenes="onExtractScenes"
+        @generate-characters="charComposable.onGenerateCharacters"
+        @extract-props="propComposable.onExtractProps"
+        @extract-scenes="sceneComposable.onExtractScenes"
         @regen-affected-sb-images="onRegenAffectedSbImages"
         @scroll-to-storyboard="scrollToStoryboard"
       />
@@ -286,18 +286,10 @@ import NovelImportDialog from '@/components/filmCreate/NovelImportDialog.vue'
 import { useVideoParams } from '@/composables/filmCreate/useVideoParams'
 import { useAssetMedia } from '@/composables/filmCreate/useAssetMedia'
 import { useI18n } from '@/i18n'
-import {
-  generationStyleOptions,
-  getStylePromptEn,
-  getStylePromptZh,
-  stylePromptMetadataForSave,
-  CUSTOM_STYLE_VALUE,
-} from '@/constants/styleOptions'
+import { generationStyleOptions } from '@/constants/styleOptions'
 import { useNavigation } from '@/composables/filmCreate/useNavigation'
 import { useStoryScript } from '@/composables/filmCreate/useStoryScript'
-import { useCharacters } from '@/composables/filmCreate/useCharacters'
-import { useProps as usePropsComposable } from '@/composables/filmCreate/useProps'
-import { useScenes } from '@/composables/filmCreate/useScenes'
+import { useResourceAssets } from '@/composables/filmCreate/useResourceAssets'
 import { useNarration } from '@/composables/filmCreate/useNarration'
 import { usePipeline } from '@/composables/filmCreate/usePipeline'
 import { useStoryboards } from '@/composables/filmCreate/useStoryboards'
@@ -313,6 +305,8 @@ import { useTaskPolling } from '@/composables/filmCreate/useTaskPolling'
 import { useProjectSettings } from '@/composables/filmCreate/useProjectSettings'
 import { useActiveTasks } from '@/composables/filmCreate/useActiveTasks'
 import { useStepNavigation } from '@/composables/filmCreate/useStepNavigation'
+import { useGenerationStyle } from '@/composables/filmCreate/useGenerationStyle'
+import { useStoryboardCardBindings } from '@/composables/filmCreate/useStoryboardCardBindings'
 
 const route = useRoute()
 const router = useRouter()
@@ -354,55 +348,17 @@ const selectedEpisodeId = ref(null)
 const savedCurrentEpisodeNumber = ref(1)
 const scriptLanguage = ref('zh')
 const scriptStoryboardStyle = ref('')
-const generationStyle = ref('')
-const customStylePrompt = ref('')
 const projectAspectRatio = ref('16:9')
 const videoClipDuration = ref(5)
 
-/** 根据 value 查找样式选项对象 */
-function _findStyleOption(val) {
-  for (const group of generationStyleOptions) {
-    const found = group.options.find(o => o.value === val)
-    if (found) return found
-  }
-  return null
-}
-
-/** 传给图像/视频 AI 用的英文 prompt（效果最好）；
- *  找不到 promptEn 时降级到 prompt，再降级到原始值；
- *  custom 时返回用户填写的自定义描述，避免把字面量 "custom" 写入提示词 */
-function getSelectedStylePrompt() {
-  const val = (generationStyle.value || '').toString().trim()
-  if (!val) return undefined
-  if (val === CUSTOM_STYLE_VALUE) {
-    const text = (customStylePrompt.value || '').toString().trim()
-    return text || undefined
-  }
-  const opt = _findStyleOption(val)
-  if (opt) return opt.promptEn || opt.prompt || val
-  return val
-}
-
-/** 中文风格描述（用于界面展示或中文场景提示词拼接） */
-function getSelectedStylePromptZh() {
-  const val = (generationStyle.value || '').toString().trim()
-  if (!val) return undefined
-  if (val === CUSTOM_STYLE_VALUE) {
-    const text = (customStylePrompt.value || '').toString().trim()
-    return text || undefined
-  }
-  const opt = _findStyleOption(val)
-  if (opt) return opt.prompt || opt.promptEn || val
-  return val
-}
-
-function projectStylePromptMetadata() {
-  return stylePromptMetadataForSave(generationStyle.value, customStylePrompt.value)
-}
-
-function getSelectedStyle() {
-  return getSelectedStylePrompt()
-}
+const {
+  generationStyle,
+  customStylePrompt,
+  getSelectedStylePrompt,
+  getSelectedStylePromptZh,
+  projectStylePromptMetadata,
+  getSelectedStyle,
+} = useGenerationStyle()
 
 const scriptContent = computed({
   get: () => store.scriptContent,
@@ -467,34 +423,18 @@ const {
   getFirstImageFile,
 } = assetMedia
 
-// ── Composable: Characters ────────────────────────────
-const charComposable = useCharacters({
-  store,
-  dramaId,
-  currentEpisodeId,
-  getSelectedStyle,
-  loadDrama: (...args) => loadDrama(...args),
-  pollTask: (...args) => pollTask(...args),
-  pollUntilResourceHasImage: (...args) => pollUntilResourceHasImage(...args),
-  hasAssetImage,
-})
-const { charactersGenerating, generatingCharIds } = charComposable
-
-// ── Composable: Props ──────────────────────────────────
-const propComposable = usePropsComposable({
-  store,
-  dramaId,
-  currentEpisodeId,
-  getSelectedStyle,
-  loadDrama: (...args) => loadDrama(...args),
-  pollTask: (...args) => pollTask(...args),
-  pollUntilResourceHasImage: (...args) => pollUntilResourceHasImage(...args),
-  hasAssetImage,
-})
-const { propsExtracting, generatingPropIds } = propComposable
-
-// ── Composable: Scenes ─────────────────────────────────
-const sceneComposable = useScenes({
+// ── Composable: Resource Assets (Characters, Props, Scenes) ──
+const {
+  charComposable,
+  charactersGenerating,
+  generatingCharIds,
+  propComposable,
+  propsExtracting,
+  generatingPropIds,
+  sceneComposable,
+  scenesExtracting,
+  generatingSceneIds,
+} = useResourceAssets({
   store,
   dramaId,
   currentEpisodeId,
@@ -506,7 +446,6 @@ const sceneComposable = useScenes({
   hasAssetImage,
   dramaAPI,
 })
-const { scenesExtracting, generatingSceneIds } = sceneComposable
 
 // ── Composable: Video Params ───────────────────────────
 const videoParamsComposable = useVideoParams({
@@ -656,56 +595,7 @@ const {
   loadDrama: (...args) => loadDrama(...args),
 })
 
-async function onGenerateCharacters() {
-  trackFilmCreateAction('generate_characters_click')
-  const beforeCount = (store.currentEpisode?.characters || []).length
-  try {
-    await charComposable.onGenerateCharacters()
-    const afterCount = (store.currentEpisode?.characters || []).length
-    trackFilmCreateAction('generate_characters_complete', {
-      extra: { before_count: beforeCount, after_count: afterCount },
-    })
-  } catch (e) {
-    trackFilmCreateAction('generate_characters_failed', {
-      extra: { message: String(e?.message || 'failed').slice(0, 120) },
-    })
-    throw e
-  }
-}
 
-async function onExtractProps() {
-  trackFilmCreateAction('extract_props_click')
-  const beforeCount = (store.props || []).length
-  try {
-    await propComposable.onExtractProps()
-    const afterCount = (store.props || []).length
-    trackFilmCreateAction('extract_props_complete', {
-      extra: { before_count: beforeCount, after_count: afterCount },
-    })
-  } catch (e) {
-    trackFilmCreateAction('extract_props_failed', {
-      extra: { message: String(e?.message || 'failed').slice(0, 120) },
-    })
-    throw e
-  }
-}
-
-async function onExtractScenes() {
-  trackFilmCreateAction('extract_scenes_click')
-  const beforeCount = (store.currentEpisode?.scenes || []).length
-  try {
-    await sceneComposable.onExtractScenes()
-    const afterCount = (store.currentEpisode?.scenes || []).length
-    trackFilmCreateAction('extract_scenes_complete', {
-      extra: { before_count: beforeCount, after_count: afterCount },
-    })
-  } catch (e) {
-    trackFilmCreateAction('extract_scenes_failed', {
-      extra: { message: String(e?.message || 'failed').slice(0, 120) },
-    })
-    throw e
-  }
-}
 
 
 
@@ -746,7 +636,7 @@ const {
   sbNarration,
 })
 
-const dragOverSbId = ref(null)
+
 // 公共库弹窗状态已移至各 composable
 const storyboardUseFirstLastFrame = ref(false)
 /** 生成尾帧时是否注入首帧作站位/构图参考（默认开启） */
@@ -973,25 +863,7 @@ const selectableScriptDramas = computed(() => {
   return list.filter((d) => Number(d.id) !== Number(cur))
 })
 
-function onSbImageDragOver(e, sbId) {
-  e.preventDefault()
-  e.stopPropagation()
-  if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
-  dragOverSbId.value = sbId
-}
-function onSbImageDragLeave(e, sbId) {
-  e.preventDefault()
-  if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) return
-  if (sbId != null && dragOverSbId.value !== sbId) return
-  dragOverSbId.value = null
-}
-function onSbImageDrop(e, sb) {
-  e.preventDefault()
-  e.stopPropagation()
-  dragOverSbId.value = null
-  const file = getFirstImageFile(e.dataTransfer)
-  if (file && sb?.id) doUploadSbImage(sb.id, file)
-}
+
 
 // ── Composable: Storyboard Images ─────────────────────
 const {
@@ -1380,7 +1252,8 @@ watch(
   }
 )
 
-const sbCardState = reactive({
+// ── Composable: Storyboard Card Bindings ───────────────
+const { sbCardState, sbCardActions } = useStoryboardCardBindings({
   sbCharacterIds,
   sbPropIds,
   sbSceneId,
@@ -1388,7 +1261,6 @@ const sbCardState = reactive({
   sbUniversalSegmentText,
   ttsSbNarrationIds,
   generatingUniversalSegmentIds,
-  dragOverSbId,
   generatingSbFirstImageIds,
   usingPrevTailAsFirstIds,
   sbImageUploadSlotById,
@@ -1398,9 +1270,6 @@ const sbCardState = reactive({
   upscalingSbIds,
   linkingTailFrameIds,
   ttsSbIds,
-})
-
-const sbCardActions = {
   getMovementLabel,
   onOpenVideoParamsDialog,
   isSbUniversalMode,
@@ -1409,9 +1278,6 @@ const sbCardActions = {
   onDeleteSingleStoryboard,
   setSbCharacterIds,
   setSbPropIds,
-  setSbSceneId: (sbId, v) => {
-    sbSceneId.value = { ...sbSceneId.value, [sbId]: v }
-  },
   onStoryboardSceneChange,
   openImagePreview,
   onSbAddCharacterCommand,
@@ -1425,9 +1291,8 @@ const sbCardActions = {
   getSbUniversalOmniRefSlots,
   onSaveUniversalSegmentField,
   getStripItems,
-  onSbImageDragOver,
-  onSbImageDragLeave,
-  onSbImageDrop,
+  getFirstImageFile,
+  doUploadSbImage,
   getSbFirstImage,
   canUsePrevTailAsFirst,
   onUsePrevTailAsFirst,
@@ -1462,7 +1327,7 @@ const sbCardActions = {
   onTtsSbDialogue,
   sbDialogueAudioRelPath,
   playSbDialogueTts,
-}
+})
 </script>
 
 <style scoped>
