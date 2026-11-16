@@ -339,8 +339,7 @@ onMounted(loadMedia)
   position: relative;
 }
 .media-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--text-muted);
 }
 .media-card.selected {
   border-color: var(--el-color-primary);

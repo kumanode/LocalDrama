@@ -1225,33 +1225,17 @@ onBeforeUnmount(() => {
 <style scoped>
 .drama-detail {
   min-height: 100vh;
-  background: #0f0f12;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 20% -20%, rgba(120, 60, 220, 0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(60, 100, 220, 0.12) 0%, transparent 60%);
-  color: #e4e4e7;
+  background: var(--bg-page);
+  color: var(--text-primary);
 }
 .header {
-  background: rgba(18, 18, 22, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(139, 92, 246, 0.18);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
   padding: 12px 24px;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
-}
-html.light .drama-detail {
-  background: #f5f3ff;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 20% -20%, rgba(139, 92, 246, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
-}
-html.light .drama-detail .header {
-  background: rgba(255, 255, 255, 0.85) !important;
-  border-bottom-color: rgba(139, 92, 246, 0.2) !important;
-  box-shadow: 0 2px 16px rgba(139, 92, 246, 0.08) !important;
+  box-shadow: none;
 }
 .logo {
   margin: 0;
@@ -1262,7 +1246,7 @@ html.light .drama-detail .header {
   line-height: 1;
   transition: filter 0.3s;
 }
-.logo:hover { filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5)); }
+.logo:hover { opacity: 0.85; }
 .logo-main {
   font-size: 1.1rem;
   font-weight: 700;
@@ -1321,23 +1305,15 @@ html.light .page-title {
 .header-actions { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
 .main { max-width: min(1200px, 96vw); margin: 0 auto; padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 20px; }
 .section.card {
-  background: rgba(24, 24, 27, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(63, 63, 70, 0.7);
-  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   padding: 20px 24px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
-  transition: box-shadow 0.3s, border-color 0.3s;
+  box-shadow: none;
+  transition: border-color var(--dur-fast) var(--ease-mech);
 }
 .section.card:hover {
-  border-color: rgba(139, 92, 246, 0.25);
-  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(139, 92, 246, 0.08);
-}
-html.light .section.card {
-  background: rgba(255, 255, 255, 0.88);
-  border-color: rgba(139, 92, 246, 0.15);
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.06);
+  border-color: var(--text-muted);
 }
 html.light .section.card:hover {
   border-color: rgba(139, 92, 246, 0.3);
@@ -1374,10 +1350,8 @@ html.light .section-title { color: #18181b; }
   transition: opacity 0.25s;
 }
 .episode-card:hover {
-  border-color: rgba(139, 92, 246, 0.5);
-  background: rgba(35, 35, 38, 0.9);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(139, 92, 246, 0.15);
+  border-color: var(--text-muted);
+  background: var(--bg-hover);
 }
 .episode-card:hover::before { opacity: 1; }
 .episode-card:hover .episode-enter {
@@ -1495,7 +1469,10 @@ html.light .section-title { color: #18181b; }
 .res-tab--drama.active::after { background: #a78bfa; }
 
 html.light .episode-card { background: rgba(255, 255, 255, 0.85); border-color: rgba(139, 92, 246, 0.12); }
-html.light .episode-card:hover { background: rgba(245, 243, 255, 0.95); border-color: rgba(139, 92, 246, 0.4); box-shadow: 0 8px 24px rgba(139, 92, 246, 0.12); }
+html.light .episode-card:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-hover);
+}
 html.light .episode-card::before { background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), transparent 60%); }
 html.light .episode-enter { border-top-color: #e4e4e7; color: #a1a1aa; }
 html.light .episode-card:hover .episode-enter { color: var(--el-color-primary); }

@@ -39,28 +39,15 @@ function goList() {
 <style scoped>
 .ai-config {
   min-height: 100vh;
-  background: #0f0f12;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 20% -20%, rgba(120, 60, 220, 0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(60, 100, 220, 0.12) 0%, transparent 60%);
-}
-html.light .ai-config {
-  background: #f5f3ff;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 20% -20%, rgba(139, 92, 246, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
+  background: var(--bg-page);
+  color: var(--text-primary);
 }
 .header {
-  background: rgba(18, 18, 22, 0.82);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 50;
-}
-html.light .header {
-  background: rgba(255, 255, 255, 0.85);
-  border-bottom-color: rgba(0, 0, 0, 0.06);
 }
 .header-inner {
   max-width: 1400px;

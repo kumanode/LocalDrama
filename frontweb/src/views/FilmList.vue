@@ -791,12 +791,8 @@ onMounted(async () => {
 <style scoped>
 .film-list {
   min-height: 100vh;
-  background: #08080d;
-  color: #e4e4e7;
-  background-image:
-    radial-gradient(ellipse 70% 45% at 50% -10%, rgba(99, 102, 241, 0.18) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 35% at 85% 55%, rgba(139, 92, 246, 0.1) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 30% at 10% 80%, rgba(79, 70, 229, 0.08) 0%, transparent 60%);
+  background: var(--bg-page);
+  color: var(--text-primary);
 }
 .header {
   background: var(--bg-card);
