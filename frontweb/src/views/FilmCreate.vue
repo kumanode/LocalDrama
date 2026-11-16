@@ -279,9 +279,7 @@ import { usePipeline } from '@/composables/filmCreate/usePipeline'
 import { useStoryboards } from '@/composables/filmCreate/useStoryboards'
 import { useStoryboardAssociations } from '@/composables/filmCreate/useStoryboardAssociations'
 import { useMergeExport } from '@/composables/filmCreate/useMergeExport'
-import { useFramePrompts } from '@/composables/filmCreate/useFramePrompts'
-import { useUniversalSegments } from '@/composables/filmCreate/useUniversalSegments'
-import { useStoryboardPromptDialog } from '@/composables/filmCreate/useStoryboardPromptDialog'
+import { useStoryboardPrompts } from '@/composables/filmCreate/useStoryboardPrompts'
 import { useStoryboardMediaGenerators } from '@/composables/filmCreate/useStoryboardMediaGenerators'
 import { useTaskPolling } from '@/composables/filmCreate/useTaskPolling'
 import { useProjectSettings } from '@/composables/filmCreate/useProjectSettings'
@@ -467,7 +465,7 @@ const {
   onRegenerateLayoutDescription,
 } = videoParamsComposable
 
-// ── Composable: Frame Prompts ─────────────────────────
+// ── Composable: Storyboard Prompts (Frame, Universal, Dialog) ──
 const {
   showFramePromptEditor,
   editingFramePromptSb,
@@ -483,25 +481,6 @@ const {
   saveEditingFramePrompt,
   regenerateEditingFramePrompt,
   showSbFramePromptPreview,
-} = useFramePrompts({
-  store,
-  sbLocation,
-  sbTime,
-  sbShotType,
-  sbAngleH,
-  sbAngleV,
-  sbAngleS,
-  sbResult,
-  sbAction,
-  sbAtmosphere,
-  angleToPromptFragment,
-  getSelectedStylePromptZh,
-  getSelectedStylePrompt,
-  pollTask: (...args) => pollTask(...args),
-})
-
-// ── Composable: Universal Segments ────────────────────
-const {
   generatingUniversalSegmentIds,
   universalOmniPolishRunning,
   universalOmniPolishAbort,
@@ -516,30 +495,6 @@ const {
   onGenerateUniversalSegmentPrompt,
   onPolishUniversalSegmentPromptStream,
   polishUniversalSegmentsAfterGeneration,
-} = useUniversalSegments({
-  store,
-  videoClipDuration,
-  sbDuration,
-  sbTitle,
-  sbLocation,
-  sbTime,
-  sbAction,
-  sbDialogue,
-  sbNarration,
-  sbResult,
-  sbAtmosphere,
-  sbShotType,
-  sbMovement,
-  sbLayoutDescription,
-  sbUniversalSegmentText,
-  onSaveUniversalSegmentField,
-  isSbUniversalMode,
-  storyboardUniversalOmni: () => storyboardUniversalOmni?.value,
-  pipelineRest: (...args) => pipelineRest(...args),
-})
-
-// ── Composable: Storyboard Prompt Dialog ─────────────
-const {
   editingSbVideoPromptId,
   editingSbVideoPromptText,
   editingSbImagePromptId,
@@ -559,7 +514,33 @@ const {
   onSaveSbImagePrompt,
   onEditSbVideoPrompt,
   onSaveSbVideoPrompt,
-} = useStoryboardPromptDialog({
+} = useStoryboardPrompts({
+  store,
+  sbLocation,
+  sbTime,
+  sbShotType,
+  sbAngleH,
+  sbAngleV,
+  sbAngleS,
+  sbResult,
+  sbAction,
+  sbAtmosphere,
+  angleToPromptFragment,
+  getSelectedStylePromptZh,
+  getSelectedStylePrompt,
+  pollTask: (...args) => pollTask(...args),
+  videoClipDuration,
+  sbDuration,
+  sbTitle,
+  sbDialogue,
+  sbNarration,
+  sbMovement,
+  sbLayoutDescription,
+  sbUniversalSegmentText,
+  onSaveUniversalSegmentField,
+  isSbUniversalMode,
+  storyboardUniversalOmni: () => storyboardUniversalOmni?.value,
+  pipelineRest: (...args) => pipelineRest(...args),
   loadDrama: (...args) => loadDrama(...args),
 })
 
