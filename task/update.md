@@ -141,10 +141,11 @@ Target: file induk di bawah 800 baris. Setiap bagian menjadi komponen dan logika
 | `NarrationSection.vue` | `useNarration.js` | [ ] Pending |
 | `LibraryPickerDialog.vue` (karakter/scene publik) | `useLibrary.js` | [ ] Pending |
 | `MergeExportSection.vue` | `useMergeExport.js` | [x] Terintegrasi |
+| `FilmCreateDialogs.vue` | `useStoryboardConfig.js` | [x] Terintegrasi |
 
 Langkah aman:
 - [x] Sebelum memecah, tulis **tes smoke** untuk composable yang dipindah (Node test runner, mock `api/*`).
-- [ ] Pindahkan satu bagian per PR. Setiap PR harus lolos `npm run build` dan pemeriksaan manual alur utama.
+- [x] Pindahkan satu bagian per PR. Setiap PR harus lolos `npm run build` dan pemeriksaan manual alur utama.
 - [ ] Pemecahan `AIConfigContent.vue` (2.850 baris) dikerjakan dengan cara yang sama: `ConfigTable`, `ConfigEditDialog`, `ProviderPresets`, `VendorLockBanner`.
 
 ### 2.2 Membersihkan `stub.js`
@@ -155,7 +156,7 @@ Langkah aman:
 ### 2.3 Sistem tugas terpusat
 - [x] Satukan polling yang tersebar (`useCanvasEpisodeGenerate.pollTask`, polling video di FilmCreate, `useGenerationTaskSync`) ke **`generationTaskStore`** sebagai satu sumber data.
 
-**Kriteria selesai:** `FilmCreate.vue` < 800 baris, tidak ada perilaku yang berubah (regresi 0 di pemeriksaan manual), dan `stub.js` sudah dibersihkan.
+**Kriteria selesai:** `FilmCreate.vue` < 800 baris (tercapai: 736 baris), tidak ada perilaku yang berubah (regresi 0 di pemeriksaan manual), dan `stub.js` sudah dibersihkan.
 
 ---
 
