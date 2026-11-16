@@ -7,7 +7,7 @@ function list(db, log) {
       response.success(res, rows);
     } catch (err) {
       log.error('List scene model map failed', { error: err.message });
-      response.internalError(res, '获取场景模型映射失败');
+      response.internalError(res, 'FETCH_SCENE_MODEL_MAP_FAILED');
     }
   };
 }
@@ -18,12 +18,12 @@ function get(db, log) {
     try {
       const row = db.prepare('SELECT * FROM ai_model_map WHERE key = ?').get(key);
       if (!row) {
-        return response.notFound(res, '场景模型映射不存在');
+        return response.notFound(res, 'SCENE_MODEL_MAP_NOT_FOUND');
       }
       response.success(res, row);
     } catch (err) {
       log.error('Get scene model map failed', { error: err.message, key });
-      response.internalError(res, '获取场景模型映射失败');
+      response.internalError(res, 'FETCH_SCENE_MODEL_MAP_FAILED');
     }
   };
 }
@@ -34,7 +34,7 @@ function create(db, log) {
     const { key, service_type = 'text', config_id, model_override, description } = body;
     
     if (!key) {
-      return response.badRequest(res, '缺少必填字段: key');
+      return response.badRequest(res, 'KEY_REQUIRED');
     }
     
     const now = new Date().toISOString();
@@ -42,7 +42,7 @@ function create(db, log) {
       // 检查 key 是否已存在
       const existing = db.prepare('SELECT id FROM ai_model_map WHERE key = ?').get(key);
       if (existing) {
-        return response.badRequest(res, '场景键已存在');
+        return response.badRequest(res, 'SCENE_KEY_EXISTS');
       }
       
       const result = db.prepare(`
@@ -54,7 +54,7 @@ function create(db, log) {
       response.created(res, row);
     } catch (err) {
       log.error('Create scene model map failed', { error: err.message, key });
-      response.internalError(res, '创建场景模型映射失败');
+      response.internalError(res, 'CREATE_SCENE_MODEL_MAP_FAILED');
     }
   };
 }
@@ -69,7 +69,7 @@ function update(db, log) {
     try {
       const existing = db.prepare('SELECT id FROM ai_model_map WHERE key = ?').get(key);
       if (!existing) {
-        return response.notFound(res, '场景模型映射不存在');
+        return response.notFound(res, 'SCENE_MODEL_MAP_NOT_FOUND');
       }
       
       db.prepare(`
@@ -89,7 +89,7 @@ function update(db, log) {
       response.success(res, row);
     } catch (err) {
       log.error('Update scene model map failed', { error: err.message, key });
-      response.internalError(res, '更新场景模型映射失败');
+      response.internalError(res, 'UPDATE_SCENE_MODEL_MAP_FAILED');
     }
   };
 }
@@ -100,14 +100,14 @@ function remove(db, log) {
     try {
       const existing = db.prepare('SELECT id FROM ai_model_map WHERE key = ?').get(key);
       if (!existing) {
-        return response.notFound(res, '场景模型映射不存在');
+        return response.notFound(res, 'SCENE_MODEL_MAP_NOT_FOUND');
       }
       
       db.prepare('DELETE FROM ai_model_map WHERE key = ?').run(key);
       response.success(res, { message: '删除成功' });
     } catch (err) {
       log.error('Delete scene model map failed', { error: err.message, key });
-      response.internalError(res, '删除场景模型映射失败');
+      response.internalError(res, 'DELETE_SCENE_MODEL_MAP_FAILED');
     }
   };
 }

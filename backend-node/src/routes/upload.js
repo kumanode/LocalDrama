@@ -51,7 +51,7 @@ function routes(cfg, log, db) {
     multerSingle: singleUpload,
     uploadImage: (req, res) => {
       if (!req.file || !req.file.buffer) {
-        return response.badRequest(res, '请选择文件');
+        return response.badRequest(res, 'FILE_REQUIRED');
       }
       try {
         const rawStorage = cfg?.storage?.local_path || './data/storage';
@@ -89,7 +89,7 @@ function routes(cfg, log, db) {
         });
       } catch (err) {
         log.error('upload image', { error: err.message });
-        response.internalError(res, err.message || '上传失败');
+        response.internalError(res, 'UPLOAD_FAILED', err.message || 'Upload failed');
       }
     },
   };

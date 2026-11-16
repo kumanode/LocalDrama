@@ -23,23 +23,23 @@ function parseZip(zipBuffer) {
   try {
     zip = new AdmZip(zipBuffer);
   } catch (e) {
-    throw new Error('ZIP 文件损坏，无法解析');
+    throw new Error('Corrupted ZIP file, cannot parse');
   }
 
   const projectEntry = zip.getEntry('project.json');
   if (!projectEntry) {
-    throw new Error('ZIP 格式不正确：缺少 project.json');
+    throw new Error('Invalid ZIP format: missing project.json');
   }
 
   let data;
   try {
     data = JSON.parse(projectEntry.getData().toString('utf8'));
   } catch (e) {
-    throw new Error('project.json 格式错误，无法解析 JSON');
+    throw new Error('Malformed project.json, cannot parse JSON');
   }
 
   if (!data.drama || !data.drama.title) {
-    throw new Error('project.json 格式不正确：缺少 drama.title 字段');
+    throw new Error('Invalid project.json: missing drama.title');
   }
 
   // 读取所有媒体文件到 Map
@@ -338,7 +338,7 @@ function _doImport(db, storagePath, files, data, d, title, metaStr, now, log) {
         now
       ];
       if (sbCols.length !== sbVals.length) {
-        throw new Error(`storyboards 导入列数不匹配: cols=${sbCols.length}, vals=${sbVals.length}`);
+        throw new Error(`storyboards import column mismatch: cols=${sbCols.length}, vals=${sbVals.length}`);
       }
       const sbInfo = db.prepare(
         `INSERT INTO storyboards (${sbCols.join(', ')})

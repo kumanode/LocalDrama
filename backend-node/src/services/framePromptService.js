@@ -593,11 +593,11 @@ function generateFramePrompt(db, log, storyboardId, frameType, panelCount, model
   const sid = Number(storyboardId);
   const sb = db.prepare('SELECT id FROM storyboards WHERE id = ? AND deleted_at IS NULL').get(sid);
   if (!sb) {
-    throw new Error('分镜不存在');
+    throw new Error('Storyboard not found');
   }
   const validTypes = FRAME_TYPES.includes(frameType);
   if (!validTypes) {
-    throw new Error('不支持的 frame_type，可选: first, key, last, panel, action');
+    throw new Error('Unsupported frame_type. Valid types: first, key, last, panel, action');
   }
   const task = taskService.createTask(db, log, 'frame_prompt_generation', String(storyboardId));
   setImmediate(() => {
@@ -629,7 +629,7 @@ module.exports = {
 async function regenerateLayoutDescription(db, log, storyboardId) {
   const sid = Number(storyboardId);
   const sb = db.prepare('SELECT * FROM storyboards WHERE id = ? AND deleted_at IS NULL').get(sid);
-  if (!sb) throw new Error('分镜不存在');
+  if (!sb) throw new Error('Storyboard not found');
 
   // 取前后分镜（用于连贯性）
   let prevSb = null, nextSb = null;
@@ -686,7 +686,7 @@ async function regenerateLayoutDescription(db, log, storyboardId) {
   newLayout = newLayout.replace(/^(布局描述|layout_description|空间布局|画面布局)[:：]\s*/i, '').trim();
 
   if (!newLayout || newLayout.length < 8) {
-    throw new Error('AI 返回的布局描述过短或无效');
+    throw new Error('AI layout description too short or invalid');
   }
 
   // 写回数据库

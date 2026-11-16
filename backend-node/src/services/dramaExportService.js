@@ -82,7 +82,7 @@ function exportDrama(db, cfg, log, dramaId) {
 
   // ---- 1. 读取 drama 基本信息 ----
   const drama = db.prepare('SELECT * FROM dramas WHERE id = ? AND deleted_at IS NULL').get(Number(dramaId));
-  if (!drama) throw new Error('剧本不存在');
+  if (!drama) throw new Error('Drama not found');
 
   let metadata = {};
   try { metadata = drama.metadata ? (typeof drama.metadata === 'string' ? JSON.parse(drama.metadata) : drama.metadata) : {}; } catch (_) {}

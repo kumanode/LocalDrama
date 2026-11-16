@@ -117,14 +117,14 @@ async function synthesizeWithOpenai(text, voice, apiKey, baseUrl, model, speed) 
  * @returns {{ local_path: string, audio_url: string }}
  */
 async function synthesize(db, log, { text, storyboard_id, config, storage_base, voice_id, speed }) {
-  if (!text || !text.trim()) throw new Error('text 不能为空');
+  if (!text || !text.trim()) throw new Error('text cannot be empty');
   const aiConfigService = require('./aiConfigService');
   const ttsConfig = config || (() => {
     const configs = aiConfigService.listConfigs(db, 'tts');
     const active = configs.filter((c) => c.is_active);
     return active.find((c) => c.is_default) || active[0];
   })();
-  if (!ttsConfig) throw new Error('未配置 TTS 模型，请在「AI 配置」中添加 service_type=tts 的配置');
+  if (!ttsConfig) throw new Error('No TTS model configured. Please add a service_type=tts configuration');
 
   const provider = (ttsConfig.provider || '').toLowerCase();
   let ttsSettings = {};
@@ -155,7 +155,7 @@ async function synthesize(db, log, { text, storyboard_id, config, storage_base, 
       finalSpeed
     );
   } else {
-    throw new Error(`不支持的 TTS provider: ${provider}，目前支持 openai、minimax`);
+    throw new Error(`Unsupported TTS provider: ${provider}, currently supports openai, minimax`);
   }
 
   // 保存到本地

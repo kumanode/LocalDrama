@@ -12,7 +12,7 @@ function routes(db, cfg, log, uploadService) {
         const row = db.prepare(
           'SELECT id, drama_id, name, role, appearance, description, personality, voice_style, image_url, local_path, polished_prompt, four_view_image_url, identity_anchors, seedance2_asset, seedance2_voice_asset, negative_prompt, updated_at FROM characters WHERE id = ? AND deleted_at IS NULL'
         ).get(Number(req.params.id));
-        if (!row) return response.notFound(res, '角色不存在');
+        if (!row) return response.notFound(res, 'CHARACTER_NOT_FOUND');
         if (row.seedance2_asset) {
           try {
             row.seedance2_asset = JSON.parse(row.seedance2_asset);
@@ -41,7 +41,7 @@ function routes(db, cfg, log, uploadService) {
       try {
         const out = characterLibraryService.updateCharacter(db, log, req.params.id, req.body || {});
         if (!out.ok) {
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '保存成功' });
@@ -54,7 +54,7 @@ function routes(db, cfg, log, uploadService) {
       try {
         const out = characterLibraryService.deleteCharacter(db, log, req.params.id);
         if (!out.ok) {
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '删除成功' });
@@ -69,10 +69,10 @@ function routes(db, cfg, log, uploadService) {
         const characterIds = body.character_ids;
         log.info('batch-generate-images request', { character_ids: characterIds, model: body.model, style: body.style });
         if (!Array.isArray(characterIds) || characterIds.length === 0) {
-          return response.badRequest(res, 'character_ids 不能为空');
+          return response.badRequest(res, 'CHARACTER_IDS_EMPTY');
         }
         if (characterIds.length > 10) {
-          return response.badRequest(res, '单次最多生成10个角色');
+          return response.badRequest(res, 'CHARACTER_BATCH_LIMIT_10');
         }
         const out = characterLibraryService.batchGenerateCharacterImages(
           db,
@@ -106,8 +106,8 @@ function routes(db, cfg, log, uploadService) {
           body.style
         );
         if (!out.ok) {
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
-          if (out.error === 'unauthorized') return response.notFound(res, '剧集不存在或无权限');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
+          if (out.error === 'unauthorized') return response.notFound(res, 'EPISODE_NOT_FOUND_OR_FORBIDDEN');
           return response.badRequest(res, out.error);
         }
         response.success(res, {
@@ -121,7 +121,7 @@ function routes(db, cfg, log, uploadService) {
     },
     uploadImage: (req, res) => {
       if (!req.file || !req.file.buffer) {
-        return response.badRequest(res, '请选择文件');
+        return response.badRequest(res, 'FILE_REQUIRED');
       }
       try {
         const rawStorage = cfg?.storage?.local_path || './data/storage';
@@ -145,7 +145,7 @@ function routes(db, cfg, log, uploadService) {
         );
         const out = characterLibraryService.uploadCharacterImage(db, log, req.params.id, url);
         if (!out.ok) {
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '上传成功', url, local_path, filename: req.file.originalname, size: req.file.size });
@@ -161,7 +161,7 @@ function routes(db, cfg, log, uploadService) {
         const prevFull = db
           .prepare('SELECT id, local_path, image_url, seedance2_asset FROM characters WHERE id = ? AND deleted_at IS NULL')
           .get(charIdNum);
-        if (!prevFull) return response.notFound(res, '角色不存在');
+        if (!prevFull) return response.notFound(res, 'CHARACTER_NOT_FOUND');
         const nextImg = body.image_url !== undefined ? body.image_url : prevFull.image_url;
         const nextLp = body.local_path !== undefined ? body.local_path : prevFull.local_path;
         seedance2AssetGuards.markStaleOnCharacterMainImageDrift(db, log, prevFull, {
@@ -174,7 +174,7 @@ function routes(db, cfg, log, uploadService) {
             skipStaleMark: true,
           });
           if (!out.ok) {
-            if (out.error === 'character not found') return response.notFound(res, '角色不存在');
+            if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
             return response.badRequest(res, out.error);
           }
         }
@@ -197,11 +197,11 @@ function routes(db, cfg, log, uploadService) {
     imageFromLibrary: (req, res) => {
       try {
         const libraryId = (req.body || {}).library_id;
-        if (libraryId == null) return response.badRequest(res, '缺少 library_id');
+        if (libraryId == null) return response.badRequest(res, 'LIBRARY_ID_REQUIRED');
         const out = characterLibraryService.applyLibraryItemToCharacter(db, log, req.params.id, libraryId);
         if (!out.ok) {
-          if (out.error === 'library item not found') return response.notFound(res, '角色库项不存在');
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
+          if (out.error === 'library item not found') return response.notFound(res, 'CHARACTER_LIBRARY_ITEM_NOT_FOUND');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '应用成功' });
@@ -215,7 +215,7 @@ function routes(db, cfg, log, uploadService) {
         const category = (req.body || {}).category;
         const out = characterLibraryService.addCharacterToLibrary(db, log, req.params.id, category);
         if (!out.ok) {
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '已加入本剧角色库', item: out.item });
@@ -228,7 +228,7 @@ function routes(db, cfg, log, uploadService) {
       try {
         const out = characterLibraryService.addCharacterToMaterialLibrary(db, log, req.params.id);
         if (!out.ok) {
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '已加入全局素材库', item: out.item });
@@ -241,8 +241,8 @@ function routes(db, cfg, log, uploadService) {
       const charRow = db.prepare(
         'SELECT id, appearance, identity_anchors FROM characters WHERE id = ? AND deleted_at IS NULL'
       ).get(Number(req.params.id));
-      if (!charRow) return response.notFound(res, '角色不存在');
-      if (!charRow.appearance) return response.badRequest(res, '角色缺少外貌描述，无法提炼锚点');
+      if (!charRow) return response.notFound(res, 'CHARACTER_NOT_FOUND');
+      if (!charRow.appearance) return response.badRequest(res, 'CHARACTER_APPEARANCE_REQUIRED');
       const { enrichIdentityAnchors } = require('../services/characterGenerationService');
       setImmediate(() => {
         enrichIdentityAnchors(db, log, charRow.id, charRow.appearance).catch(() => {});
@@ -256,8 +256,8 @@ function routes(db, cfg, log, uploadService) {
         const style = body.style || undefined;
         const out = await characterLibraryService.generateCharacterFourViewImage(db, log, cfg, req.params.id, modelName, style);
         if (!out.ok) {
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
-          if (out.error === 'unauthorized') return response.notFound(res, '剧集不存在或无权限');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
+          if (out.error === 'unauthorized') return response.notFound(res, 'EPISODE_NOT_FOUND_OR_FORBIDDEN');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '四视图生成任务已提交', image_generation: out.image_generation });
@@ -273,7 +273,7 @@ function routes(db, cfg, log, uploadService) {
         const style = body.style || undefined;
         const out = await characterLibraryService.generateCharacterPromptOnly(db, log, cfg, req.params.id, modelName, style);
         if (!out.ok) {
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '提示词已生成', polished_prompt: out.polished_prompt });
@@ -286,7 +286,7 @@ function routes(db, cfg, log, uploadService) {
       try {
         const out = await characterLibraryService.extractAppearanceFromImage(db, log, cfg, req.params.id);
         if (!out.ok) {
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '外貌描述已提取', appearance: out.appearance });
@@ -300,7 +300,7 @@ function routes(db, cfg, log, uploadService) {
       try {
         const out = await characterLibraryService.registerCharacterJimengMaterialAsset(db, log, cfg, req.params.id);
         if (!out.ok) {
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: 'SD2 素材认证已更新', seedance2_asset: out.seedance2_asset });
@@ -313,7 +313,7 @@ function routes(db, cfg, log, uploadService) {
       try {
         const out = await characterLibraryService.refreshCharacterJimengMaterialAsset(db, log, cfg, req.params.id);
         if (!out.ok) {
-          if (out.error === 'character not found') return response.notFound(res, '角色不存在');
+          if (out.error === 'character not found') return response.notFound(res, 'CHARACTER_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '认证状态已刷新', seedance2_asset: out.seedance2_asset });
@@ -329,14 +329,14 @@ function routes(db, cfg, log, uploadService) {
         const charRow = db
           .prepare('SELECT id, drama_id FROM characters WHERE id = ? AND deleted_at IS NULL')
           .get(charId);
-        if (!charRow) return response.notFound(res, '角色不存在');
+        if (!charRow) return response.notFound(res, 'CHARACTER_NOT_FOUND');
 
-        if (!req.file) return response.badRequest(res, '请上传音频文件');
+        if (!req.file) return response.badRequest(res, 'AUDIO_FILE_REQUIRED');
 
         const allowedExt = ['.mp3', '.wav', '.m4a', '.ogg'];
         const ext = path.extname(req.file.originalname || '').toLowerCase();
         if (!allowedExt.includes(ext)) {
-          return response.badRequest(res, '仅支持 mp3/wav/m4a/ogg 格式');
+          return response.badRequest(res, 'AUDIO_FORMAT_INVALID');
         }
 
         const storageLocalPath = cfg?.storage?.local_path;
@@ -384,7 +384,7 @@ function routes(db, cfg, log, uploadService) {
         const row = db
           .prepare('SELECT seedance2_voice_asset FROM characters WHERE id = ? AND deleted_at IS NULL')
           .get(charId);
-        if (!row) return response.notFound(res, '角色不存在');
+        if (!row) return response.notFound(res, 'CHARACTER_NOT_FOUND');
         let asset = null;
         if (row.seedance2_voice_asset) {
           try {

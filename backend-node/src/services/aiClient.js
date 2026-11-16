@@ -398,7 +398,7 @@ async function generateText(db, log, serviceType, userPrompt, systemPrompt, opti
     config = getDefaultConfig(db, 'text');
   }
   if (!config) {
-    throw new Error(`未配置文本模型，请在「AI 配置」中添加 ${serviceType} 类型 且已启用的配置`);
+    throw new Error(`No enabled text model configured. Please add an enabled ${serviceType} model in AI Configuration`);
   }
   // scene_key 路由的模型覆盖优先级 > preferredModel
   const effectivePreferredModel = routedModelOverride || preferredModel;
@@ -480,7 +480,7 @@ async function generateText(db, log, serviceType, userPrompt, systemPrompt, opti
   const content = res.body;
   const elapsedMs = Date.now() - startMs;
   if (!content) {
-    throw new Error('AI 返回内容为空');
+    throw new Error('AI response is empty');
   }
   log.info('AI raw response received', { model, text_length: content.length, elapsed_ms: elapsedMs, text_preview: content.slice(0, 200) });
   return content;
@@ -511,7 +511,7 @@ async function streamGenerateText(db, log, serviceType, userPrompt, systemPrompt
     config = getDefaultConfig(db, 'text');
   }
   if (!config) {
-    throw new Error(`未配置文本模型，请在「AI 配置」中添加 ${serviceType} 类型 且已启用的配置`);
+    throw new Error(`No enabled text model configured. Please add an enabled ${serviceType} model in AI Configuration`);
   }
   const effectivePreferredModel = routedModelOverride || preferredModel;
   const model = getModelFromConfig(config, effectivePreferredModel);
@@ -591,7 +591,7 @@ async function streamGenerateText(db, log, serviceType, userPrompt, systemPrompt
   }
   const content = res.body;
   if (!content) {
-    throw new Error('AI 返回内容为空');
+    throw new Error('AI response is empty');
   }
   log.info('AI streamGenerateText done', { model, text_length: content.length, elapsed_ms: Date.now() - startMs });
   return content;
@@ -658,7 +658,7 @@ async function generateTextWithVision(db, log, serviceType, userPrompt, systemPr
     }
   } else if (imageSource.localAbsPath) {
     if (!fs.existsSync(imageSource.localAbsPath)) {
-      throw new Error(`图片文件不存在：${imageSource.localAbsPath}`);
+      throw new Error(`Image file not found: ${imageSource.localAbsPath}`);
     }
     const buf = fs.readFileSync(imageSource.localAbsPath);
     const ext = path.extname(imageSource.localAbsPath).toLowerCase();
@@ -667,7 +667,7 @@ async function generateTextWithVision(db, log, serviceType, userPrompt, systemPr
     imageUrlForApi = `data:${mime};base64,${buf.toString('base64')}`;
     imageLogInfo = { image_type: 'local_file', image_path: imageSource.localAbsPath, image_size_kb: Math.round(buf.length / 1024), image_mime: mime };
   } else {
-    throw new Error('imageSource 必须包含 imageUrl 或 localAbsPath');
+    throw new Error('imageSource must contain imageUrl or localAbsPath');
   }
 
   // 复用 generateText 的配置查找逻辑
@@ -676,7 +676,7 @@ async function generateTextWithVision(db, log, serviceType, userPrompt, systemPr
     ? getConfigForModel(db, serviceType, preferredModel)
     : getDefaultConfig(db, serviceType);
   if (!config) config = getDefaultConfig(db, 'text');
-  if (!config) throw new Error(`未配置文本模型，请在「AI 配置」中添加 ${serviceType} 类型的配置`);
+  if (!config) throw new Error(`No text model configured. Please add a ${serviceType} configuration in AI Configuration`);
   const model = getModelFromConfig(config, preferredModel);
   const url = buildChatUrl(config);
 
@@ -738,7 +738,7 @@ async function generateTextWithVision(db, log, serviceType, userPrompt, systemPr
       status: res.status,
       raw_response: (res.raw || '').slice(0, 300),
     });
-    throw new Error(`AI vision 返回内容为空（HTTP ${res.status}），原始响应：${(res.raw || '').slice(0, 200)}`);
+    throw new Error(`AI vision response is empty (HTTP ${res.status}), raw response: ${(res.raw || '').slice(0, 200)}`);
   }
   log.info('[Vision] 请求成功', { model, elapsed_ms: Date.now() - startMs, result_len: content.length, result_preview: content.slice(0, 100) });
   return content.trim();
@@ -779,13 +779,13 @@ const EXTRACT_PROMPTS = {
  */
 async function extractDescriptionFromImage(db, log, entityType, imageUrl, entityName) {
   const prompts = EXTRACT_PROMPTS[entityType];
-  if (!prompts) throw new Error(`不支持的实体类型：${entityType}`);
+  if (!prompts) throw new Error(`Unsupported entity type: ${entityType}`);
 
   let imageSource;
   if (imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('data:'))) {
     imageSource = { imageUrl };
   } else {
-    throw new Error('imageUrl 必须是 http URL 或 base64 data URL');
+    throw new Error('imageUrl must be an http URL or base64 data URL');
   }
 
   try {

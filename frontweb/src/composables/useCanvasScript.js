@@ -4,27 +4,9 @@ import { ElMessage } from 'element-plus'
 import { dramaAPI } from '@/api/drama'
 import { generationAPI } from '@/api/generation'
 import { propAPI } from '@/api/props'
-import { taskAPI } from '@/api/task'
+import { pollGenerationTask } from '@/stores/generationTaskStore'
 import { getDramaGenerationOptions } from '@/utils/canvasWorkflow'
 import { CANVAS_NODE_STATUS_LABELS } from '@/composables/useCanvasNodeStatus'
-
-async function pollTask(taskId, onTick, maxAttempts = 450, interval = 2000) {
-  if (!taskId) return { status: 'completed' }
-  for (let i = 0; i < maxAttempts; i++) {
-    await new Promise((r) => setTimeout(r, interval))
-    onTick?.()
-    try {
-      const t = await taskAPI.get(taskId)
-      if (t.status === 'completed') return { status: 'completed', result: t.result }
-      if (t.status === 'failed') {
-        return { status: 'failed', error: t.error?.message || t.error || i18nT('messages.taskFailed') }
-      }
-    } catch (e) {
-      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || i18nT('dramaCanvas.pollingFailed') }
-    }
-  }
-  return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
-}
 
 export function scriptNodeId(episodeId) {
   return `script:${episodeId}`
@@ -64,7 +46,7 @@ export function useCanvasScript(deps) {
       await refreshCanvas(true)
       return
     }
-    const polled = await pollTask(taskId, () => refreshCanvas(true))
+    const polled = await pollGenerationTask(taskId, {}, null, { onTick: () => refreshCanvas(true) })
     if (polled.status !== 'completed') {
       throw new Error(polled.error || i18nT('common.failedFor', { label }))
     }

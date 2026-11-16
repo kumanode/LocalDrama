@@ -1,28 +1,10 @@
 import { t as i18nT } from '../i18n/index.js'
-import { taskAPI } from '@/api/task'
 import { characterAPI } from '@/api/characters'
 import { sceneAPI } from '@/api/scenes'
 import { propAPI } from '@/api/props'
 import { assetImageUrl } from '@/utils/mediaUrl'
+import { pollGenerationTask, GEN_RESOURCE } from '@/stores/generationTaskStore'
 import { CANVAS_NODE_STATUS_LABELS } from '@/composables/useCanvasNodeStatus'
-
-async function pollTask(taskId, onTick, maxAttempts = 450, interval = 2000) {
-  if (!taskId) return { status: 'completed' }
-  for (let i = 0; i < maxAttempts; i++) {
-    await new Promise((r) => setTimeout(r, interval))
-    onTick?.()
-    try {
-      const t = await taskAPI.get(taskId)
-      if (t.status === 'completed') return { status: 'completed', result: t.result }
-      if (t.status === 'failed') {
-        return { status: 'failed', error: t.error?.message || t.error || i18nT('messages.taskFailed') }
-      }
-    } catch (e) {
-      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || i18nT('dramaCanvas.pollingFailed') }
-    }
-  }
-  return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
-}
 
 async function pollUntilHasImage(findEntity, maxAttempts = 120, interval = 2000) {
   for (let i = 0; i < maxAttempts; i++) {
@@ -53,7 +35,21 @@ export async function generateAssetReferenceImage(ctx, { kind, entity, nodeId })
 
     const taskId = res?.image_generation?.task_id ?? res?.task_id
     if (taskId) {
-      const polled = await pollTask(taskId, () => ctx?.refreshDrama?.(true))
+      const resourceType = kind === 'character'
+        ? GEN_RESOURCE.CHAR_IMAGE
+        : kind === 'scene'
+          ? GEN_RESOURCE.SCENE_IMAGE
+          : GEN_RESOURCE.PROP_IMAGE
+      const polled = await pollGenerationTask(
+        taskId,
+        {
+          dramaId: drama?.id,
+          resourceType,
+          resourceId: entity.id,
+        },
+        null,
+        { onTick: () => ctx?.refreshDrama?.(true) }
+      )
       if (polled.status !== 'completed') throw new Error(polled.error || i18nT('dramaCanvas.generationFailed'))
     } else {
       await ctx?.refreshDrama?.(true)

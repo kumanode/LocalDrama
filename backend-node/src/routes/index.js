@@ -5,7 +5,6 @@ const taskRoutes = require('./task');
 const settingsRoutes = require('./settings');
 const aiConfigRoutes = require('./aiConfig');
 const propRoutes = require('./prop');
-const stubRoutes = require('./stub');
 const characterLibraryRoutes = require('./characterLibrary');
 const sceneLibraryRoutes = require('./sceneLibrary');
 const propLibraryRoutes = require('./propLibrary');
@@ -29,7 +28,6 @@ function setupRouter(cfg, db, log) {
   const settings = settingsRoutes(db, cfg, log);
   const aiConfig = aiConfigRoutes(db, log, cfg);
   const prop = propRoutes(db, log, cfg);
-  const stub = stubRoutes(db, cfg, log);
   const sceneModelMap = sceneModelMapRoutes(db, log);
   
   const uploadService = require('../services/uploadService');
@@ -66,7 +64,7 @@ function setupRouter(cfg, db, log) {
       } else if (req.body && req.body.text) {
         text = req.body.text;
       }
-      if (!text.trim()) return response.badRequest(res, '请上传小说文本文件或提供 text 参数');
+      if (!text.trim()) return response.badRequest(res, 'NOVEL_FILE_OR_TEXT_REQUIRED');
       const title = req.body?.title || '';
       const maxChapters = Number(req.body?.max_chapters) || 20;
       const aiSummarize = req.body?.ai_summarize === 'true' || req.body?.ai_summarize === true;
@@ -108,13 +106,13 @@ function setupRouter(cfg, db, log) {
     try {
       const body = req.body || {};
       if (!body.drama_id) {
-        return response.badRequest(res, 'drama_id 必填');
+        return response.badRequest(res, 'DRAMA_ID_REQUIRED');
       }
       const taskId = characterGenerationService.generateCharacters(db, cfg, log, body);
       response.success(res, { task_id: taskId, status: 'pending' });
     } catch (err) {
       log.error('generation/characters', { error: err.message });
-      response.internalError(res, err.message || '创建任务失败');
+      response.internalError(res, 'TASK_CREATE_FAILED', err.message || 'Task creation failed');
     }
   });
 
@@ -134,7 +132,7 @@ function setupRouter(cfg, db, log) {
       if (err.message && (err.message.includes('未配置') || err.message.includes('必填') || err.message.includes('不存在'))) {
         return response.badRequest(res, err.message);
       }
-      response.internalError(res, err.message || '故事生成失败');
+      response.internalError(res, 'STORY_GENERATION_FAILED', err.message || 'Story generation failed');
     }
   });
 
@@ -193,8 +191,8 @@ function setupRouter(cfg, db, log) {
   // ---------- vision: 从图片提取描述（不依赖已有实体 ID）----------
   r.post('/extract-description-from-image', async (req, res) => {
     const { image_url, entity_type, entity_name } = req.body || {};
-    if (!image_url) return response.badRequest(res, '缺少 image_url');
-    if (!['character', 'scene', 'prop'].includes(entity_type)) return response.badRequest(res, 'entity_type 需为 character/scene/prop');
+    if (!image_url) return response.badRequest(res, 'IMAGE_URL_REQUIRED');
+    if (!['character', 'scene', 'prop'].includes(entity_type)) return response.badRequest(res, 'ENTITY_TYPE_INVALID');
     try {
       const { extractDescriptionFromImage } = require('../services/aiClient');
       const out = await extractDescriptionFromImage(db, log, entity_type, image_url, entity_name);
@@ -214,7 +212,21 @@ function setupRouter(cfg, db, log) {
   // 之前可能有部分路由指向了 storyboards.episodeStoryboardsGenerate，这可能导致参数解析不一致
   r.post('/episodes/:episode_id/storyboards', drama.generateStoryboard);
   r.post('/episodes/:episode_id/props/extract', prop.extractProps);
-  r.post('/episodes/:episode_id/characters/extract', stub.episodeCharactersExtract);
+  r.post('/episodes/:episode_id/characters/extract', (req, res) => {
+    const characterGenerationService = require('../services/characterGenerationService');
+    const ep = db.prepare('SELECT drama_id FROM episodes WHERE id = ? AND deleted_at IS NULL').get(req.params.episode_id);
+    if (!ep) return response.notFound(res, 'EPISODE_NOT_FOUND');
+    try {
+      const taskId = characterGenerationService.generateCharacters(db, cfg, log, {
+        drama_id: ep.drama_id,
+        episode_id: req.params.episode_id,
+      });
+      response.success(res, { task_id: taskId, status: 'pending' });
+    } catch (err) {
+      log.error('episodes characters extract', { error: err.message });
+      response.internalError(res, 'TASK_CREATE_FAILED', err.message || 'Task creation failed');
+    }
+  });
   r.get('/episodes/:episode_id/storyboards', storyboards.episodeStoryboardsGet);
   r.post('/episodes/:episode_id/finalize', drama.finalizeEpisode);
   r.get('/episodes/:episode_id/download', drama.downloadEpisodeVideo);
@@ -302,6 +314,8 @@ function setupRouter(cfg, db, log) {
   // ---------- settings ----------
   r.get('/settings/language', settings.getLanguage);
   r.put('/settings/language', settings.updateLanguage);
+  r.get('/settings/content-language', settings.getContentLanguage);
+  r.put('/settings/content-language', settings.updateContentLanguage);
   r.get('/settings/generation', settings.getGenerationSettings);
   r.put('/settings/generation', settings.updateGenerationSettings);
 

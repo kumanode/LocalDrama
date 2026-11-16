@@ -3307,7 +3307,7 @@ async function resolveJimengApiImageBuffer(rawUrl, files_base_url, storage_local
   const isPublicHttp = /^https?:\/\//i.test(raw) && !/localhost|127\.0\.0\.1/i.test(raw);
   if (isPublicHttp) {
     const res = await fetch(raw);
-    if (!res.ok) throw new Error('拉取参考图失败 HTTP ' + res.status);
+    if (!res.ok) throw new Error('Failed to fetch reference image HTTP ' + res.status);
     const ab = await res.arrayBuffer();
     return { buffer: Buffer.from(ab), filename: 'ref_' + index + '.jpg' };
   }
@@ -3315,7 +3315,7 @@ async function resolveJimengApiImageBuffer(rawUrl, files_base_url, storage_local
     const proxyUrl = await uploadLocalImageToProxy(storage_local_path, raw, log, 'jimeng_ai_vg' + video_gen_id + '_' + index);
     if (proxyUrl) {
       const res = await fetch(proxyUrl);
-      if (!res.ok) throw new Error('图床参考图拉取失败 HTTP ' + res.status);
+      if (!res.ok) throw new Error('Failed to fetch image host reference image HTTP ' + res.status);
       const ab = await res.arrayBuffer();
       return { buffer: Buffer.from(ab), filename: 'ref_' + index + '.jpg' };
     }

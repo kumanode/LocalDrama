@@ -79,7 +79,7 @@ function routes(db, log) {
     get: (req, res) => {
       try {
         const item = videoService.getById(db, req.params.id);
-        if (!item) return response.notFound(res, '记录不存在');
+        if (!item) return response.notFound(res, 'RECORD_NOT_FOUND');
         response.success(res, item);
       } catch (err) {
         log.error('videos get', { error: err.message });
@@ -89,7 +89,7 @@ function routes(db, log) {
     delete: (req, res) => {
       try {
         const ok = videoService.deleteById(db, log, req.params.id);
-        if (!ok) return response.notFound(res, '记录不存在');
+        if (!ok) return response.notFound(res, 'RECORD_NOT_FOUND');
         response.success(res, { message: '删除成功' });
       } catch (err) {
         log.error('videos delete', { error: err.message });

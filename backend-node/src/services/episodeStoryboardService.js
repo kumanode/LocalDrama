@@ -291,55 +291,66 @@ function generateImagePrompt(sb, style) {
   return parts.join('，');
 }
 
-function generateVideoPrompt(sb, style, videoRatio) {
+function generateVideoPrompt(sb, style, videoRatio, cfg = null) {
+  const runCfg = cfg || (typeof loadConfig === 'function' ? loadConfig() : null);
+  const isEn = promptI18n.isEnglish(runCfg);
+  const l = (k) => promptI18n.getPromptLabel(runCfg, k);
   const parts = [];
+
   // 场景与标题
   if (sb.scene_description) {
-    parts.push('场景：' + sb.scene_description);
+    parts.push(l('scene') + sb.scene_description);
   } else if (sb.location) {
-    const scene = sb.time ? sb.location + '，' + sb.time : sb.location;
-    parts.push('场景：' + scene);
+    const sep = isEn ? ', ' : '，';
+    const scene = sb.time ? sb.location + sep + sb.time : sb.location;
+    parts.push(l('scene') + scene);
   }
-  if (sb.title) parts.push('镜头标题：' + sb.title);
+  if (sb.title) parts.push(l('title') + sb.title);
   // 角色造型（#38）：缺失时视频模型无从获知人物外貌，每次生成形象随机
   if (sb.character_appearances) {
-    parts.push('角色造型：' + String(sb.character_appearances).replace(/\r?\n/g, '；'));
+    const sep = isEn ? '; ' : '；';
+    parts.push(l('character_appearances') + String(sb.character_appearances).replace(/\r?\n/g, sep));
   }
   // 动作与对白（核心叙事）
-  if (sb.action) parts.push('动作：' + sb.action);
-  if (sb.dialogue) parts.push('对话：' + sb.dialogue);
-  if (sb.narration) parts.push('解说旁白：' + sb.narration);
-  if (sb.result) parts.push('结果：' + sb.result);
+  if (sb.action) parts.push(l('action') + sb.action);
+  if (sb.dialogue) parts.push(l('dialogue') + sb.dialogue);
+  if (sb.narration) parts.push(l('narration') + sb.narration);
+  if (sb.result) parts.push(l('result') + sb.result);
   // 镜头与运镜
   const shotType = sb.shot_type || sb.camera_shot_type;
-  if (shotType) parts.push('景别：' + shotType);
+  if (shotType) parts.push(l('shot_type') + shotType);
   // 结构化视角：中文标签 + 英文描述（兼顾中英文视频模型）
   if (sb.angle_h && sb.angle_v && sb.angle_s) {
-    const chLabel = angleService.toChineseLabel(sb.angle_h, sb.angle_v, sb.angle_s);
     const angleFragment = angleService.toPromptFragment(sb.angle_h, sb.angle_v, sb.angle_s);
-    parts.push(`镜头角度：${chLabel}（${angleFragment}）`);
+    if (isEn) {
+      parts.push(`${l('shot_angle')}${angleFragment}`);
+    } else {
+      const chLabel = angleService.toChineseLabel(sb.angle_h, sb.angle_v, sb.angle_s);
+      parts.push(`${l('shot_angle')}${chLabel}（${angleFragment}）`);
+    }
   } else {
     const angle = sb.angle ?? sb.camera_angle;
-    if (angle) parts.push('镜头角度：' + angle);
+    if (angle) parts.push(l('shot_angle') + angle);
   }
   const movement = sb.movement ?? sb.camera_movement;
-  if (movement) parts.push('运镜：' + movement);
+  if (movement) parts.push(l('movement') + movement);
   // 氛围与情绪
-  if (sb.atmosphere) parts.push('氛围：' + sb.atmosphere);
-  if (sb.emotion) parts.push('情绪：' + sb.emotion);
+  if (sb.atmosphere) parts.push(l('atmosphere') + sb.atmosphere);
+  if (sb.emotion) parts.push(l('emotion') + sb.emotion);
   if (sb.emotion_intensity != null && sb.emotion_intensity !== '') {
-    parts.push('情绪强度：' + String(sb.emotion_intensity));
+    parts.push(l('emotion_intensity') + String(sb.emotion_intensity));
   }
   // 声音
-  if (sb.bgm_prompt) parts.push('配乐：' + sb.bgm_prompt);
-  if (sb.sound_effect) parts.push('音效：' + sb.sound_effect);
+  if (sb.bgm_prompt) parts.push(l('bgm_prompt') + sb.bgm_prompt);
+  if (sb.sound_effect) parts.push(l('sound_effect') + sb.sound_effect);
   // 时长
   const durationSec = normalizeDuration(sb.duration) || 5;
-  parts.push('时长：' + durationSec + '秒');
+  parts.push(l('duration') + durationSec + l('seconds'));
   // 风格（英文 token 保持英文以兼容视频 AI）与画面比例
-  if (style) parts.push('风格：' + style);
+  if (style) parts.push(l('style') + style);
   if (videoRatio) parts.push('=VideoRatio: ' + videoRatio);
-  return parts.length ? parts.join('。') : '视频场景';
+  const sep = isEn ? '. ' : '。';
+  return parts.length ? parts.join(sep) : l('default_video_scene');
 }
 
 /**
@@ -427,7 +438,11 @@ function deriveStoryboardFieldsFromAi(sb, style, videoRatio, opts = {}) {
   const { h: angleH, v: angleV, s: angleS } = (angle || shotType)
     ? angleService.parseFromLegacyText(angle || '', shotType || '')
     : { h: null, v: null, s: null };
-  const description = `【镜头类型】${shotType}\n【运镜】${movement}\n【动作】${action}\n【对话】${dialogue}\n【解说】${narration}\n【结果】${result}\n【情绪】${emotion}`;
+  const runCfg = opts.cfg || (typeof loadConfig === 'function' ? loadConfig() : null);
+  const isEn = promptI18n.isEnglish(runCfg);
+  const description = isEn
+    ? `[Shot Scale] ${shotType}\n[Movement] ${movement}\n[Action] ${action}\n[Dialogue] ${dialogue}\n[Narration] ${narration}\n[Result] ${result}\n[Mood] ${emotion}`
+    : `【镜头类型】${shotType}\n【运镜】${movement}\n【动作】${action}\n【对话】${dialogue}\n【解说】${narration}\n【结果】${result}\n【情绪】${emotion}`;
   const sbWithAngles = { ...sb, angle_h: angleH, angle_v: angleV, angle_s: angleS };
   const imagePrompt = generateImagePrompt(sbWithAngles, style);
   // 角色造型注入（#38）：视频提示词须携带角色外貌，否则视频模型每次随机生成人物形象
@@ -435,7 +450,8 @@ function deriveStoryboardFieldsFromAi(sb, style, videoRatio, opts = {}) {
   const videoPrompt = generateVideoPrompt(
     characterAppearances ? { ...sbWithAngles, character_appearances: characterAppearances } : sbWithAngles,
     style,
-    videoRatio
+    videoRatio,
+    runCfg
   );
   const sceneId = sb.scene_id != null ? Number(sb.scene_id) : null;
   const charactersJson = Array.isArray(sb.characters) ? JSON.stringify(sb.characters) : (sb.characters ? JSON.stringify([].concat(sb.characters)) : '[]');
@@ -638,7 +654,7 @@ function tryIncrementalSave(db, log, episodeIdNum, accumulated, savedNums, style
 function saveStoryboards(db, log, episodeId, storyboards, cfg, styleOverride, skipShotNumbers = null, deriveOpts = {}) {
   const episodeIdNum = Number(episodeId);
   if (storyboards.length === 0) {
-    throw new Error('AI生成分镜失败：返回的分镜数量为0');
+    throw new Error('AI storyboard generation failed: returned 0 storyboards');
   }
   const style = (styleOverride && String(styleOverride).trim()) || cfg?.style?.default_style || '';
   const videoRatio = cfg?.style?.default_video_ratio || '16:9';
@@ -1129,7 +1145,7 @@ function generateStoryboard(db, log, episodeId, model, style, storyboardCount, v
     'SELECT id, script_content, description, drama_id FROM episodes WHERE id = ? AND deleted_at IS NULL'
   ).get(Number(episodeId));
   if (!episode) {
-    throw new Error('剧集不存在或无权限访问');
+    throw new Error('Episode not found or access denied');
   }
 
   // 获取剧集风格和比例（如果未指定，则从 drama metadata / style 中获取完整提示词）
@@ -1172,7 +1188,7 @@ function generateStoryboard(db, log, episodeId, model, style, storyboardCount, v
       ? String(episode.description)
       : '';
   if (!scriptContent) {
-    throw new Error('剧本内容为空，请先生成剧集内容');
+    throw new Error('Script content is empty, please generate episode content first');
   }
 
   const characters = db.prepare(
@@ -1458,7 +1474,7 @@ function rebuildVideoPromptForStoryboard(db, log, storyboardId) {
     character_appearances: characterAppearances,
   };
 
-  const videoPrompt = generateVideoPrompt(sbForPrompt, finalStyle, videoRatio);
+  const videoPrompt = generateVideoPrompt(sbForPrompt, finalStyle, videoRatio, cfg);
   const now = new Date().toISOString();
   db.prepare('UPDATE storyboards SET video_prompt = ?, updated_at = ? WHERE id = ?').run(videoPrompt, now, sbId);
 
@@ -1503,10 +1519,10 @@ function buildSplitPlansFromStoryboard(row) {
   const narrationText = row.narration != null ? String(row.narration).trim() : '';
   const segmentCount = dialogueEntries.length + (narrationText ? 1 : 0);
   if (segmentCount < 2) {
-    throw new Error('当前分镜仅有一段对白或旁白，无需拆镜');
+    throw new Error('Current shot has only one segment of dialogue or narration, splitting not needed');
   }
   if (dialogueEntries.length === 0 && narrationText) {
-    throw new Error('仅有旁白无法按对白拆镜');
+    throw new Error('Cannot split by dialogue when only narration is present');
   }
 
   const allSpeakers = dialogueEntries.map((d) => d.speaker).filter(Boolean);
@@ -1628,12 +1644,12 @@ function updateStoryboardAsSplitSegment(db, sbId, baseRow, plan, now) {
  */
 function splitStoryboardByAudio(db, log, storyboardId) {
   const sbId = Number(storyboardId);
-  if (!Number.isFinite(sbId) || sbId <= 0) throw new Error('无效的分镜 id');
+  if (!Number.isFinite(sbId) || sbId <= 0) throw new Error('Invalid storyboard id');
 
   const row = db
     .prepare('SELECT * FROM storyboards WHERE id = ? AND deleted_at IS NULL')
     .get(sbId);
-  if (!row) throw new Error('分镜不存在');
+  if (!row) throw new Error('Storyboard not found');
 
   const plans = buildSplitPlansFromStoryboard(row);
   const extraCount = plans.length - 1;

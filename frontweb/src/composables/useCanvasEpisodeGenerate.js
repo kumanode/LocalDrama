@@ -3,30 +3,12 @@ import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dramaAPI } from '@/api/drama'
 import { storyboardsAPI } from '@/api/storyboards'
-import { taskAPI } from '@/api/task'
+import { pollGenerationTask, GEN_RESOURCE } from '@/stores/generationTaskStore'
 import { parseDramaMetadata } from '@/utils/canvasLayout'
 import { getDramaGenerationOptions } from '@/utils/canvasWorkflow'
 import { runImageStep, runVideoStep } from '@/composables/useCanvasWorkflowRunner'
 import { hasStoryboardImage, hasStoryboardVideo } from '@/utils/storyboardMedia'
 import { CANVAS_NODE_STATUS_LABELS } from '@/composables/useCanvasNodeStatus'
-
-async function pollTask(taskId, onTick, maxAttempts = 450, interval = 2000) {
-  if (!taskId) return { status: 'completed' }
-  for (let i = 0; i < maxAttempts; i++) {
-    await new Promise((r) => setTimeout(r, interval))
-    try {
-      const t = await taskAPI.get(taskId)
-      if (t.status === 'completed') return { status: 'completed', result: t.result }
-      if (t.status === 'failed') {
-        return { status: 'failed', error: t.error?.message || t.error || i18nT('messages.taskFailed') }
-      }
-      onTick?.()
-    } catch (e) {
-      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || i18nT('dramaCanvas.pollingFailed') }
-    }
-  }
-  return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
-}
 
 /** 画布模式：当前集 AI 生成分镜 + 批量生图/生视频 */
 export function useCanvasEpisodeGenerate(deps) {
@@ -132,7 +114,17 @@ export function useCanvasEpisodeGenerate(deps) {
       const res = await dramaAPI.generateStoryboard(ep.id, buildStoryboardApiOptions())
       const taskId = res?.task_id ?? (typeof res === 'string' ? res : null)
       if (taskId) {
-        const polled = await pollTask(taskId, () => refreshCanvas(true))
+        const polled = await pollGenerationTask(
+          taskId,
+          {
+            dramaId: drama.value?.id,
+            episodeId: ep.id,
+            resourceType: GEN_RESOURCE.GENERATE_STORYBOARD,
+            resourceId: ep.id,
+          },
+          null,
+          { onTick: () => refreshCanvas(true) }
+        )
         if (polled.status !== 'completed') {
           throw new Error(polled.error || i18nT('dramaCanvas.storyboardGenerationFailed'))
         }

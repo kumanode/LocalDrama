@@ -121,6 +121,7 @@ export default {
     newDramaProject: '新建短剧项目',
     importDramaProject: '导入短剧项目',
     beginnerHint: '新手？试试导入示例项目快速体验',
+    sampleChinese: '中文示例',
     unnamedProject: '未命名项目',
     noDescription: '暂无描述',
     projectCount: '{count} 个项目',

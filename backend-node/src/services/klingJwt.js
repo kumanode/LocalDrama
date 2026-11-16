@@ -35,12 +35,12 @@ function signKlingOfficialJwt(accessKey, secretKey, opts = {}) {
 
   const ak = normalizeKlingCredential(accessKey);
   const sk = normalizeKlingCredential(secretKey);
-  if (!ak || !sk) throw new Error('AccessKey 与 SecretKey 不能为空');
+  if (!ak || !sk) throw new Error('AccessKey and SecretKey cannot be empty');
 
   let signingSecret = sk;
   if (secretEncoding === 'base64') {
     const buf = Buffer.from(sk, 'base64');
-    if (!buf.length) throw new Error('SecretKey 按 Base64 解码后为空，请检查是否勾选错误或粘贴内容');
+    if (!buf.length) throw new Error('SecretKey decoded from Base64 is empty, please verify');
     signingSecret = buf;
   }
 

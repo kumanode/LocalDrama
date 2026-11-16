@@ -14,7 +14,7 @@ function routes(db, log, cfg) {
     /** 为单条分镜生成 TTS：对白 → audio_local_path；旁白 → narration_audio_local_path（body.tts_kind === 'narration'） */
     extract: async (req, res) => {
       const { storyboard_id, text, tts_kind } = req.body || {};
-      if (!text && !storyboard_id) return response.badRequest(res, '请提供 storyboard_id 或 text');
+      if (!text && !storyboard_id) return response.badRequest(res, 'NO_TEXT_OR_STORYBOARD');
       const kind = String(tts_kind || 'dialogue').toLowerCase() === 'narration' ? 'narration' : 'dialogue';
       let ttsText = text;
       if (kind === 'narration') {
@@ -23,7 +23,7 @@ function routes(db, log, cfg) {
           ttsText = row?.narration;
         }
         if (!ttsText || !String(ttsText).trim()) {
-          return response.badRequest(res, '分镜解说旁白为空，无法合成语音');
+          return response.badRequest(res, 'STORYBOARD_NARRATION_EMPTY');
         }
       } else {
         if ((!ttsText || !String(ttsText).trim()) && storyboard_id) {
@@ -31,7 +31,7 @@ function routes(db, log, cfg) {
           ttsText = row?.dialogue;
         }
         if (!ttsText || !String(ttsText).trim()) {
-          return response.badRequest(res, '分镜对白为空，无法合成语音');
+          return response.badRequest(res, 'STORYBOARD_DIALOGUE_EMPTY');
         }
       }
       try {
@@ -66,7 +66,7 @@ function routes(db, log, cfg) {
     extractBatch: async (req, res) => {
       const { storyboard_ids } = req.body || {};
       if (!Array.isArray(storyboard_ids) || storyboard_ids.length === 0) {
-        return response.badRequest(res, 'storyboard_ids 不能为空');
+        return response.badRequest(res, 'STORYBOARD_IDS_EMPTY');
       }
       const results = [];
       const storagePath = getStoragePath();

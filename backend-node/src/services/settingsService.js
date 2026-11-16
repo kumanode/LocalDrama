@@ -44,6 +44,31 @@ function updateLanguage(cfg, log, language) {
   return { ok: true, language };
 }
 
+const CONTENT_LANGUAGES = new Set(['zh', 'en', 'id']);
+
+function getContentLanguage(cfg) {
+  return cfg?.app?.content_language || cfg?.app?.language || 'zh';
+}
+
+function updateContentLanguage(cfg, log, language) {
+  if (!CONTENT_LANGUAGES.has(language)) return { ok: false, error: 'Unsupported content language' };
+  if (!cfg.app) cfg.app = {};
+  cfg.app.content_language = language;
+  setConfigPath(cfg);
+  if (configPath) {
+    try {
+      const current = yaml.load(fs.readFileSync(configPath, 'utf8')) || {};
+      if (!current.app) current.app = {};
+      current.app.content_language = language;
+      fs.writeFileSync(configPath, yaml.dump(current, { lineWidth: -1 }), 'utf8');
+    } catch (err) {
+      log.warnw('Failed to write content language config', { error: err.message });
+    }
+  }
+  log.infow('Content language updated', { language });
+  return { ok: true, language };
+}
+
 /**
  * 从 global_settings 表读取一个键值，返回解析后的值，不存在时返回 defaultValue。
  */
@@ -71,6 +96,8 @@ module.exports = {
   setConfigPath,
   getLanguage,
   updateLanguage,
+  getContentLanguage,
+  updateContentLanguage,
   getGlobalSetting,
   setGlobalSetting,
 };

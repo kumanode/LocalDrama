@@ -18,8 +18,8 @@ const ALLOWED_ACTIONS = new Set([
 
 function normalizeBaseUrl(raw) {
   let s = String(raw || '').trim().replace(/\/$/, '');
-  if (!s) throw new Error('缺少 base_url');
-  if (!/^https?:\/\//i.test(s)) throw new Error('base_url 须以 http:// 或 https:// 开头');
+  if (!s) throw new Error('base_url is required');
+  if (!/^https?:\/\//i.test(s)) throw new Error('base_url must start with http:// or https://');
   return s;
 }
 
@@ -83,7 +83,7 @@ function buildRequestUrl(base, pathMode, act, apiVersion, projectName) {
   try {
     u = new URL(base);
   } catch (e) {
-    throw new Error('base_url 不是合法 URL');
+    throw new Error('base_url is not a valid URL');
   }
   u.searchParams.set('Action', act);
   u.searchParams.set('Version', ver);
@@ -101,7 +101,7 @@ function extractUpstreamMessage(data, text) {
   if (m) return String(m);
   if (data && data.message) return String(data.message);
   if (data && data.Message) return String(data.Message);
-  return `HTTP 错误: ${text ? text.slice(0, 500) : ''}`;
+  return `HTTP error: ${text ? text.slice(0, 500) : ''}`;
 }
 
 function parseSignedOpenApiUrl(base) {
@@ -197,9 +197,9 @@ async function callModelArkAsset(opts, log) {
     project_name,
   } = opts;
 
-  if (!action || typeof action !== 'string') throw new Error('缺少 action');
+  if (!action || typeof action !== 'string') throw new Error('action is required');
   const act = action.trim();
-  if (!ALLOWED_ACTIONS.has(act)) throw new Error('不支持的 action: ' + act);
+  if (!ALLOWED_ACTIONS.has(act)) throw new Error('Unsupported action: ' + act);
 
   const base = normalizeBaseUrl(ensureArkOpenApiBasePath(base_url));
   const pathMode = (path_mode || 'open_api_query').toString();
@@ -207,7 +207,7 @@ async function callModelArkAsset(opts, log) {
 
   const method = String(http_method || 'POST').toUpperCase();
   if (!['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-    throw new Error('不支持的 http_method');
+    throw new Error('Unsupported http_method');
   }
 
   const pnScope = (project_name || '').toString().trim();
@@ -221,10 +221,10 @@ async function callModelArkAsset(opts, log) {
     const ak = String(access_key_id || '').trim();
     const sk = String(secret_access_key || '').trim();
     if (!ak || !sk) {
-      throw new Error('控制面 OpenAPI 须填写 Access Key ID 与 Secret Access Key（控制台 IAM 密钥，非推理 API Key）');
+      throw new Error('Control plane OpenAPI requires Access Key ID and Secret Access Key (Console IAM key, not inference API Key)');
     }
     if (pathMode !== 'open_api_query') {
-      throw new Error('AK/SK 签名仅支持与「官方 OpenAPI」路径模式（Query 中带 Action）一起使用');
+      throw new Error('AK/SK signature only supported with official OpenAPI path mode (Query with Action)');
     }
     res = await fetchSignedOpenApi({
       base,
@@ -240,7 +240,7 @@ async function callModelArkAsset(opts, log) {
     });
   } else {
     const token = normalizeBearerToken(api_key);
-    if (!token) throw new Error('缺少 api_key');
+    if (!token) throw new Error('api_key is required');
     const url = buildRequestUrl(base, pathMode, act, api_version, pnScope);
     res = await fetchBearer(url, method, token, bodyObj);
   }

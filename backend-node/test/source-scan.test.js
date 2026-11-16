@@ -38,13 +38,11 @@ describe('backend source-scan', () => {
     assert.deepEqual(hits.map((h) => h.line), [2, 4, 6])
   })
 
-  it('does not add new Chinese user-facing strings in backend sources', () => {
+  it('does not add new Chinese user-facing strings in backend sources (zero leak target)', () => {
     const violations = []
     for (const [file, count] of leaks) {
-      const allowed = allowlist[file]
-      if (allowed === undefined) {
-        violations.push(`${file}: ${count} Chinese response/error message(s) not in allowlist`)
-      } else if (count > allowed) {
+      const allowed = allowlist[file] || 0
+      if (count > allowed) {
         violations.push(`${file}: ${count} message(s), allowlist permits ${allowed}`)
       }
     }
@@ -59,23 +57,10 @@ describe('backend source-scan', () => {
         ...violations,
       ].join('\n'),
     )
+    assert.equal(leaks.size, 0, 'Backend has 0 user-facing Chinese leaks')
   })
 
-  it('keeps the allowlist shrinking', () => {
-    const stale = []
-    for (const [file, count] of Object.entries(allowlist)) {
-      const actual = leaks.get(file) || 0
-      if (actual < count) stale.push(`${file}: allowlist ${count}, actual ${actual}`)
-    }
-    assert.deepEqual(
-      stale,
-      [],
-      `backend-node/test/i18n-allowlist.json is stale; update these entries:\n${stale.sort().join('\n')}`,
-    )
-  })
-
-  it('has a readable allowlist', () => {
-    assert.ok(fs.existsSync(allowlistPath), 'backend-node/test/i18n-allowlist.json is missing')
-    assert.equal(typeof allowlist, 'object')
+  it('keeps zero allowlist entries and requires allowlist file to remain deleted', () => {
+    assert.ok(!fs.existsSync(allowlistPath), 'backend-node/test/i18n-allowlist.json must remain deleted once leaks hit 0')
   })
 })

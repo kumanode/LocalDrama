@@ -1474,7 +1474,7 @@ async function callImageApi(db, log, opts) {
   const preferredProvider = preferred_provider ?? opts.preferredProvider;
   const config = getDefaultImageConfig(db, preferredModel, preferredProvider, imageServiceType);
   if (!config) {
-    throw new Error('未配置图片模型，请在「AI 配置」中添加 image 类型且已启用的配置');
+    throw new Error('No active image model configured. Please add an enabled image model in AI Configuration');
   }
   const model = getModelFromConfig(config, preferredModel);
   const provider = (config.provider || '').toLowerCase();

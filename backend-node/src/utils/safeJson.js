@@ -191,7 +191,7 @@ function safeParseAIJSON(aiResponse, v, log, outMeta) {
   }
 
   if (!aiResponse || typeof aiResponse !== 'string') {
-    throw new Error('AI返回内容为空');
+    throw new Error('AI response is empty');
   }
   let cleaned = sanitizeControlChars(aiResponse).trim()
     .replace(/^```json\s*/gm, '')
@@ -202,7 +202,7 @@ function safeParseAIJSON(aiResponse, v, log, outMeta) {
   cleaned = escapeNewlinesInStrings(cleaned);
   const jsonStr = extractJsonCandidate(cleaned);
   if (!jsonStr) {
-    throw new Error('响应中未找到有效的JSON对象或数组');
+    throw new Error('No valid JSON object or array found in response');
   }
 
   // 优先尝试完整解析（正常路径，无破损）
@@ -417,7 +417,7 @@ function safeParseAIJSON(aiResponse, v, log, outMeta) {
       } catch (_) {}
     }
 
-    throw new Error('JSON解析失败: ' + err.message);
+    throw new Error('JSON parse failed: ' + err.message);
   }
 }
 

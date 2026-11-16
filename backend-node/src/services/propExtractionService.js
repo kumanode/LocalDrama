@@ -137,7 +137,7 @@ function extractPropsForEpisode(db, log, episodeId, cfg) {
   ).get(Number(episodeId));
   if (!episode) throw new Error('episode not found');
   if (!episode.script_content || !String(episode.script_content).trim()) {
-    throw new Error('剧集剧本内容为空，无法提取道具');
+    throw new Error('Episode script is empty, cannot extract props');
   }
 
   const task = taskService.createTask(db, log, 'prop_extraction', String(episodeId));

@@ -17,7 +17,7 @@ function clearOverrideInMemory(key) {
 
 // 与 Go application/services/prompt_i18n.go 对齐：提示词与语言
 function getLanguage(cfg) {
-  return (cfg?.app?.language || 'zh').toLowerCase();
+  return (cfg?.app?.content_language || cfg?.app?.language || 'zh').toLowerCase();
 }
 
 function isEnglish(cfg) {
@@ -1581,9 +1581,41 @@ function getPropPolishPrompt(cfg) {
 **必须**在同一段内自然包含以下关键约束的中文表述（或等价流畅说法）：单一主体、纯色无缝棚拍背景、无多余物体、无人物、无手、无环境；并融入真实尺度与次要元素要求；末尾再接画风：${styleZh ? styleZh + ' 渲染质感' : '写实产品主图质感'}`;
 }
 
+const PROMPT_LABELS = {
+  scene: { zh: '场景：', en: 'Scene: ' },
+  title: { zh: '镜头标题：', en: 'Shot Title: ' },
+  character_appearances: { zh: '角色造型：', en: 'Character Appearances: ' },
+  action: { zh: '动作：', en: 'Action: ' },
+  dialogue: { zh: '对话：', en: 'Dialogue: ' },
+  narration: { zh: '解说旁白：', en: 'Narration: ' },
+  result: { zh: '结果：', en: 'Result: ' },
+  shot_type: { zh: '景别：', en: 'Shot Scale: ' },
+  shot_angle: { zh: '镜头角度：', en: 'Shot Angle: ' },
+  movement: { zh: '运镜：', en: 'Camera Movement: ' },
+  atmosphere: { zh: '氛围：', en: 'Atmosphere: ' },
+  emotion: { zh: '情绪：', en: 'Mood: ' },
+  emotion_intensity: { zh: '情绪强度：', en: 'Emotional Intensity: ' },
+  bgm_prompt: { zh: '配乐：', en: 'Music: ' },
+  sound_effect: { zh: '音效：', en: 'Sound Effect: ' },
+  duration: { zh: '时长：', en: 'Duration: ' },
+  seconds: { zh: '秒', en: 's' },
+  style: { zh: '风格：', en: 'Style: ' },
+  default_video_scene: { zh: '视频场景', en: 'Video scene' },
+  description: { zh: '分镜描述：', en: 'Description: ' },
+};
+
+function getPromptLabel(cfg, key) {
+  const isEn = isEnglish(cfg);
+  const entry = PROMPT_LABELS[key];
+  if (!entry) return key;
+  return isEn ? entry.en : entry.zh;
+}
+
 module.exports = {
   getLanguage,
   isEnglish,
+  getPromptLabel,
+  label: getPromptLabel,
   getCharacterExtractionPrompt,
   getPropExtractionPrompt,
   formatUserPrompt,

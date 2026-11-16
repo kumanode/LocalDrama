@@ -43,7 +43,7 @@ function createAgentHandlers(db, log, runtime) {
   const api = runtime || defaultRuntime();
 
   async function chat(req, res) {
-    if (!(await api.isAgentReady())) return response.serviceUnavailable(res, '助手未就绪');
+    if (!(await api.isAgentReady())) return response.serviceUnavailable(res, 'SERVICE_UNAVAILABLE');
     const { validateChatBody } = await import('../mastra/context.mjs');
     const parsed = validateChatBody(db, req.body || {});
     if (!parsed.ok) return response.badRequest(res, parsed.message);
@@ -65,13 +65,13 @@ function createAgentHandlers(db, log, runtime) {
   }
 
   async function decide(req, res, approved) {
-    if (!(await api.isAgentReady())) return response.serviceUnavailable(res, '助手未就绪');
+    if (!(await api.isAgentReady())) return response.serviceUnavailable(res, 'SERVICE_UNAVAILABLE');
     const body = req.body || {};
     const dramaId = Number(body.dramaId);
     const history = await api.getHistory(dramaId);
     const pending = history && Array.isArray(history.pendingApprovals) ? history.pendingApprovals : [];
     const owned = pending.some((item) => item.runId === body.runId && item.toolCallId === body.toolCallId);
-    if (!owned) return response.notFound(res, '找不到这次确认');
+    if (!owned) return response.notFound(res, 'CONFIRMATION_NOT_FOUND');
     beginSse(res);
     try {
       await api.resumeApproval({
@@ -88,7 +88,7 @@ function createAgentHandlers(db, log, runtime) {
   }
 
   async function history(req, res) {
-    if (!(await api.isAgentReady())) return response.serviceUnavailable(res, '助手未就绪');
+    if (!(await api.isAgentReady())) return response.serviceUnavailable(res, 'SERVICE_UNAVAILABLE');
     const data = await api.getHistory(Number(req.query.dramaId));
     response.success(res, data);
   }

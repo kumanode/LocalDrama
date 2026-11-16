@@ -4,7 +4,7 @@ const response = require('../response');
 function getTaskStatus(db, log) {
   return (req, res) => {
     const task = taskService.getTask(db, req.params.task_id);
-    if (!task) return response.notFound(res, '任务不存在');
+    if (!task) return response.notFound(res, 'TASK_NOT_FOUND');
     response.success(res, task);
   };
 }
@@ -12,7 +12,7 @@ function getTaskStatus(db, log) {
 function getResourceTasks(db, log) {
   return (req, res) => {
     const resourceId = req.query.resource_id;
-    if (!resourceId) return response.badRequest(res, '缺少resource_id参数');
+    if (!resourceId) return response.badRequest(res, 'RESOURCE_ID_REQUIRED');
     try {
       const tasks = taskService.getTasksByResource(db, resourceId);
       response.success(res, tasks);
@@ -28,7 +28,7 @@ function cancelTaskStatus(db, log) {
     try {
       const result = taskService.cancelTask(db, log, req.params.task_id, req.body?.reason);
       if (!result.ok && result.reason === 'not_found') {
-        return response.notFound(res, '任务不存在');
+        return response.notFound(res, 'TASK_NOT_FOUND');
       }
       response.success(res, result.task || { id: req.params.task_id });
     } catch (err) {

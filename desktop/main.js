@@ -275,9 +275,23 @@ app.whenReady().then(async () => {
     writeMainLog(`Failed to start backend\n${stack}`);
     console.error('Failed to start backend', err);
     const { dialog } = require('electron');
+    const isEn = (() => {
+      try {
+        const yaml = require('js-yaml');
+        const configPath = path.join(getBackendCwd(), 'configs', 'config.yaml');
+        if (fs.existsSync(configPath)) {
+          const cfg = yaml.load(fs.readFileSync(configPath, 'utf8'));
+          return (cfg?.app?.language || 'zh').toLowerCase() === 'en';
+        }
+      } catch (_) {}
+      return false;
+    })();
+
     dialog.showErrorBox(
-      '本地短剧助手启动失败',
-      `后端服务未能启动，请查看日志：\n${MAIN_STARTUP_LOG}\n\n${stack}`
+      isEn ? 'LocalDrama Assistant Startup Failed' : '本地短剧助手启动失败',
+      isEn
+        ? `Backend service failed to start. Please check logs at:\n${MAIN_STARTUP_LOG}\n\n${stack}`
+        : `后端服务未能启动，请查看日志：\n${MAIN_STARTUP_LOG}\n\n${stack}`
     );
     app.quit();
     return;

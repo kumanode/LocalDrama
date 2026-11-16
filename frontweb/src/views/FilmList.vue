@@ -78,7 +78,7 @@
                     :loading="importingExample === ex.filename"
                     @click="onImportExample(ex)"
                   >
-                    <el-icon><FolderOpened /></el-icon>{{ ex.name }}
+                    <el-icon><FolderOpened /></el-icon>{{ locale === 'en' && /[\u4e00-\u9fff]/.test(ex.name) ? `${ex.name} (${$t('filmList.sampleChinese')})` : ex.name }}
                   </el-button>
                 </div>
               </div>

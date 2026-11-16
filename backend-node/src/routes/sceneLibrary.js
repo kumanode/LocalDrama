@@ -25,7 +25,7 @@ function routes(db, cfg, log) {
     get: (req, res) => {
       try {
         const item = sceneLibraryService.getLibraryItem(db, req.params.id);
-        if (!item) return response.notFound(res, '场景库项不存在');
+        if (!item) return response.notFound(res, 'SCENE_LIBRARY_ITEM_NOT_FOUND');
         response.success(res, item);
       } catch (err) {
         log.error('scene-library get', { error: err.message });
@@ -35,7 +35,7 @@ function routes(db, cfg, log) {
     update: (req, res) => {
       try {
         const item = sceneLibraryService.updateLibraryItem(db, log, req.params.id, req.body || {});
-        if (!item) return response.notFound(res, '场景库项不存在');
+        if (!item) return response.notFound(res, 'SCENE_LIBRARY_ITEM_NOT_FOUND');
         response.success(res, item);
       } catch (err) {
         log.error('scene-library update', { error: err.message });
@@ -45,7 +45,7 @@ function routes(db, cfg, log) {
     delete: (req, res) => {
       try {
         const ok = sceneLibraryService.deleteLibraryItem(db, log, req.params.id);
-        if (!ok) return response.notFound(res, '场景库项不存在');
+        if (!ok) return response.notFound(res, 'SCENE_LIBRARY_ITEM_NOT_FOUND');
         response.success(res, { message: '删除成功' });
       } catch (err) {
         log.error('scene-library delete', { error: err.message });

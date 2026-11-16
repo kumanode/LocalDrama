@@ -272,18 +272,41 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
     const interval = options.interval ?? 2000
     const showErrorToast = options.showErrorToast !== false
     const showTimeoutToast = options.showTimeoutToast !== false
+    const onTick = options.onTick
+    const isPaused = options.isPaused
+    const isAborted = options.isAborted
+    const abortErrorMsg = options.abortErrorMsg || i18nT('taskCancelled')
+    const rejectOnAbort = options.rejectOnAbort ?? false
 
     let attempts = 0
     let stopped = false
-    const promise = new Promise((resolve) => {
+    const promise = new Promise((resolve, reject) => {
       const tick = async () => {
         if (stopped || cancelledPollTaskIds.value.has(taskId)) {
           markFailed(key, i18nT('messages.taskPollingStopped'))
           return resolve({ status: 'cancelled', error: i18nT('messages.taskPollingStopped') })
         }
+        if (isAborted?.()) {
+          markFailed(key, abortErrorMsg)
+          const err = Object.assign(new Error(abortErrorMsg), { pipelineAborted: true })
+          if (rejectOnAbort) return reject(err)
+          return resolve({ status: 'cancelled', error: abortErrorMsg })
+        }
+        if (isPaused?.()) {
+          return resolve({ paused: true })
+        }
         attempts++
         try {
+          if (onTick) {
+            try { await onTick() } catch (_) {}
+          }
           const t = await taskAPI.get(taskId)
+          if (isAborted?.()) {
+            markFailed(key, abortErrorMsg)
+            const err = Object.assign(new Error(abortErrorMsg), { pipelineAborted: true })
+            if (rejectOnAbort) return reject(err)
+            return resolve({ status: 'cancelled', error: abortErrorMsg })
+          }
           if (isOrphanedProcessingTask(t)) {
             const errMsg = orphanTaskMsg()
             markFailed(key, errMsg)
@@ -663,3 +686,43 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
     taskKey,
   }
 })
+
+export function pollGenerationTask(taskId, meta = {}, onDone = null, options = {}) {
+  try {
+    const store = useGenerationTaskStore()
+    return store.pollTask(taskId, meta, onDone, options)
+  } catch (_) {
+    return new Promise(async (resolve, reject) => {
+      const maxAttempts = options.maxAttempts ?? 450
+      const interval = options.interval ?? 2000
+      for (let i = 0; i < maxAttempts; i++) {
+        await new Promise((r) => setTimeout(r, interval))
+        if (options.isAborted?.()) {
+          const msg = options.abortErrorMsg || i18nT('taskCancelled')
+          const err = Object.assign(new Error(msg), { pipelineAborted: true })
+          if (options.rejectOnAbort) return reject(err)
+          return resolve({ status: 'cancelled', error: msg })
+        }
+        if (options.isPaused?.()) {
+          return resolve({ paused: true })
+        }
+        if (options.onTick) {
+          try { await options.onTick() } catch (_) {}
+        }
+        try {
+          const t = await taskAPI.get(taskId)
+          if (t.status === 'completed') {
+            if (onDone) await onDone()
+            return resolve({ status: 'completed', result: t.result })
+          }
+          if (t.status === 'failed') {
+            return resolve({ status: 'failed', error: t.error || i18nT('messages.taskFailed') })
+          }
+        } catch (e) {
+          if (i === maxAttempts - 1) return resolve({ status: 'failed', error: e.message })
+        }
+      }
+      resolve({ status: 'timeout', error: options.timeoutMessage || i18nT('dramaCanvas.taskTimedOut') })
+    })
+  }
+}

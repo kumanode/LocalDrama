@@ -28,7 +28,7 @@ function routes(db, cfg, log) {
     get: (req, res) => {
       try {
         const item = imageService.getById(db, req.params.id);
-        if (!item) return response.notFound(res, '记录不存在');
+        if (!item) return response.notFound(res, 'RECORD_NOT_FOUND');
         response.success(res, item);
       } catch (err) {
         log.error('images get', { error: err.message });
@@ -38,7 +38,7 @@ function routes(db, cfg, log) {
     delete: (req, res) => {
       try {
         const ok = imageService.deleteById(db, log, req.params.id);
-        if (!ok) return response.notFound(res, '记录不存在');
+        if (!ok) return response.notFound(res, 'RECORD_NOT_FOUND');
         response.success(res, { message: '删除成功' });
       } catch (err) {
         log.error('images delete', { error: err.message });
@@ -82,7 +82,7 @@ function routes(db, cfg, log) {
         if (err.message && (err.message.includes('script content') || err.message.includes('not found'))) {
           return response.badRequest(res, err.message);
         }
-        response.internalError(res, err.message || '任务创建失败');
+        response.internalError(res, 'TASK_CREATE_FAILED', err.message || 'Task creation failed');
       }
     },
     episodeBatch: (req, res) => {

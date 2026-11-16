@@ -49,13 +49,13 @@ function extractRetentionClausesFromVideoPrompts(draft, composed) {
     const pieces = full
       .replace(/\r\n/g, '\n')
       .trim()
-      .split(/。+/)
+      .split(/(?:。+|\.\s+)/)
       .map((x) => x.trim())
       .filter(Boolean);
     for (let piece of pieces) {
       piece = piece.replace(/\s*=\s*VideoRatio\s*:/gi, '=VideoRatio:').trim();
       if (!piece) continue;
-      const labeled = /^(场景|镜头标题|动作|对话|对白|结果|景别|镜头角度|运镜|氛围|情绪|情绪强度|配乐|音效|时长|风格|解说旁白)[：:]/.test(
+      const labeled = /^(场景|镜头标题|角色造型|动作|对话|对白|结果|景别|镜头角度|运镜|氛围|情绪|情绪强度|配乐|音效|时长|风格|解说旁白|Scene|Shot\s*Title|Character\s*Appearances?|Action|Dialogue|Result|Shot\s*Scale|Shot\s*Angle|Camera\s*Movement|Atmosphere|Mood|Emotional\s*Intensity|Music|Sound\s*Effects?|Duration|Style|Narration)[：:]/i.test(
         piece
       );
       const hasRatio = /=VideoRatio\s*:/i.test(piece);
@@ -64,9 +64,9 @@ function extractRetentionClausesFromVideoPrompts(draft, composed) {
       if (seen.has(dedupKey)) continue;
       seen.add(dedupKey);
       let c = piece;
-      if (/^镜头角度/.test(c) && c.length > 920) c = `${c.slice(0, 920)}…`;
+      if (/^(镜头角度|Shot\s*Angle)/i.test(c) && c.length > 920) c = `${c.slice(0, 920)}…`;
       else if (c.length > 560) c = `${c.slice(0, 560)}…`;
-      if (!/[。．…]$/.test(c)) c += '。';
+      if (!/[。．.…]$/.test(c)) c += '。';
       out.push(c);
     }
   }
@@ -251,7 +251,7 @@ function routes(db, log) {
     insertBefore: (req, res) => {
       try {
         const sb = storyboardService.insertBeforeStoryboard(db, log, req.params.id);
-        if (!sb) return response.notFound(res, '目标分镜不存在');
+        if (!sb) return response.notFound(res, 'TARGET_STORYBOARD_NOT_FOUND');
         response.created(res, sb);
       } catch (err) {
         log.error('storyboards insertBefore', { error: err.message });
@@ -261,7 +261,7 @@ function routes(db, log) {
     getOne: (req, res) => {
       try {
         const sb = storyboardService.getStoryboardById(db, req.params.id);
-        if (!sb) return response.notFound(res, '分镜不存在');
+        if (!sb) return response.notFound(res, 'STORYBOARD_NOT_FOUND');
         response.success(res, sb);
       } catch (err) {
         log.error('storyboards getOne', { error: err.message });
@@ -271,7 +271,7 @@ function routes(db, log) {
     update: (req, res) => {
       try {
         const sb = storyboardService.updateStoryboard(db, log, req.params.id, req.body || {});
-        if (!sb) return response.notFound(res, '分镜不存在');
+        if (!sb) return response.notFound(res, 'STORYBOARD_NOT_FOUND');
         response.success(res, sb);
       } catch (err) {
         log.error('storyboards update', { error: err.message });
@@ -281,7 +281,7 @@ function routes(db, log) {
     delete: (req, res) => {
       try {
         const ok = storyboardService.deleteStoryboard(db, log, req.params.id);
-        if (!ok) return response.notFound(res, '分镜不存在');
+        if (!ok) return response.notFound(res, 'STORYBOARD_NOT_FOUND');
         response.success(res, { message: '删除成功' });
       } catch (err) {
         log.error('storyboards delete', { error: err.message });
@@ -322,14 +322,14 @@ function routes(db, log) {
         const frameType = req.params.frame_type;
         const validTypes = ['first', 'key', 'last', 'panel', 'action'];
         if (!validTypes.includes(frameType)) {
-          return response.badRequest(res, '不支持的 frame_type');
+          return response.badRequest(res, 'FRAME_TYPE_UNSUPPORTED');
         }
         const body = req.body || {};
         const prompt = typeof body.prompt === 'string' ? body.prompt : '';
         const description = typeof body.description === 'string' ? body.description : null;
         const layout = typeof body.layout === 'string' ? body.layout : null;
         if (!prompt.trim()) {
-          return response.badRequest(res, 'prompt 不能为空');
+          return response.badRequest(res, 'PROMPT_REQUIRED');
         }
         framePromptService.saveFramePrompt(db, log, req.params.id, frameType, prompt, description, layout);
         response.success(res, { message: '保存成功', frame_type: frameType });
@@ -341,7 +341,7 @@ function routes(db, log) {
     regenerateLayoutDescription: async (req, res) => {
       try {
         const id = Number(req.params.id);
-        if (!id) return response.badRequest(res, '缺少分镜 id');
+        if (!id) return response.badRequest(res, 'STORYBOARD_ID_REQUIRED');
         const newLayout = await framePromptService.regenerateLayoutDescription(db, log, id);
         response.success(res, {
           layout_description: newLayout,
@@ -349,28 +349,28 @@ function routes(db, log) {
         });
       } catch (err) {
         log.error('storyboards regenerateLayoutDescription', { error: err.message, id: req.params.id });
-        response.internalError(res, err.message || '重新生成布局描述失败');
+        response.internalError(res, 'REGEN_LAYOUT_FAILED', err.message || 'Regenerate layout description failed');
       }
     },
     rebuildVideoPrompt: (req, res) => {
       try {
         const id = Number(req.params.id);
-        if (!id) return response.badRequest(res, '缺少分镜 id');
+        if (!id) return response.badRequest(res, 'STORYBOARD_ID_REQUIRED');
         const sb = episodeStoryboardService.rebuildVideoPromptForStoryboard(db, log, id);
-        if (!sb) return response.notFound(res, '分镜不存在');
+        if (!sb) return response.notFound(res, 'STORYBOARD_NOT_FOUND');
         response.success(res, {
           ...sb,
           message: '视频提示词已按最新规则重建并保存',
         });
       } catch (err) {
         log.error('storyboards rebuildVideoPrompt', { error: err.message, id: req.params.id });
-        response.internalError(res, err.message || '重建视频提示词失败');
+        response.internalError(res, 'REBUILD_VIDEO_PROMPT_FAILED', err.message || 'Rebuild video prompt failed');
       }
     },
     splitByAudio: (req, res) => {
       try {
         const id = Number(req.params.id);
-        if (!id) return response.badRequest(res, '缺少分镜 id');
+        if (!id) return response.badRequest(res, 'STORYBOARD_ID_REQUIRED');
         const result = episodeStoryboardService.splitStoryboardByAudio(db, log, id);
         response.success(res, {
           ...result,
@@ -378,7 +378,7 @@ function routes(db, log) {
         });
       } catch (err) {
         log.error('storyboards splitByAudio', { error: err.message, id: req.params.id });
-        response.badRequest(res, err.message || '拆镜失败');
+        response.badRequest(res, 'SPLIT_SHOT_FAILED', err.message || 'Split shot failed');
       }
     },
     episodeStoryboardsGenerate: (req, res) => {
@@ -413,9 +413,9 @@ function routes(db, log) {
         const sb = db.prepare(
           'SELECT id, episode_id, storyboard_number, image_prompt, action, dialogue, result, atmosphere, shot_type FROM storyboards WHERE id = ? AND deleted_at IS NULL'
         ).get(sbId);
-        if (!sb) return response.notFound(res, '分镜不存在');
+        if (!sb) return response.notFound(res, 'STORYBOARD_NOT_FOUND');
         if (!sb.image_prompt && !sb.action && !sb.dialogue) {
-          return response.badRequest(res, '该分镜暂无可优化的内容（image_prompt / action / dialogue 均为空）');
+          return response.badRequest(res, 'NO_OPTIMIZABLE_CONTENT');
         }
 
         // 通过 episode 查 drama_id
@@ -516,7 +516,7 @@ function routes(db, log) {
         );
 
         if (!polishedPrompt || polishedPrompt.trim().length < 10) {
-          return response.badRequest(res, 'AI 返回内容过短，请检查文本模型配置');
+          return response.badRequest(res, 'AI_OUTPUT_TOO_SHORT');
         }
 
         const polished = polishedPrompt.trim();
@@ -569,7 +569,7 @@ function routes(db, log) {
           { scene_key: 'image_polish', max_tokens: 2400, temperature: 0.28 }
         );
         if (!out || String(out).trim().length < 20) {
-          return response.badRequest(res, 'AI 返回内容过短，请检查文本模型配置');
+          return response.badRequest(res, 'AI_OUTPUT_TOO_SHORT');
         }
         let text = String(out).trim();
         text = normalizeUniversalSegmentShotDurations(text, durationLabel, durationSec);
@@ -660,7 +660,7 @@ function routes(db, log) {
           : '';
       const draft = draftRaw.trim();
       if (!draft) {
-        return response.badRequest(res, '请先填写或生成全能片段描述后再润色（编辑器内容不能为空）');
+        return response.badRequest(res, 'OMNI_SEGMENT_EMPTY');
       }
       const built = buildUniversalSegmentUserPromptBundle(db, sbId, req.body || {}, {
         universalSegmentOverride: draftRaw,
@@ -777,10 +777,10 @@ function routes(db, log) {
     polishClassicVideoPromptStream: async (req, res) => {
       const sbId = Number(req.params.id);
       const sbRow = db.prepare('SELECT * FROM storyboards WHERE id = ? AND deleted_at IS NULL').get(sbId);
-      if (!sbRow) return response.notFound(res, '分镜不存在');
+      if (!sbRow) return response.notFound(res, 'STORYBOARD_NOT_FOUND');
       const mode = sbRow.creation_mode === 'universal' ? 'universal' : 'classic';
       if (mode === 'universal') {
-        return response.badRequest(res, '当前为全能模式，请使用「润色全能提示词」');
+        return response.badRequest(res, 'OMNI_MODE_USE_OMNI_POLISH');
       }
 
       let dramaId = null;
@@ -818,7 +818,7 @@ function routes(db, log) {
       const currentDraft = draftTrim || dbVp;
       const anchor = currentDraft || String(autoComposed || '').trim();
       if (!anchor || anchor.length < 4) {
-        return response.badRequest(res, '请先填写分镜的动作/对白/场景等字段，或手写视频提示词后再润色');
+        return response.badRequest(res, 'STORYBOARD_POLISH_PREREQUISITE_REQUIRED');
       }
 
       let scriptText = '';
@@ -1030,7 +1030,7 @@ function routes(db, log) {
       const row = db.prepare(
         'SELECT id, local_path, image_url FROM storyboards WHERE id = ? AND deleted_at IS NULL'
       ).get(id);
-      if (!row) return response.notFound(res, '分镜不存在');
+      if (!row) return response.notFound(res, 'STORYBOARD_NOT_FOUND');
       try {
         const loadConfig = require('../config').loadConfig;
         const cfg = loadConfig();
@@ -1038,10 +1038,10 @@ function routes(db, log) {
           ? cfg.storage.local_path
           : path.join(process.cwd(), cfg.storage?.local_path || './data/storage');
         const localPath = resolveStoryboardImageLocalPath(db, storageBase, id, row);
-        if (!localPath) return response.badRequest(res, '分镜没有本地图片，无法超分');
+        if (!localPath) return response.badRequest(res, 'NO_LOCAL_IMAGE_FOR_UPSCALING');
         const srcFile = path.join(storageBase, localPath);
         let sharp; try { sharp = require('sharp'); } catch (_) { sharp = null; }
-        if (!sharp) return response.badRequest(res, 'sharp 模块不可用，无法超分');
+        if (!sharp) return response.badRequest(res, 'SHARP_MODULE_UNAVAILABLE');
         const info = await sharp(srcFile).metadata();
         const scale = 2;
         const newW = (info.width || 512) * scale;
@@ -1068,7 +1068,7 @@ function routes(db, log) {
       try {
         const episodeId = Number(req.body?.episode_id);
         const overwrite = !!req.body?.overwrite; // 是否覆盖已有值
-        if (!episodeId) return response.badRequest(res, 'episode_id 必填');
+        if (!episodeId) return response.badRequest(res, 'EPISODE_ID_REQUIRED');
 
         const rows = db.prepare(
           'SELECT id, angle_s, shot_type, atmosphere, time, description, action, movement, lighting_style, depth_of_field FROM storyboards WHERE episode_id = ? AND deleted_at IS NULL ORDER BY storyboard_number ASC'

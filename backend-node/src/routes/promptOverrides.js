@@ -88,10 +88,10 @@ function routes(db, log) {
       const { content } = req.body || {};
       const defs = getPromptDefinitions();
       if (!defs.some((d) => d.key === key)) {
-        return response.badRequest(res, `未知的提示词 key: ${key}`);
+        return response.badRequest(res, 'UNKNOWN_PROMPT_KEY', `Unknown prompt key: ${key}`);
       }
       if (!content || !content.trim()) {
-        return response.badRequest(res, 'content 不能为空');
+        return response.badRequest(res, 'CONTENT_REQUIRED');
       }
       try {
         promptOverridesService.setOverride(db, key, content.trim());
@@ -107,7 +107,7 @@ function routes(db, log) {
       const { key } = req.params;
       const defs = getPromptDefinitions();
       if (!defs.some((d) => d.key === key)) {
-        return response.badRequest(res, `未知的提示词 key: ${key}`);
+        return response.badRequest(res, 'UNKNOWN_PROMPT_KEY', `Unknown prompt key: ${key}`);
       }
       try {
         promptOverridesService.deleteOverride(db, key);

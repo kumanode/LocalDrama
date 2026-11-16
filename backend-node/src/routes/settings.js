@@ -14,12 +14,25 @@ function updateLanguage(cfg, log) {
   return (req, res) => {
     const lang = req.body?.language;
     if (lang !== 'zh' && lang !== 'en') {
-      return response.badRequest(res, '语言参数错误，只支持 zh 或 en');
+      return response.badRequest(res, 'LANGUAGE_PARAM_INVALID');
     }
     const out = settingsService.updateLanguage(cfg, log, lang);
     if (!out.ok) return response.badRequest(res, out.error);
     const message = lang === 'en' ? 'Language switched to English' : '语言已切换为中文';
     response.success(res, { message, language: lang });
+  };
+}
+
+function getContentLanguage(cfg) {
+  return (req, res) => response.success(res, { language: settingsService.getContentLanguage(cfg) });
+}
+
+function updateContentLanguage(cfg, log) {
+  return (req, res) => {
+    const language = req.body?.language;
+    const out = settingsService.updateContentLanguage(cfg, log, language);
+    if (!out.ok) return response.badRequest(res, 'CONTENT_LANGUAGE_INVALID');
+    response.success(res, { language });
   };
 }
 
@@ -40,14 +53,14 @@ function updateGenerationSettings(db) {
     if (concurrency !== undefined) {
       const n = Number(concurrency);
       if (!Number.isInteger(n) || n < 1 || n > 20) {
-        return response.badRequest(res, '图片并发数需为 1-20 之间的整数');
+        return response.badRequest(res, 'IMAGE_CONCURRENCY_INVALID');
       }
       settingsService.setGlobalSetting(db, 'pipeline_concurrency', n);
     }
     if (video_concurrency !== undefined) {
       const n = Number(video_concurrency);
       if (!Number.isInteger(n) || n < 1 || n > 20) {
-        return response.badRequest(res, '视频并发数需为 1-20 之间的整数');
+        return response.badRequest(res, 'VIDEO_CONCURRENCY_INVALID');
       }
       settingsService.setGlobalSetting(db, 'pipeline_video_concurrency', n);
     }
@@ -66,6 +79,8 @@ module.exports = function settingsRoutes(db, cfg, log) {
   return {
     getLanguage: getLanguage(cfg),
     updateLanguage: updateLanguage(cfg, log),
+    getContentLanguage: getContentLanguage(cfg),
+    updateContentLanguage: updateContentLanguage(cfg, log),
     getGenerationSettings: getGenerationSettings(db),
     updateGenerationSettings: updateGenerationSettings(db),
   };

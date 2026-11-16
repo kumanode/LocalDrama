@@ -25,7 +25,7 @@ function routes(db, cfg, log) {
     get: (req, res) => {
       try {
         const item = propLibraryService.getLibraryItem(db, req.params.id);
-        if (!item) return response.notFound(res, '道具库项不存在');
+        if (!item) return response.notFound(res, 'PROP_LIBRARY_ITEM_NOT_FOUND');
         response.success(res, item);
       } catch (err) {
         log.error('prop-library get', { error: err.message });
@@ -35,7 +35,7 @@ function routes(db, cfg, log) {
     update: (req, res) => {
       try {
         const item = propLibraryService.updateLibraryItem(db, log, req.params.id, req.body || {});
-        if (!item) return response.notFound(res, '道具库项不存在');
+        if (!item) return response.notFound(res, 'PROP_LIBRARY_ITEM_NOT_FOUND');
         response.success(res, item);
       } catch (err) {
         log.error('prop-library update', { error: err.message });
@@ -45,7 +45,7 @@ function routes(db, cfg, log) {
     delete: (req, res) => {
       try {
         const ok = propLibraryService.deleteLibraryItem(db, log, req.params.id);
-        if (!ok) return response.notFound(res, '道具库项不存在');
+        if (!ok) return response.notFound(res, 'PROP_LIBRARY_ITEM_NOT_FOUND');
         response.success(res, { message: '删除成功' });
       } catch (err) {
         log.error('prop-library delete', { error: err.message });

@@ -260,11 +260,11 @@ function rowToConfig(r) {
  */
 async function testConnection(opts) {
   const base = (opts.base_url || '').replace(/\/$/, '');
-  if (!base) throw new Error('base_url 必填');
-  if (!opts.api_key) throw new Error('api_key 必填');
+  if (!base) throw new Error('base_url is required');
+  if (!opts.api_key) throw new Error('api_key is required');
   const models = flattenModelIds(opts.model);
   const model = remapArkModelId(opts.base_url, models[0] || '');
-  if (!model && (opts.provider === 'gemini' || opts.provider === 'google')) throw new Error('model 必填');
+  if (!model && (opts.provider === 'gemini' || opts.provider === 'google')) throw new Error('model is required');
   const provider = (opts.provider || 'openai').toLowerCase();
   const serviceType = (opts.service_type || '').toLowerCase();
   let endpoint = opts.endpoint || '';
@@ -279,7 +279,7 @@ async function testConnection(opts) {
     });
     if (res.status === 401 || res.status === 403) {
       const text = await res.text();
-      let errMsg = `API Key 无效 (${res.status})`;
+      let errMsg = `Invalid API Key (${res.status})`;
       try { const j = JSON.parse(text); errMsg = j.msg || j.message || errMsg; } catch {}
       throw new Error(errMsg);
     }
@@ -299,11 +299,11 @@ async function testConnection(opts) {
     });
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`请求失败: ${res.status} ${text.slice(0, 200)}`);
+      throw new Error(`Request failed: ${res.status} ${text.slice(0, 200)}`);
     }
     const data = await res.json().catch(() => ({}));
     if (data.candidates == null && data.error != null) {
-      throw new Error(data.error.message || data.error || 'Gemini 返回错误');
+      throw new Error(data.error.message || data.error || 'Gemini error');
     }
     return;
   }
@@ -429,7 +429,7 @@ async function testConnection(opts) {
       const lmsg = msg.toLowerCase();
       const isAuthErr = lmsg.includes('unauthorized') || lmsg.includes('invalid api key')
         || lmsg.includes('authentication') || lmsg.includes('forbidden');
-      if (isAuthErr) throw new Error(`API Key 无效: ${msg || res.status}`);
+      if (isAuthErr) throw new Error(`Invalid API Key: ${msg || res.status}`);
       // 其他错误（如模型不支持某个 API 参数）说明网络通、key 有效
       return;
     }
@@ -463,7 +463,7 @@ async function testConnection(opts) {
   });
   if (!res.ok) {
     const text = await res.text();
-    let errMsg = `请求失败: ${res.status}`;
+    let errMsg = `Request failed: ${res.status}`;
     try {
       const j = JSON.parse(text);
       errMsg += ' - ' + (j.error?.message || j.message || j.error || text.slice(0, 150));
@@ -474,7 +474,7 @@ async function testConnection(opts) {
   }
   const data = await res.json().catch(() => ({}));
   if (data.choices == null && data.error != null) {
-    throw new Error(data.error.message || data.error || '接口返回错误');
+    throw new Error(data.error.message || data.error || 'API returned error');
   }
 }
 

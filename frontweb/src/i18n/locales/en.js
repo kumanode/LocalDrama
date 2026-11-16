@@ -121,6 +121,7 @@ export default {
     newDramaProject: 'New Drama Project',
     importDramaProject: 'Import Drama Project',
     beginnerHint: 'New here? Import an example project to explore right away',
+    sampleChinese: 'Sample (Chinese)',
     unnamedProject: 'Untitled Project',
     noDescription: 'No description provided',
     projectCount: '{count} Projects',

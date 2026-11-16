@@ -1,7 +1,7 @@
 import { t as i18nT } from '../i18n/index.js'
-import { taskAPI } from '@/api/task'
 import { imagesAPI } from '@/api/images'
 import { videosAPI } from '@/api/videos'
+import { pollGenerationTask, GEN_RESOURCE } from '@/stores/generationTaskStore'
 import request from '@/utils/request'
 import { storyboardImageUrl } from '@/utils/mediaUrl'
 import {
@@ -11,25 +11,6 @@ import {
   toAbsoluteMediaUrl,
 } from '@/utils/canvasWorkflow'
 import { dramaUsesFirstLastFrame, sbVideoFirstLastUrls } from '@/utils/storyboardMedia'
-
-async function pollTaskSimple(taskId, options = {}) {
-  if (!taskId) return { status: 'failed', error: i18nT('messages.missingTaskId') }
-  const maxAttempts = options.maxAttempts ?? 450
-  const interval = options.interval ?? 2000
-  for (let i = 0; i < maxAttempts; i++) {
-    await new Promise((r) => setTimeout(r, interval))
-    try {
-      const t = await taskAPI.get(taskId)
-      if (t.status === 'completed') return { status: 'completed', result: t.result }
-      if (t.status === 'failed') {
-        return { status: 'failed', error: t.error?.message || t.error || i18nT('messages.taskFailed') }
-      }
-    } catch (e) {
-      if (i === maxAttempts - 1) return { status: 'failed', error: e.message || i18nT('dramaCanvas.pollingFailed') }
-    }
-  }
-  return { status: 'timeout', error: i18nT('dramaCanvas.taskTimedOut') }
-}
 
 export async function runImageStep(drama, sb, genOpts) {
   const prompt = sb.polished_prompt || sb.image_prompt || sb.description || sb.action || ''
@@ -44,7 +25,11 @@ export async function runImageStep(drama, sb, genOpts) {
     aspect_ratio: genOpts.aspectRatio,
   })
   if (res?.task_id) {
-    const polled = await pollTaskSimple(res.task_id)
+    const polled = await pollGenerationTask(res.task_id, {
+      dramaId: drama.id,
+      resourceType: GEN_RESOURCE.SB_IMAGE,
+      resourceId: sb.id,
+    })
     if (polled.status !== 'completed') throw new Error(polled.error || i18nT('dramaCanvas.storyboardImageGenerationFailed'))
   }
 }
@@ -73,7 +58,11 @@ export async function runVideoStep(drama, sb, genOpts) {
     duration: sb.duration || undefined,
   })
   if (res?.task_id) {
-    const polled = await pollTaskSimple(res.task_id)
+    const polled = await pollGenerationTask(res.task_id, {
+      dramaId: drama.id,
+      resourceType: GEN_RESOURCE.SB_VIDEO,
+      resourceId: sb.id,
+    })
     if (polled.status !== 'completed') throw new Error(polled.error || i18nT('dramaCanvas.videoGenerationFailed'))
   }
 }

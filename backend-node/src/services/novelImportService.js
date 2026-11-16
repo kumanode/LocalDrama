@@ -79,7 +79,7 @@ ${truncated}
  * @returns {{ chapters: Array<{title, content, script}> }}
  */
 async function importNovel(db, log, { text, title, maxChapters, aiSummarize }) {
-  if (!text || !text.trim()) throw new Error('小说内容不能为空');
+  if (!text || !text.trim()) throw new Error('Novel content cannot be empty');
 
   const chapters = detectChaptersByRules(text);
   if (chapters.length === 0) {

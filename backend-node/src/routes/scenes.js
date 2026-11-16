@@ -8,7 +8,7 @@ function routes(db, log, cfg) {
     getOne: (req, res) => {
       try {
         const scene = sceneService.getSceneById(db, Number(req.params.scene_id));
-        if (!scene) return response.notFound(res, '场景不存在');
+        if (!scene) return response.notFound(res, 'SCENE_NOT_FOUND');
         response.success(res, { scene });
       } catch (err) {
         log.error('scenes getOne', { error: err.message });
@@ -28,7 +28,7 @@ function routes(db, log, cfg) {
               db, log, cfg, req.params.scene_id, body.model || undefined, body.style || undefined
             );
         if (!out.ok) {
-          if (out.error === 'scene not found') return response.notFound(res, '场景不存在');
+          if (out.error === 'scene not found') return response.notFound(res, 'SCENE_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         if (single) {
@@ -44,7 +44,7 @@ function routes(db, log, cfg) {
       try {
         const out = await sceneService.extractSceneFromImage(db, log, cfg, req.params.scene_id);
         if (!out.ok) {
-          if (out.error === 'scene not found') return response.notFound(res, '场景不存在');
+          if (out.error === 'scene not found') return response.notFound(res, 'SCENE_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '场景描述已提取', prompt: out.prompt });
@@ -56,7 +56,7 @@ function routes(db, log, cfg) {
     update: (req, res) => {
       try {
         const out = sceneService.updateScene(db, log, req.params.scene_id, req.body || {});
-        if (!out.ok) return response.notFound(res, '场景不存在');
+        if (!out.ok) return response.notFound(res, 'SCENE_NOT_FOUND');
         response.success(res, { message: '保存成功' });
       } catch (err) {
         log.error('scenes update', { error: err.message });
@@ -66,7 +66,7 @@ function routes(db, log, cfg) {
     updatePrompt: (req, res) => {
       try {
         const out = sceneService.updateScenePrompt(db, log, req.params.scene_id, req.body || {});
-        if (!out.ok) return response.notFound(res, '场景不存在');
+        if (!out.ok) return response.notFound(res, 'SCENE_NOT_FOUND');
         response.success(res, { message: '场景提示词已更新' });
       } catch (err) {
         log.error('scenes updatePrompt', { error: err.message });
@@ -76,7 +76,7 @@ function routes(db, log, cfg) {
     delete: (req, res) => {
       try {
         const out = sceneService.deleteScene(db, log, req.params.scene_id);
-        if (!out.ok) return response.notFound(res, '场景不存在');
+        if (!out.ok) return response.notFound(res, 'SCENE_NOT_FOUND');
         response.success(res, { message: '场景已删除' });
       } catch (err) {
         log.error('scenes delete', { error: err.message });
@@ -87,7 +87,7 @@ function routes(db, log, cfg) {
       try {
         const body = req.body || {};
         const dramaId = body.drama_id;
-        if (dramaId == null) return response.badRequest(res, '缺少 drama_id');
+        if (dramaId == null) return response.badRequest(res, 'DRAMA_ID_REQUIRED');
         const scene = sceneService.createScene(db, log, dramaId, body);
         response.created(res, scene);
       } catch (err) {
@@ -99,7 +99,7 @@ function routes(db, log, cfg) {
       try {
         const body = req.body || {};
         const sceneId = body.scene_id != null ? Number(body.scene_id) : null;
-        if (sceneId == null) return response.badRequest(res, '缺少 scene_id');
+        if (sceneId == null) return response.badRequest(res, 'SCENE_ID_REQUIRED');
         const modelName = body.model || undefined;
         const style = body.style || undefined;
         // use_quad_grid：前端场景区复选框显式传入。勾选走四视图，取消勾选走单图；
@@ -111,8 +111,8 @@ function routes(db, log, cfg) {
           ? await sceneService.generateSceneFourViewImage(db, log, cfg, sceneId, modelName, style)
           : await sceneService.generateSceneSingleImage(db, log, cfg, sceneId, modelName, style);
         if (!out.ok) {
-          if (out.error === 'scene not found') return response.notFound(res, '场景不存在');
-          if (out.error === 'unauthorized') return response.notFound(res, '剧集不存在或无权限');
+          if (out.error === 'scene not found') return response.notFound(res, 'SCENE_NOT_FOUND');
+          if (out.error === 'unauthorized') return response.notFound(res, 'EPISODE_NOT_FOUND_OR_FORBIDDEN');
           return response.badRequest(res, out.error);
         }
         response.success(res, {
@@ -128,8 +128,8 @@ function routes(db, log, cfg) {
       try {
         const out = sceneLibraryService.addSceneToLibrary(db, log, req.params.scene_id);
         if (!out.ok) {
-          if (out.error === 'scene not found') return response.notFound(res, '场景不存在');
-          if (out.error === 'unauthorized') return response.forbidden(res, '无权限');
+          if (out.error === 'scene not found') return response.notFound(res, 'SCENE_NOT_FOUND');
+          if (out.error === 'unauthorized') return response.forbidden(res, 'FORBIDDEN');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '已加入本剧场景库', item: out.item });
@@ -142,7 +142,7 @@ function routes(db, log, cfg) {
       try {
         const out = sceneLibraryService.addSceneToMaterialLibrary(db, log, req.params.scene_id);
         if (!out.ok) {
-          if (out.error === 'scene not found') return response.notFound(res, '场景不存在');
+          if (out.error === 'scene not found') return response.notFound(res, 'SCENE_NOT_FOUND');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '已加入全局素材库', item: out.item });
@@ -158,8 +158,8 @@ function routes(db, log, cfg) {
         const style = body.style || undefined;
         const out = await sceneService.generateSceneFourViewImage(db, log, cfg, req.params.scene_id, modelName, style);
         if (!out.ok) {
-          if (out.error === 'scene not found') return response.notFound(res, '场景不存在');
-          if (out.error === 'unauthorized') return response.notFound(res, '剧集不存在或无权限');
+          if (out.error === 'scene not found') return response.notFound(res, 'SCENE_NOT_FOUND');
+          if (out.error === 'unauthorized') return response.notFound(res, 'EPISODE_NOT_FOUND_OR_FORBIDDEN');
           return response.badRequest(res, out.error);
         }
         response.success(res, { message: '场景四视图生成任务已提交', image_generation: out.image_generation });

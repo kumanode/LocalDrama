@@ -9,7 +9,7 @@ const loadConfig = require('../config').loadConfig;
 async function generateStory(db, log, body) {
   const premise = (body.premise || body.prompt || body.text || '').trim();
   if (!premise) {
-    throw new Error('请提供故事梗概');
+    throw new Error('Story outline is required');
   }
   const cfg = loadConfig();
   const style = body.style || body.genre || null;
@@ -140,9 +140,9 @@ async function processStoryGeneration(db, log, taskId, req) {
 
 function startStoryGeneration(db, log, req) {
   const dramaId = String(req.drama_id || '');
-  if (!dramaId) throw new Error('drama_id 必填');
+  if (!dramaId) throw new Error('drama_id is required');
   if (!dramaService.getDramaById(db, Number(dramaId))) {
-    throw new Error('项目不存在');
+    throw new Error('Project not found');
   }
 
   const existing = db.prepare(

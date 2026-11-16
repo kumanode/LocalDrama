@@ -11,9 +11,9 @@ function list(db) {
 function get(db) {
   return (req, res) => {
     const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) return response.badRequest(res, '无效的配置ID');
+    if (isNaN(id)) return response.badRequest(res, 'INVALID_CONFIG_ID');
     const config = aiConfigService.getConfig(db, id);
-    if (!config) return response.notFound(res, '配置不存在');
+    if (!config) return response.notFound(res, 'CONFIG_NOT_FOUND');
     response.success(res, config);
   };
 }
@@ -28,14 +28,14 @@ function vendorLock(cfg) {
 function create(db, log, cfg) {
   return (req, res) => {
     if (aiConfigService.getVendorLockStatus(cfg).enabled) {
-      return response.badRequest(res, '当前为厂商锁定模式，不允许添加配置');
+      return response.badRequest(res, 'VENDOR_LOCKED_ADD_FORBIDDEN');
     }
     const body = req.body || {};
     if (!body.service_type || !body.name || !body.provider || !body.base_url) {
-      return response.badRequest(res, '缺少必填字段: service_type, name, provider, base_url');
+      return response.badRequest(res, 'MISSING_REQUIRED_FIELDS');
     }
     if (body.api_key === undefined || body.api_key === null) {
-      return response.badRequest(res, '缺少必填字段: api_key');
+      return response.badRequest(res, 'MISSING_API_KEY');
     }
     try {
       const config = aiConfigService.createConfig(db, log, {
@@ -45,7 +45,7 @@ function create(db, log, cfg) {
       response.created(res, config);
     } catch (err) {
       log.errorw('Create AI config failed', { error: err.message });
-      response.internalError(res, '创建失败');
+      response.internalError(res, 'CREATE_FAILED');
     }
   };
 }
@@ -53,7 +53,7 @@ function create(db, log, cfg) {
 function update(db, log, cfg) {
   return (req, res) => {
     const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) return response.badRequest(res, '无效的配置ID');
+    if (isNaN(id)) return response.badRequest(res, 'INVALID_CONFIG_ID');
 
     let body = req.body || {};
     // 锁定模式下只允许修改 api_key、default_model、is_default
@@ -66,7 +66,7 @@ function update(db, log, cfg) {
     }
 
     const config = aiConfigService.updateConfig(db, log, id, body);
-    if (!config) return response.notFound(res, '配置不存在');
+    if (!config) return response.notFound(res, 'CONFIG_NOT_FOUND');
     response.success(res, config);
   };
 }
@@ -74,12 +74,12 @@ function update(db, log, cfg) {
 function remove(db, log, cfg) {
   return (req, res) => {
     if (aiConfigService.getVendorLockStatus(cfg).enabled) {
-      return response.badRequest(res, '当前为厂商锁定模式，不允许删除配置');
+      return response.badRequest(res, 'VENDOR_LOCKED_DELETE_FORBIDDEN');
     }
     const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) return response.badRequest(res, '无效的配置ID');
+    if (isNaN(id)) return response.badRequest(res, 'INVALID_CONFIG_ID');
     const ok = aiConfigService.deleteConfig(db, log, id);
-    if (!ok) return response.notFound(res, '配置不存在');
+    if (!ok) return response.notFound(res, 'CONFIG_NOT_FOUND');
     response.success(res, { message: '删除成功' });
   };
 }
@@ -87,18 +87,18 @@ function remove(db, log, cfg) {
 function bulkUpdateKey(db, log, cfg) {
   return (req, res) => {
     if (!aiConfigService.getVendorLockStatus(cfg).enabled) {
-      return response.badRequest(res, '批量换Key仅在厂商锁定模式下可用');
+      return response.badRequest(res, 'KEY_ROTATION_VENDOR_LOCKED_ONLY');
     }
     const { api_key } = req.body || {};
     if (!api_key || !api_key.trim()) {
-      return response.badRequest(res, '请提供新的 API Key');
+      return response.badRequest(res, 'API_KEY_REQUIRED');
     }
     try {
       const count = aiConfigService.bulkUpdateApiKey(db, log, api_key.trim());
       response.success(res, { updated: count, message: `已更新 ${count} 条配置的 API Key` });
     } catch (err) {
       log.error('Bulk update api_key failed', { error: err.message });
-      response.internalError(res, '批量换Key失败');
+      response.internalError(res, 'KEY_ROTATION_FAILED');
     }
   };
 }
@@ -107,7 +107,7 @@ function testConnection(log) {
   return async (req, res) => {
     const body = req.body || {};
     if (!body.base_url || !body.api_key) {
-      return response.badRequest(res, '缺少 base_url 或 api_key');
+      return response.badRequest(res, 'BASE_URL_OR_API_KEY_REQUIRED');
     }
     try {
       await aiConfigService.testConnection({
@@ -122,7 +122,7 @@ function testConnection(log) {
       response.success(res, { message: '连接测试成功' });
     } catch (err) {
       log.error('AI config test connection failed', { error: err.message });
-      response.badRequest(res, '连接测试失败: ' + (err.message || '未知错误'));
+      response.badRequest(res, 'CONNECTION_TEST_FAILED', err.message || 'Connection test failed');
     }
   };
 }
@@ -157,7 +157,7 @@ function modelArkAsset(log) {
     } catch (err) {
       log.error('model-ark-asset proxy failed', { error: err.message, action });
       const status = err.status >= 400 && err.status < 600 ? err.status : 400;
-      return response.error(res, status, 'MODEL_ARK_ASSET', err.message || '请求失败', err.payload);
+      return response.error(res, status, 'MODEL_ARK_ASSET', err.message || 'Request failed', err.payload);
     }
   };
 }
@@ -170,13 +170,13 @@ function listJimeng2MaterialAssets(log) {
     const { normalizeMaterialHubToken } = require('../services/jimengMaterialHubService');
     let api_key = normalizeMaterialHubToken(body.api_key || '');
     if (!base_url || !api_key) {
-      return response.badRequest(res, '请先填写网关 URL 与 Token');
+      return response.badRequest(res, 'GATEWAY_URL_TOKEN_REQUIRED');
     }
     const jimengMaterialHubService = require('../services/jimengMaterialHubService');
     const ctx = { baseUrl: base_url, token: api_key };
     const r = await jimengMaterialHubService.listAssets(ctx, { limit: body.limit, cursor: body.cursor }, log);
     if (!r.ok) {
-      return response.badRequest(res, String(r.error || '列出素材失败').slice(0, 800));
+      return response.badRequest(res, 'LIST_ASSETS_FAILED', String(r.error || 'Failed to list assets').slice(0, 800));
     }
     response.success(res, r.data);
   };

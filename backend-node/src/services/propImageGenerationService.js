@@ -150,9 +150,9 @@ async function processPropImageGeneration(db, log, taskId, propId, opts) {
 
 function generatePropImage(db, log, propId, opts) {
   const prop = propService.getById(db, propId);
-  if (!prop) throw new Error('道具不存在');
+  if (!prop) throw new Error('Prop not found');
   if (!prop.prompt || !String(prop.prompt).trim()) {
-    throw new Error('道具没有图片提示词');
+    throw new Error('Prop has no image prompt');
   }
 
   const task = taskService.createTask(db, log, 'prop_image_generation', String(propId));
