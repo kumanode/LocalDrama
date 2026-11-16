@@ -45,18 +45,21 @@ html, body, #app, .app {
   right: 24px;
   bottom: 24px;
   z-index: 20;
-  border: 0;
-  border-radius: 999px;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-pill);
   padding: 10px 16px;
-  background: #1f6feb;
-  color: #fff;
+  background: var(--text-bright);
+  color: var(--bg-page);
+  font-family: var(--font-sans);
+  font-weight: 600;
   cursor: pointer;
 }
 .task-center-launcher {
   position: fixed; right: 24px; bottom: 78px; z-index: 20;
   display: inline-flex; align-items: center; gap: var(--space-2);
-  border: 1px solid var(--border-color); border-radius: 999px; padding: 9px 14px;
-  background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow); cursor: pointer;
+  border: 1px solid var(--border-color); border-radius: var(--radius-pill); padding: 9px 14px;
+  background: var(--bg-card); color: var(--text-primary); box-shadow: none; cursor: pointer;
+  font-family: var(--font-mono); font-size: var(--font-xs);
 }
 @media (max-width: 600px) {
   .task-center-launcher { right: 12px; bottom: 72px; padding: 10px; }

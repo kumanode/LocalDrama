@@ -799,15 +799,13 @@ onMounted(async () => {
     radial-gradient(ellipse 40% 30% at 10% 80%, rgba(79, 70, 229, 0.08) 0%, transparent 60%);
 }
 .header {
-  background: rgba(12, 12, 18, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(99, 102, 241, 0.18);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
   padding: 12px 24px;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 0 rgba(99, 102, 241, 0.08), 0 4px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
 }
 .header-inner {
   max-width: min(1400px, 96vw);
@@ -829,19 +827,13 @@ onMounted(async () => {
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 50%, #f0abfc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.35));
+  color: var(--text-bright);
 }
 .logo-sub {
   font-size: 0.68rem;
   font-weight: 400;
   letter-spacing: 0.02em;
-  color: #6d6d7a;
-  -webkit-text-fill-color: #6d6d7a;
-  filter: none;
+  color: var(--text-muted);
 }
 .page-title {
   color: #a1a1aa;
@@ -961,47 +953,37 @@ html.light .btn-import {
 }
 .project-card {
   position: relative;
-  background: rgba(24, 24, 30, 0.75);
-  border: 1px solid rgba(63, 63, 70, 0.6);
-  border-radius: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   padding: 20px;
   cursor: pointer;
-  transition: border-color 0.25s, background 0.25s, transform 0.25s, box-shadow 0.25s;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  transition: border-color var(--dur-fast) var(--ease-mech);
+  box-shadow: none;
   overflow: hidden;
 }
-.project-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, transparent 60%);
-  pointer-events: none;
-}
+.project-card::before { display: none; }
 .project-card:hover {
-  border-color: rgba(99, 102, 241, 0.55);
-  background: rgba(28, 28, 36, 0.9);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15), 0 0 0 1px rgba(99, 102, 241, 0.1), 0 2px 8px rgba(0, 0, 0, 0.4);
+  border-color: var(--text-muted);
+  background: var(--bg-card);
+  box-shadow: none;
 }
 
 /* 操作卡片 */
 .action-card {
   cursor: default;
-  border-style: dashed;
-  border-color: rgba(99, 102, 241, 0.4);
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.04) 100%);
+  border: 1px dashed var(--border-muted);
+  background: var(--bg-inner);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 40px rgba(99, 102, 241, 0.04);
+  box-shadow: none;
+  border-radius: var(--radius-lg);
 }
 .action-card:hover {
-  border-color: rgba(99, 102, 241, 0.65);
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.07) 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.12), inset 0 0 40px rgba(99, 102, 241, 0.06);
+  border-color: var(--text-muted);
+  background: var(--bg-inner);
+  box-shadow: none;
 }
 .action-card::before {
   display: none;
@@ -1016,7 +998,7 @@ html.light .btn-import {
 .action-card-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #a5b4fc;
+  color: var(--text-bright);
   margin: 0;
 }
 .action-card-buttons {
@@ -1225,54 +1207,52 @@ html.light .btn-import {
 
 /* ===== 亮色模式适配 ===== */
 html.light .film-list {
-  background: #f5f3ff;
-  color: #1e1b4b;
-  background-image:
-    radial-gradient(ellipse 70% 45% at 50% -10%, rgba(99, 102, 241, 0.1) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 35% at 85% 55%, rgba(139, 92, 246, 0.06) 0%, transparent 60%);
+  background: var(--bg-page);
+  color: var(--text-primary);
 }
 html.light .header {
-  background: rgba(248, 246, 255, 0.88);
-  border-bottom-color: rgba(99, 102, 241, 0.2);
-  box-shadow: 0 1px 0 rgba(99, 102, 241, 0.1), 0 4px 16px rgba(99, 102, 241, 0.06);
+  background: var(--bg-card);
+  border-bottom-color: var(--border-color);
+  box-shadow: none;
 }
 html.light .logo-main {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #9333ea 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.2));
+  color: var(--text-bright);
+  background: none;
+  -webkit-text-fill-color: var(--text-bright);
+  filter: none;
 }
 html.light .logo-sub {
-  color: #9ca3af;
-  -webkit-text-fill-color: #9ca3af;
+  color: var(--text-muted);
+  -webkit-text-fill-color: var(--text-muted);
 }
 html.light .project-card {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(199, 210, 254, 0.8);
-  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.06), 0 2px 12px rgba(0, 0, 0, 0.04);
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  box-shadow: none;
   backdrop-filter: none;
 }
 html.light .project-card::before {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, transparent 60%);
+  display: none;
 }
 html.light .project-card:hover {
-  border-color: rgba(99, 102, 241, 0.5);
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 12px 36px rgba(99, 102, 241, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-color: var(--text-muted);
+  background: var(--bg-card);
+  box-shadow: none;
 }
 html.light .action-card {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.04) 100%);
-  border-color: rgba(99, 102, 241, 0.35);
+  background: var(--bg-inner);
+  border-color: var(--border-muted);
+  box-shadow: none;
 }
 html.light .action-card:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.07) 100%);
-  border-color: rgba(99, 102, 241, 0.55);
+  background: var(--bg-inner);
+  border-color: var(--text-muted);
+  box-shadow: none;
 }
-html.light .action-card-title { color: #4f46e5; }
-html.light .project-title { color: #1e1b4b; }
-html.light .project-desc { color: #4b5563; }
-html.light .project-meta { color: #6b7280; }
+html.light .action-card-title { color: var(--text-bright); }
+html.light .project-title { color: var(--text-bright); }
+html.light .project-desc { color: var(--text-muted); }
+html.light .project-meta { color: var(--text-faint); }
 html.light .example-hint-text { color: #6b7280; }
 html.light .library-item {
   background: #faf9ff;

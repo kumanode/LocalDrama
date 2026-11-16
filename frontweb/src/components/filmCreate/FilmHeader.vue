@@ -245,15 +245,13 @@ function goCanvasMode() {
 
 <style scoped>
 .header {
-  background: rgba(20, 21, 28, 0.78);
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
   padding: 10px 28px;
   position: sticky;
   top: 0;
   z-index: 200;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15), 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: none;
   margin-left: 180px;
   transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
 }
@@ -261,9 +259,9 @@ function goCanvasMode() {
   margin-left: 48px;
 }
 :global(html.light) .header {
-  background: rgba(255, 255, 255, 0.82) !important;
-  border-bottom-color: rgba(139, 92, 246, 0.1) !important;
-  box-shadow: 0 1px 0 rgba(139,92,246,0.06), 0 4px 20px rgba(139, 92, 246, 0.05) !important;
+  background: var(--bg-card) !important;
+  border-bottom-color: var(--border-color) !important;
+  box-shadow: none !important;
 }
 .header-inner {
   display: flex;
@@ -284,7 +282,7 @@ function goCanvasMode() {
   color: inherit;
   text-align: left;
 }
-.logo:hover { filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5)); }
+.logo:hover { filter: none; }
 .logo:focus-visible,
 .nav-toggle:focus-visible,
 .nav-step:focus-visible,
@@ -297,12 +295,8 @@ function goCanvasMode() {
 .logo-main {
   font-size: 1.05rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #d0d5e8 0%, #a8b0cc 50%, #8890b0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-bright);
   letter-spacing: -0.01em;
-  filter: drop-shadow(0 0 8px rgba(160, 170, 200, 0.15));
 }
 .logo-sub {
   font-size: 0.65rem;
@@ -313,10 +307,7 @@ function goCanvasMode() {
   text-transform: uppercase;
 }
 :global(html.light) .logo-main {
-  background: linear-gradient(135deg, #6d28d9, #4f46e5);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-bright);
 }
 :global(html.light) .logo-sub {
   color: #9ca3af;
@@ -391,18 +382,18 @@ function goCanvasMode() {
   display: flex;
   flex-direction: column;
   padding: 14px 0 10px;
-  background: linear-gradient(180deg, #131318 0%, #111116 50%, #0f0f14 100%);
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 1px 0 0 rgba(255,255,255,0.02), 4px 0 24px rgba(0, 0, 0, 0.4);
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-color);
+  box-shadow: none;
   width: 180px;
   overflow-y: auto;
   overflow-x: hidden;
   transition: width 0.25s cubic-bezier(.4,0,.2,1), padding 0.25s cubic-bezier(.4,0,.2,1);
 }
 :global(html.light) .quick-nav {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 247, 255, 0.99) 100%);
-  border-right-color: rgba(139, 92, 246, 0.1);
-  box-shadow: 1px 0 0 rgba(139,92,246,0.06), 4px 0 20px rgba(139, 92, 246, 0.04);
+  background: var(--bg-card) !important;
+  border-right-color: var(--border-color) !important;
+  box-shadow: none !important;
 }
 .quick-nav::-webkit-scrollbar { width: 4px; }
 .quick-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
@@ -437,7 +428,7 @@ function goCanvasMode() {
 .atp-title {
   font-size: 0.72rem;
   font-weight: 600;
-  color: #a78bfa;
+  color: var(--text-bright);
   letter-spacing: 0.03em;
   flex: 1;
 }
@@ -455,7 +446,7 @@ function goCanvasMode() {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #a78bfa;
+  background: var(--el-color-danger);
   flex-shrink: 0;
   animation: atp-pulse 1.2s ease-in-out infinite;
 }
@@ -489,7 +480,7 @@ function goCanvasMode() {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #7c3aed;
+  background: var(--el-color-danger);
   flex-shrink: 0;
   animation: atp-pulse 1.6s ease-in-out infinite;
 }
@@ -542,13 +533,13 @@ function goCanvasMode() {
 }
 .atp-collapsed-count {
   font-size: 0.65rem;
-  color: #a78bfa;
+  color: var(--text-bright);
   font-weight: 700;
   line-height: 1;
 }
-:global(html.light) .atp-title { color: #7c3aed; }
-:global(html.light) .atp-count-badge { background: rgba(139,92,246,0.12); color: #7c3aed; }
-:global(html.light) .atp-spin-dot { background: #7c3aed; }
+:global(html.light) .atp-title { color: var(--text-bright); }
+:global(html.light) .atp-count-badge { background: var(--bg-inner); color: var(--text-primary); }
+:global(html.light) .atp-spin-dot { background: var(--el-color-danger); }
 :global(html.light) .atp-item-dot { background: #8b5cf6; }
 :global(html.light) .atp-item-label { color: #374151; }
 :global(html.light) .atp-item:hover { background: rgba(0,0,0,0.04); }
@@ -578,7 +569,7 @@ function goCanvasMode() {
   white-space: nowrap;
   overflow: hidden;
 }
-:global(html.light) .nav-sidebar-title { color: #7c3aed; }
+:global(html.light) .nav-sidebar-title { color: var(--text-bright); }
 .nav-toggle {
   display: flex;
   align-items: center;
@@ -679,7 +670,7 @@ function goCanvasMode() {
 .dot-generating {
   background: rgba(139, 92, 246, 0.15);
   border-color: rgba(139, 92, 246, 0.5);
-  color: #a78bfa;
+  color: var(--text-bright);
   box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
 }
 .dot-done {
@@ -716,7 +707,7 @@ function goCanvasMode() {
 .status-done .step-label { color: #6ee7b7; }
 :global(html.light) .status-done .step-label { color: #059669; }
 .status-generating .step-label { color: #c4b5fd; }
-:global(html.light) .status-generating .step-label { color: #7c3aed; }
+:global(html.light) .status-generating .step-label { color: var(--text-bright); }
 .status-partial .step-label { color: #fbbf24; }
 :global(html.light) .status-partial .step-label { color: #d97706; }
 
@@ -738,7 +729,7 @@ function goCanvasMode() {
   flex-shrink: 0;
 }
 .partial-badge { color: #f59e0b; }
-.gen-badge { color: #a78bfa; }
+.gen-badge { color: var(--text-bright); }
 
 /* spin animation */
 @keyframes navSpin {
@@ -801,20 +792,20 @@ function goCanvasMode() {
   padding: 5px 10px 3px 12px;
   font-size: 11px;
   font-weight: 600;
-  color: #a78bfa;
+  color: var(--text-bright);
   letter-spacing: 0.02em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-:global(html.light) .nav-segment-label { color: #7c3aed; }
+:global(html.light) .nav-segment-label { color: var(--text-bright); }
 .nav-segment-dot {
   display: inline-block;
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #a78bfa;
+  background: var(--el-color-danger);
   flex-shrink: 0;
 }
-:global(html.light) .nav-segment-dot { background: #7c3aed; }
+:global(html.light) .nav-segment-dot { background: var(--el-color-danger); }
 </style>
