@@ -26,3 +26,12 @@ test('chrome: FilmHeader.vue does not use gradients or drop-shadows', () => {
   assert.doesNotMatch(content, /linear-gradient/, 'FilmHeader.vue must not use linear-gradient')
   assert.doesNotMatch(content, /box-shadow:\s*0\s+[1-9]/, 'FilmHeader.vue must not use box-shadow')
 })
+
+test('chrome: FilmCreate.css contains no radial-gradient, backdrop-filter, or translateY', () => {
+  const filmCreateCss = fs.readFileSync(path.resolve(testDir, '../src/views/FilmCreate.css'), 'utf8')
+  assert.doesNotMatch(filmCreateCss, /radial-gradient/, 'FilmCreate.css must not use radial-gradient')
+  assert.doesNotMatch(filmCreateCss, /backdrop-filter/, 'FilmCreate.css must not use backdrop-filter')
+  assert.doesNotMatch(filmCreateCss, /translateY/, 'FilmCreate.css must not use translateY')
+  assert.doesNotMatch(filmCreateCss, /box-shadow:\s*0\s+[1-9]/, 'FilmCreate.css must not use box-shadow on cards')
+  assert.match(filmCreateCss, /background:\s*var\(--bg-page\)/, 'FilmCreate.css must use var(--bg-page)')
+})
