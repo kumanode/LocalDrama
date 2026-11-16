@@ -304,6 +304,7 @@ import { useProps as usePropsComposable } from '@/composables/filmCreate/useProp
 import { useScenes } from '@/composables/filmCreate/useScenes'
 import { useNarration } from '@/composables/filmCreate/useNarration'
 import { usePipeline } from '@/composables/filmCreate/usePipeline'
+import { useStoryboards } from '@/composables/filmCreate/useStoryboards'
 
 const route = useRoute()
 const router = useRouter()
@@ -768,34 +769,12 @@ async function cancelActiveTask(item) {
 const sbCharacterIds = ref({})  // sbId -> number[] 多选角色
 const sbPropIds = ref({})       // sbId -> number[] 多选物品
 const sbSceneId = ref({})
-// 分镜图片/视频列表（由 /images?storyboard_id=xx 和 /videos?storyboard_id=xx 拉取）
-const sbImages = ref({})
-const sbVideos = ref({})
-const sbVideoErrors = ref({})
-const generatingSbImageIds = reactive(new Set())
-const generatingSbVideoIds = reactive(new Set())
 const generatingUniversalSegmentIds = reactive(new Set())
 // 重新生成角色/场景/道具关联分镜图的 loading set，key: 'char-{id}' | 'scene-{id}' | 'prop-{id}'
 const regenSbImagesForAsset = reactive(new Set())
 const regenSbImagesProgress = ref({})
-// 批量生成分镜图
-const batchImageRunning = ref(false)
-const batchImageStopping = ref(false)
-const batchImageProgress = ref({ current: 0, total: 0, failed: 0 })
-const batchImageErrors = ref([])
-// 批量生成分镜视频
-const batchVideoRunning = ref(false)
-const batchVideoStopping = ref(false)
-const batchVideoProgress = ref({ current: 0, total: 0, failed: 0 })
-const batchVideoErrors = ref([])
 // P0-1: 连贯帧模式
 const videoFrameContiguity = ref(false)
-// P0-3: 分镜超分辨率 loading set
-const upscalingSbIds = reactive(new Set())
-// 尾帧衔接 loading 状态
-const linkingTailFrameIds = reactive(new Set())
-// “上镜尾帧”（将上一分镜尾帧图片直接设为当前首帧）loading 状态
-const usingPrevTailAsFirstIds = reactive(new Set())
 const {
   ttsSbIds,
   ttsSbNarrationIds,
@@ -840,9 +819,6 @@ const editingFramePromptSlot = ref('first') // 'first' | 'last'
 const editingFramePromptText = ref('')
 const editingFramePromptSaving = ref(false)
 const editingFramePromptRegenerating = ref(false)
-const uploadingSbImageId = ref(null)
-const sbImageFileInput = ref(null)
-const sbImageUploadForId = ref(null)
 
 const dragOverSbId = ref(null)
 // 公共库弹窗状态已移至各 composable
@@ -857,6 +833,80 @@ const exportingStoryboardSheet = ref(false)
 /** 生成尾帧时是否注入首帧作站位/构图参考（默认开启） */
 const lastFrameUseFirstLayoutLock = ref(true)
 const gridMode = ref('single') // 序列图模式：single / quad_grid / nine_grid
+
+// ── Composable: Storyboards ───────────────────────────
+const {
+  sbImages,
+  sbVideos,
+  sbVideoErrors,
+  sbSelectedImgId,
+  sbSelectedLastImgId,
+  sbSelectedVideoId,
+  generatingSbImageIds,
+  generatingSbFirstImageIds,
+  generatingSbLastImageIds,
+  generatingSbVideoIds,
+  upscalingSbIds,
+  linkingTailFrameIds,
+  usingPrevTailAsFirstIds,
+  sbImageUploadSlotById,
+  uploadingSbImageId,
+  sbImageUploadForId,
+  sbImageFileInput,
+  batchImageRunning,
+  batchImageStopping,
+  batchImageProgress,
+  batchImageErrors,
+  batchVideoRunning,
+  batchVideoStopping,
+  batchVideoProgress,
+  batchVideoErrors,
+  getSbAllImages,
+  getSbAllVideos,
+  getSbFirstImage,
+  getSbLastImage,
+  getSbImage,
+  getSbVideo,
+  hasSbImage,
+  hasSbFirstLastPair,
+  getQuadGridImage,
+  getSbFirstFrameUrl,
+  getSbLastFrameUrl,
+  getNextStoryboard,
+  getPrevStoryboard,
+  canUsePrevTailAsFirst,
+  isSbVideoGenerating,
+  getSbResumableFailedVideo,
+  getSbVideoError,
+  loadStoryboardMedia,
+  loadSingleStoryboardMedia,
+  restoreSelectionsFromBackend,
+  sbMainVideoPlayerKey,
+  getVideoStripItems,
+  onSelectSbMainVideo,
+  quadPanelLabel,
+  getStripItems,
+  stripItemTitle,
+  onSelectSbFrameImage,
+  onSelectSbMainImage,
+  onSelectStripItem,
+  onStripItemClick,
+  onRemoveSbHistoryImage,
+  frameTypeForSlot,
+  uploadingSbImageSlot,
+  onUploadSbImageClick,
+  doUploadSbImage,
+  onSbImageFileChange,
+  recordHasPlayableVideoUrl,
+  resolveSbImageById,
+} = useStoryboards({
+  store,
+  dramaId,
+  currentEpisodeId,
+  storyboardUseFirstLastFrame,
+  isSbUniversalMode,
+  genStore,
+})
 
 // ── 剧本长度 → 估算总时长；自动分镜数与项目「每段秒数」(videoClipDuration) 对齐 ──
 
@@ -978,248 +1028,13 @@ function onSbImageDrop(e, sb) {
 function getSelectedStyle() {
   return getSelectedStylePrompt()
 }
-/** 列表项是否具备可播放地址（避免仅有空白 local_path 时外层有卡片、内层无 <video>） */
-function recordHasPlayableVideoUrl(i) {
-  if (!i) return false
-  const lp = i.local_path && String(i.local_path).trim()
-  if (lp) return true
-  return isHttpVideoUrl(i.video_url)
-}
-/** 主播放器强制随记录/地址重建，避免重新生成后 <video> 仍缓存旧 src */
-function sbMainVideoPlayerKey(sbId) {
-  const v = getSbVideo(sbId)
-  if (!v) return ''
-  const src = assetVideoUrl(v)
-  return `${v.id}:${v.updated_at || ''}:${src.slice(0, 160)}`
-}
+
 function onStoryboardUseFirstLastFrameChange() {
   if (storyboardUseFirstLastFrame.value && gridMode.value !== 'single') {
     gridMode.value = 'single'
     ElMessage.info(t('filmCreate.firstLastFrameSingleGridTip'))
   }
   saveProjectSettings(false)
-}
-
-function uploadingSbImageSlot(sbId) {
-  return sbImageUploadSlotById.value[sbId] || null
-}
-
-function frameTypeForSlot(slot) {
-  return slot === 'last' ? 'storyboard_last' : 'storyboard_first'
-}
-
-function resolveSbImageById(storyboardId, imageId) {
-  if (imageId == null) return null
-  const images = getSbAllImages(storyboardId)
-  return images.find((i) => i.id === imageId) || null
-}
-
-/** 首帧图（首尾帧模式下严格优先服务器绑定的 first_frame_image_id） */
-function getSbFirstImage(storyboardId) {
-  const images = getSbAllImages(storyboardId)
-  const sb = (store.storyboards || []).find((b) => b.id === storyboardId)
-
-  // 最高权威：服务器已绑定的首帧
-  if (sb?.first_frame_image_id != null) {
-    const bound = resolveSbImageById(storyboardId, sb.first_frame_image_id)
-    if (bound) return bound
-  }
-
-  const sel = sbSelectedImgId.value[storyboardId]
-  if (sel != null) {
-    const found = images.find((i) => i.id === sel)
-    if (found) return found
-  }
-
-  const typed = images.find((i) => i.frame_type === 'storyboard_first')
-  if (typed) return typed
-  // 不再回退到 images[0]，避免把尾帧图片误显示为首帧
-  return null
-}
-
-/** 尾帧图（首尾帧模式下严格优先服务器绑定的 last_frame_image_id） */
-function getSbLastImage(storyboardId) {
-  const images = getSbAllImages(storyboardId)
-  const sb = (store.storyboards || []).find((b) => b.id === storyboardId)
-
-  // 最高权威：服务器已绑定的尾帧（后端 bindStoryboardFrameImage 正确写入的 last_frame_image_id）
-  if (sb?.last_frame_image_id != null) {
-    const bound = resolveSbImageById(storyboardId, sb.last_frame_image_id)
-    if (bound) return bound
-  }
-
-  // 仅在没有服务器绑定时才考虑手动选择（首尾帧生成后我们会主动清除手动选择）
-  const sel = sbSelectedLastImgId.value[storyboardId]
-  if (sel != null) {
-    const found = images.find((i) => i.id === sel)
-    if (found) return found
-  }
-
-  const typed = images.find((i) => i.frame_type === 'storyboard_last')
-  if (typed) return typed
-
-  if (sb?.last_frame_image_url || sb?.last_frame_local_path) {
-    return {
-      id: sb.last_frame_image_id,
-      image_url: sb.last_frame_image_url,
-      local_path: sb.last_frame_local_path,
-      frame_type: 'storyboard_last',
-    }
-  }
-  return null
-}
-
-/** 该分镜是否有图（接口拉取的或 composed_image） */
-function hasSbImage(sb) {
-  if (storyboardUseFirstLastFrame.value && !isSbUniversalMode(sb.id)) {
-    return !!(getSbFirstImage(sb.id) || (sb && (sb.composed_image || sb.image_url)))
-  }
-  return !!(getSbImage(sb.id) || (sb && (sb.composed_image || sb.image_url)))
-}
-
-function hasSbFirstLastPair(sb) {
-  return !!(getSbFirstImage(sb.id) && getSbLastImage(sb.id))
-}
-/** 取该分镜下所有已完成的非四宫格图片列表 */
-function getSbAllImages(storyboardId) {
-  const list = sbImages.value[storyboardId]
-  if (!Array.isArray(list)) return []
-  return list.filter((i) => i.status === 'completed' && i.frame_type !== 'quad_grid' && i.frame_type !== 'nine_grid' && (i.image_url || i.local_path))
-}
-/** 取当前主图（首尾帧模式下等同首帧） */
-function getSbImage(storyboardId) {
-  if (storyboardUseFirstLastFrame.value) return getSbFirstImage(storyboardId)
-  const images = getSbAllImages(storyboardId)
-  if (!images.length) return null
-  const selectedId = sbSelectedImgId.value[storyboardId]
-  if (selectedId != null) {
-    const found = images.find((i) => i.id === selectedId)
-    if (found) return found
-  }
-  return images[0]
-}
-/** 取该分镜下的四宫格整图记录 */
-/** 取该分镜下的四宫格整图记录 */
-function getQuadGridImage(storyboardId) {
-  const list = sbImages.value[storyboardId]
-  if (!Array.isArray(list)) return null
-  return list.find((i) => i.status === 'completed' && (i.frame_type === 'quad_grid' || i.frame_type === 'nine_grid') && (i.image_url || i.local_path)) || null
-}
-/** 取该分镜所有已完成的视频记录 */
-function getSbAllVideos(storyboardId) {
-  const list = sbVideos.value[storyboardId]
-  if (!Array.isArray(list)) return []
-  return list.filter((i) => i.status === 'completed' && recordHasPlayableVideoUrl(i))
-}
-/** 取该分镜当前选中的视频（尊重 sbSelectedVideoId，否则默认第一条） */
-function getSbVideo(storyboardId) {
-  const all = getSbAllVideos(storyboardId)
-  if (all.length === 0) return null
-  const selectedId = sbSelectedVideoId.value[storyboardId]
-  if (selectedId != null) {
-    const found = all.find((v) => v.id === selectedId)
-    if (found) return found
-  }
-  return all[0]
-}
-/** 取下一个分镜（按 storyboard_number 顺序） */
-function getNextStoryboard(storyboardId) {
-  const list = store.storyboards || []
-  const idx = list.findIndex((s) => s.id === storyboardId)
-  if (idx === -1 || idx === list.length - 1) return null
-  return list[idx + 1]
-}
-
-/** 取上一个分镜（按 storyboard_number 顺序，用于“上镜尾帧”快速衔接） */
-function getPrevStoryboard(storyboardId) {
-  const list = store.storyboards || []
-  const idx = list.findIndex((s) => s.id === storyboardId)
-  if (idx === -1 || idx === 0) return null
-  return list[idx - 1]
-}
-
-/** 辅助判断：当前分镜是否有“上一镜尾帧”可用于快速替换首帧 */
-function canUsePrevTailAsFirst(sb) {
-  const p = getPrevStoryboard(sb?.id)
-  return !!(p && getSbLastImage(p.id))
-}
-
-/** 视频历史条：返回非当前选中的已完成视频列表 */
-function getVideoStripItems(storyboardId) {
-  const all = getSbAllVideos(storyboardId)
-  const current = getSbVideo(storyboardId)
-  return all
-    .filter((v) => !current || v.id !== current.id)
-    .map((v, idx) => ({
-      key: `vid-${v.id}`,
-      video: v,
-      src: assetVideoUrl(v),
-      label: t('filmCreate.videoHistoryItem', { num: idx + 2 }),
-    }))
-}
-/** 选中某条历史视频为当前视频，并持久化到分镜记录供合成视频使用 */
-function onSelectSbMainVideo(sb, video) {
-  sbSelectedVideoId.value = { ...sbSelectedVideoId.value, [sb.id]: video.id }
-  storyboardsAPI.update(sb.id, {
-    video_url: video.video_url || null,
-    local_path: video.local_path || undefined,
-  }).catch(e => console.warn('[mainVideo] save failed', e))
-}
-/** 取该分镜最近一次视频生成的错误信息（从 API 返回的记录或本地即时错误） */
-function getSbVideoError(storyboardId) {
-  if (sbVideoErrors.value[storyboardId]) return sbVideoErrors.value[storyboardId]
-  const list = sbVideos.value[storyboardId]
-  if (!Array.isArray(list) || list.length === 0) return ''
-  const hasCompleted = list.some((i) => i.status === 'completed' && recordHasPlayableVideoUrl(i))
-  if (hasCompleted) return ''
-  const bogusCompleted = list.find(
-    (i) => i.status === 'completed' && i.video_url && !recordHasPlayableVideoUrl(i)
-  )
-  if (bogusCompleted) {
-    const u = String(bogusCompleted.video_url || '').trim()
-    if (u) return u
-    if (bogusCompleted.error_msg) return bogusCompleted.error_msg
-  }
-  const failed = list.filter((i) => i.status === 'failed' && i.error_msg)
-  if (failed.length === 0) return ''
-  return failed[0].error_msg
-}
-
-/** 可「继续查询」的失败记录：有上游 task 且后端标记 can_resume_poll */
-function getSbResumableFailedVideo(storyboardId) {
-  const list = sbVideos.value[storyboardId]
-  if (!Array.isArray(list) || list.length === 0) return null
-  return list.find((i) => i.status === 'failed' && i.can_resume_poll) || null
-}
-
-async function loadStoryboardMedia() {
-  const boards = store.storyboards || []
-  if (boards.length === 0) {
-    sbImages.value = {}
-    sbVideos.value = {}
-    return
-  }
-  const nextImages = { ...sbImages.value }
-  const nextVideos = { ...sbVideos.value }
-  await Promise.all(
-    boards.map(async (sb) => {
-      try {
-        const [imgRes, vidRes] = await Promise.all([
-          imagesAPI.list({ storyboard_id: sb.id, page: 1, page_size: 100 }),
-          videosAPI.list({ storyboard_id: sb.id, page: 1, page_size: 50 })
-        ])
-        nextImages[sb.id] = (imgRes && imgRes.items) ? imgRes.items : []
-        nextVideos[sb.id] = (vidRes && vidRes.items) ? vidRes.items : []
-      } catch (_) {
-        nextImages[sb.id] = []
-        nextVideos[sb.id] = []
-      }
-    })
-  )
-  sbImages.value = nextImages
-  sbVideos.value = nextVideos
-  // 从后端恢复主图选择
-  restoreSelectionsFromBackend()
 }
 
 function getGeneratingSetsBag() {
@@ -1251,18 +1066,6 @@ function buildSbGenMeta(sb, resourceType, labelPrefix) {
   }
 }
 
-/** 分镜视频是否正在生成（单条点击、批量、一键成片、任务恢复均覆盖） */
-function isSbVideoGenerating(sbId) {
-  if (generatingSbVideoIds.has(sbId)) return true
-  if (sbId == null || dramaId.value == null || currentEpisodeId.value == null) return false
-  return genStore.isRunning({
-    dramaId: dramaId.value,
-    episodeId: currentEpisodeId.value,
-    resourceType: GEN_RESOURCE.SB_VIDEO,
-    resourceId: sbId,
-  })
-}
-
 async function recoverAndSyncEpisodeTasks(epId) {
   const did = dramaId.value
   const eid = epId ?? currentEpisodeId.value
@@ -1290,218 +1093,6 @@ async function recoverAndSyncEpisodeTasks(epId) {
   )
   if (mergeRunning) {
     store.setVideoStatus('generating', did, eid)
-  }
-}
-
-/** 只刷新单条分镜的图片/视频，避免每次单图操作都全量请求所有分镜 */
-async function loadSingleStoryboardMedia(sbId) {
-  if (!sbId) return
-  try {
-    const [imgRes, vidRes] = await Promise.all([
-      imagesAPI.list({ storyboard_id: sbId, page: 1, page_size: 100 }),
-      videosAPI.list({ storyboard_id: sbId, page: 1, page_size: 50 })
-    ])
-    sbImages.value = {
-      ...sbImages.value,
-      [sbId]: (imgRes && imgRes.items) ? imgRes.items : []
-    }
-    sbVideos.value = {
-      ...sbVideos.value,
-      [sbId]: (vidRes && vidRes.items) ? vidRes.items : []
-    }
-    restoreSelectionsFromBackend()
-  } catch (_) {
-    // 静默忽略，不影响其他分镜的显示
-  }
-}
-
-// ── 主图选择 ─────────────────────────────────────────────────────────
-
-const sbSelectedImgId = ref({})   // sbId → 选中的首帧/主图 image_generation.id
-const sbSelectedLastImgId = ref({}) // sbId → 选中的尾帧 image_generation.id
-const sbSelectedVideoId = ref({}) // sbId → 选中的 video_generation.id
-const generatingSbFirstImageIds = reactive(new Set())
-const generatingSbLastImageIds = reactive(new Set())
-/** sbId → 'first' | 'last'，上传目标槽位 */
-const sbImageUploadSlotById = ref({})
-
-/**
- * 从后端 storyboard.image_url / local_path 恢复主图选择状态。
- * 与 image_generation 记录比对，找到匹配的记录并恢复 sbSelectedImgId。
- */
-function restoreSelectionsFromBackend() {
-  const boards = store.storyboards || []
-  for (const sb of boards) {
-    const images = getSbAllImages(sb.id)
-    if (sbSelectedImgId.value[sb.id] == null) {
-      if (sb.first_frame_image_id != null) {
-        sbSelectedImgId.value = { ...sbSelectedImgId.value, [sb.id]: sb.first_frame_image_id }
-      } else {
-        const sbPath = (sb.local_path || '').trim()
-        const sbUrl = (sb.image_url || '').trim()
-        if (sbPath || sbUrl) {
-          const matched = images.find(
-            (img) =>
-              (sbPath && img.local_path && img.local_path === sbPath) ||
-              (sbUrl && img.image_url && img.image_url === sbUrl)
-          )
-          if (matched) {
-            sbSelectedImgId.value = { ...sbSelectedImgId.value, [sb.id]: matched.id }
-          }
-        }
-      }
-    }
-    if (sbSelectedLastImgId.value[sb.id] == null && sb.last_frame_image_id != null) {
-      sbSelectedLastImgId.value = { ...sbSelectedLastImgId.value, [sb.id]: sb.last_frame_image_id }
-    }
-  }
-}
-
-/** 获取缩略图条数据：已绑定首尾帧以外的历史图 */
-function getStripItems(storyboardId) {
-  const allImgs = getSbAllImages(storyboardId)
-  const firstImg = storyboardUseFirstLastFrame.value ? getSbFirstImage(storyboardId) : getSbImage(storyboardId)
-  const lastImg = storyboardUseFirstLastFrame.value ? getSbLastImage(storyboardId) : null
-  const boundIds = new Set([firstImg?.id, lastImg?.id].filter((x) => x != null))
-  return allImgs
-    .filter((img) => !boundIds.has(img.id))
-    .map((img) => ({
-      key: `img-${img.id}`,
-      src: assetImageUrl(img),
-      type: 'img',
-      img,
-      label: quadPanelLabel(img.frame_type),
-      frameBadge: img.frame_type === 'storyboard_first' ? t('filmCreate.badgeFirst') : img.frame_type === 'storyboard_last' ? t('filmCreate.badgeLast') : null,
-      prompt: img.prompt || '',
-    }))
-}
-
-function stripItemTitle(sbId, item) {
-  const lines = [item.label, item.prompt].filter(Boolean)
-  if (storyboardUseFirstLastFrame.value) {
-    lines.unshift(t('filmCreate.clickSetFirstLastFrame'))
-  } else {
-    lines.unshift(t('filmCreate.clickSetMainImage'))
-  }
-  return lines.join('\n\n')
-}
-
-async function onStripItemClick(sb, item) {
-  if (!storyboardUseFirstLastFrame.value) {
-    onSelectStripItem(sb, item)
-    return
-  }
-  try {
-    await ElMessageBox.confirm(t('filmCreate.bindFrameConfirmMsg'), t('filmCreate.bindFrameConfirmTitle'), {
-      confirmButtonText: t('filmCreate.setAsFirstFrame'),
-      cancelButtonText: t('filmCreate.setAsLastFrame'),
-      distinguishCancelAndClose: true,
-      type: 'info',
-    })
-    onSelectSbFrameImage(sb, item.img, 'first')
-    ElMessage.success(t('filmCreate.setAsFirstFrameSuccess'))
-  } catch (action) {
-    if (action === 'cancel') {
-      onSelectSbFrameImage(sb, item.img, 'last')
-      ElMessage.success(t('filmCreate.setAsLastFrameSuccess'))
-    }
-  }
-}
-
-/** 宫格子图位置标签 */
-function quadPanelLabel(frameType) {
-  const map = {
-    quad_panel_0: t('filmCreate.quad_topLeft'),
-    quad_panel_1: t('filmCreate.quad_topRight'),
-    quad_panel_2: t('filmCreate.quad_bottomLeft'),
-    quad_panel_3: t('filmCreate.quad_bottomRight'),
-    nine_panel_0: t('filmCreate.nine_topLeft'),
-    nine_panel_1: t('filmCreate.nine_topCenter'),
-    nine_panel_2: t('filmCreate.nine_topRight'),
-    nine_panel_3: t('filmCreate.nine_centerLeft'),
-    nine_panel_4: t('filmCreate.nine_center'),
-    nine_panel_5: t('filmCreate.nine_centerRight'),
-    nine_panel_6: t('filmCreate.nine_bottomLeft'),
-    nine_panel_7: t('filmCreate.nine_bottomCenter'),
-    nine_panel_8: t('filmCreate.nine_bottomRight'),
-  }
-  return map[frameType] || null
-}
-
-/** 点击缩略图条中的图片切换为主图 */
-function onSelectStripItem(sb, item) {
-  onSelectSbMainImage(sb, item.img)
-}
-
-/** 选定首帧或尾帧参考图（持久化到后端） */
-function onSelectSbFrameImage(sb, img, slot) {
-  if (!sb?.id || !img) return
-  const isLast = slot === 'last'
-
-  // 本地选中状态（用于部分回退逻辑）
-  if (isLast) {
-    sbSelectedLastImgId.value = { ...sbSelectedLastImgId.value, [sb.id]: img.id }
-  } else {
-    sbSelectedImgId.value = { ...sbSelectedImgId.value, [sb.id]: img.id }
-  }
-
-  // 关键：乐观更新 store 里分镜的权威绑定字段（storyboards 数组是 getSbFirst/LastImage 的主要数据源）
-  // 这样点击后立即生效，无需刷新页面；getStripItems 也会立即把这张图从历史条里过滤掉
-  const list = store.currentEpisode?.storyboards
-  if (Array.isArray(list)) {
-    const row = list.find((x) => Number(x.id) === Number(sb.id))
-    if (row) {
-      const now = new Date().toISOString()
-      if (isLast) {
-        row.last_frame_image_id = img.id
-        row.last_frame_image_url = img.image_url || null
-        row.last_frame_local_path = img.local_path || null
-      } else {
-        row.first_frame_image_id = img.id
-        row.image_url = img.image_url || null
-        row.local_path = img.local_path || null
-      }
-      row.updated_at = now
-    }
-  }
-
-  // 发送到后端持久化（静默，调用方按需提示）
-  const patch = { updated_at: new Date().toISOString() }
-  if (isLast) {
-    patch.last_frame_image_id = img.id
-    patch.last_frame_image_url = img.image_url || null
-    patch.last_frame_local_path = img.local_path || undefined
-  } else {
-    patch.image_url = img.image_url || null
-    patch.local_path = img.local_path || undefined
-    patch.first_frame_image_id = img.id
-  }
-
-  storyboardsAPI.update(sb.id, patch).catch((e) => console.warn('[refFrame] save failed', e))
-}
-
-/** 选定某张 API 图为主图（持久化到后端） */
-function onSelectSbMainImage(sb, img) {
-  onSelectSbFrameImage(sb, img, 'first')
-}
-
-/** 删除分镜历史参考图（strip 中的未绑定历史图，类似资源 extra 图的移除） */
-async function onRemoveSbHistoryImage(storyboardId, imageGenId) {
-  if (!storyboardId || !imageGenId) return
-  try {
-    await ElMessageBox.confirm(t('filmCreate.confirmDeleteHistoryImage'), t('filmCreate.deleteHistoryImageTitle'), {
-      confirmButtonText: t('common.delete'),
-      cancelButtonText: t('common.cancel'),
-      type: 'warning',
-      distinguishCancelAndClose: true,
-    })
-    await imagesAPI.delete(imageGenId)
-    await loadSingleStoryboardMedia(storyboardId)
-    ElMessage.success(t('filmCreate.historyImageDeleted'))
-  } catch (err) {
-    if (err !== 'cancel' && err !== 'close') {
-      ElMessage.error(err?.message || t('filmCreate.msgDeleteFailed'))
-    }
   }
 }
 
@@ -1797,76 +1388,6 @@ async function onGenerateSbImage(sb) {
     generatingSbImageIds.delete(sb.id)
     genStore.markDone(meta)
   }
-}
-
-function onUploadSbImageClick(sb, slot = 'first') {
-  if (!sb?.id) return
-  sbImageUploadForId.value = sb.id
-  sbImageUploadSlotById.value = { ...sbImageUploadSlotById.value, [sb.id]: slot }
-  if (!storyboardUseFirstLastFrame.value) {
-    uploadingSbImageId.value = sb.id
-  }
-  if (sbImageFileInput.value) {
-    sbImageFileInput.value.value = ''
-    sbImageFileInput.value.click()
-  }
-}
-
-async function doUploadSbImage(sbId, file, slot = 'first') {
-  if (!file || !sbId || !dramaId.value) return
-  const useSlot = storyboardUseFirstLastFrame.value ? slot : 'first'
-  if (storyboardUseFirstLastFrame.value) {
-    sbImageUploadSlotById.value = { ...sbImageUploadSlotById.value, [sbId]: useSlot }
-  } else {
-    uploadingSbImageId.value = sbId
-  }
-  try {
-    const res = await uploadAPI.uploadImage(file, { dramaId: dramaId.value })
-    const url = res?.url || res?.path
-    const localPath = res?.local_path
-    if (!url && !localPath) {
-      ElMessage.error(t('filmCreate.uploadNoUrlReturned'))
-      return
-    }
-    const uploaded = await imagesAPI.upload({
-      storyboard_id: sbId,
-      drama_id: dramaId.value,
-      image_url: url || '',
-      local_path: localPath || undefined,
-      frame_type: storyboardUseFirstLastFrame.value ? frameTypeForSlot(useSlot) : undefined,
-    })
-    ElMessage.success(useSlot === 'last' ? t('filmCreate.lastFrameUploadSuccess') : t('filmCreate.firstFrameUploadSuccess'))
-    if (uploaded?.id) {
-      const sb = (store.storyboards || []).find((b) => b.id === sbId)
-      if (sb) onSelectSbFrameImage(sb, uploaded, useSlot)
-    } else if (!storyboardUseFirstLastFrame.value) {
-      const { [sbId]: _r, ...rest } = sbSelectedImgId.value
-      sbSelectedImgId.value = rest
-    }
-    await loadSingleStoryboardMedia(sbId)
-    restoreSelectionsFromBackend()
-  } catch (e) {
-    ElMessage.error(e.message || t('filmCreate.uploadFailed'))
-  } finally {
-    uploadingSbImageId.value = null
-    const next = { ...sbImageUploadSlotById.value }
-    delete next[sbId]
-    sbImageUploadSlotById.value = next
-  }
-}
-
-function onSbImageFileChange(ev) {
-  const file = ev.target?.files?.[0]
-  const sid = sbImageUploadForId.value
-  if (!file || !sid) {
-    ev.target.value = ''
-    return
-  }
-  const slot = sbImageUploadSlotById.value[sid] || 'first'
-  doUploadSbImage(sid, file, slot).finally(() => {
-    sbImageUploadForId.value = null
-    ev.target.value = ''
-  })
 }
 
 function syncStoryboardStateFromEpisode(ep) {
@@ -2515,22 +2036,6 @@ async function onAddEpisode() {
 
 
 
-
-function getSbFirstFrameUrl(sb) {
-  const img = storyboardUseFirstLastFrame.value ? getSbFirstImage(sb.id) : getSbImage(sb.id)
-  if (img && (img.image_url || img.local_path)) return assetImageUrl(img)
-  if (sb.composed_image || sb.image_url) return imageUrl(sb.composed_image || sb.image_url)
-  return ''
-}
-
-function getSbLastFrameUrl(sb) {
-  const img = getSbLastImage(sb.id)
-  if (img && (img.image_url || img.local_path)) return assetImageUrl(img)
-  if (sb.last_frame_image_url || sb.last_frame_local_path) {
-    return assetImageUrl({ image_url: sb.last_frame_image_url, local_path: sb.last_frame_local_path })
-  }
-  return ''
-}
 
 /** 经典模式视频：首帧 URL（连贯帧可覆盖首帧）+ 可选尾帧 */
 function sbVideoFirstLastUrls(sb, universal, contiguityFirstFrameUrl) {

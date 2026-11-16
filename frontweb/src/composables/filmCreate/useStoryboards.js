@@ -4,6 +4,7 @@ import { t } from '@/i18n'
 import { storyboardsAPI } from '@/api/storyboards'
 import { imagesAPI } from '@/api/images'
 import { videosAPI } from '@/api/videos'
+import { uploadAPI } from '@/api/upload'
 import { GEN_RESOURCE } from '@/stores/generationTaskStore'
 import { assetImageUrl, assetVideoUrl } from '@/utils/mediaUrl'
 
@@ -21,7 +22,6 @@ export function useStoryboards({
   pollTask,
   genStore,
   loadDrama,
-  loadSingleStoryboardMedia,
   refreshStoryboardsOnly
 }) {
   const sbImages = ref({})
@@ -292,6 +292,277 @@ export function useStoryboards({
     return `${v.id}:${v.updated_at || ''}:${src.slice(0, 160)}`
   }
 
+  async function loadSingleStoryboardMedia(sbId) {
+    if (!sbId) return
+    try {
+      const [imgRes, vidRes] = await Promise.all([
+        imagesAPI.list({ storyboard_id: sbId, page: 1, page_size: 100 }),
+        videosAPI.list({ storyboard_id: sbId, page: 1, page_size: 50 })
+      ])
+      sbImages.value = {
+        ...sbImages.value,
+        [sbId]: (imgRes && imgRes.items) ? imgRes.items : []
+      }
+      sbVideos.value = {
+        ...sbVideos.value,
+        [sbId]: (vidRes && vidRes.items) ? vidRes.items : []
+      }
+      restoreSelectionsFromBackend()
+    } catch (_) {}
+  }
+
+  function hasSbFirstLastPair(sb) {
+    return !!(getSbFirstImage(sb.id) && getSbLastImage(sb.id))
+  }
+
+  function getQuadGridImage(storyboardId) {
+    const list = sbImages.value[storyboardId]
+    if (!Array.isArray(list)) return null
+    return list.find((i) => i.status === 'completed' && (i.frame_type === 'quad_grid' || i.frame_type === 'nine_grid') && (i.image_url || i.local_path)) || null
+  }
+
+  function canUsePrevTailAsFirst(sb) {
+    const p = getPrevStoryboard(sb?.id)
+    return !!(p && getSbLastImage(p.id))
+  }
+
+  function getVideoStripItems(storyboardId) {
+    const all = getSbAllVideos(storyboardId)
+    const current = getSbVideo(storyboardId)
+    return all
+      .filter((v) => !current || v.id !== current.id)
+      .map((v, idx) => ({
+        key: `vid-${v.id}`,
+        video: v,
+        src: assetVideoUrl(v),
+        label: t('filmCreate.videoHistoryItem', { num: idx + 2 }),
+      }))
+  }
+
+  function onSelectSbMainVideo(sb, video) {
+    sbSelectedVideoId.value = { ...sbSelectedVideoId.value, [sb.id]: video.id }
+    storyboardsAPI.update(sb.id, {
+      video_url: video.video_url || null,
+      local_path: video.local_path || undefined,
+    }).catch(e => console.warn('[mainVideo] save failed', e))
+  }
+
+  function quadPanelLabel(frameType) {
+    const map = {
+      quad_panel_0: t('filmCreate.quad_topLeft'),
+      quad_panel_1: t('filmCreate.quad_topRight'),
+      quad_panel_2: t('filmCreate.quad_bottomLeft'),
+      quad_panel_3: t('filmCreate.quad_bottomRight'),
+      nine_panel_0: t('filmCreate.nine_topLeft'),
+      nine_panel_1: t('filmCreate.nine_topCenter'),
+      nine_panel_2: t('filmCreate.nine_topRight'),
+      nine_panel_3: t('filmCreate.nine_centerLeft'),
+      nine_panel_4: t('filmCreate.nine_center'),
+      nine_panel_5: t('filmCreate.nine_centerRight'),
+      nine_panel_6: t('filmCreate.nine_bottomLeft'),
+      nine_panel_7: t('filmCreate.nine_bottomCenter'),
+      nine_panel_8: t('filmCreate.nine_bottomRight'),
+    }
+    return map[frameType] || null
+  }
+
+  function getStripItems(storyboardId) {
+    const allImgs = getSbAllImages(storyboardId)
+    const firstImg = storyboardUseFirstLastFrame.value ? getSbFirstImage(storyboardId) : getSbImage(storyboardId)
+    const lastImg = storyboardUseFirstLastFrame.value ? getSbLastImage(storyboardId) : null
+    const boundIds = new Set([firstImg?.id, lastImg?.id].filter((x) => x != null))
+    return allImgs
+      .filter((img) => !boundIds.has(img.id))
+      .map((img) => ({
+        key: `img-${img.id}`,
+        src: assetImageUrl(img),
+        type: 'img',
+        img,
+        label: quadPanelLabel(img.frame_type),
+        frameBadge: img.frame_type === 'storyboard_first' ? t('filmCreate.badgeFirst') : img.frame_type === 'storyboard_last' ? t('filmCreate.badgeLast') : null,
+        prompt: img.prompt || '',
+      }))
+  }
+
+  function stripItemTitle(sbId, item) {
+    const lines = [item.label, item.prompt].filter(Boolean)
+    if (storyboardUseFirstLastFrame.value) {
+      lines.unshift(t('filmCreate.clickSetFirstLastFrame'))
+    } else {
+      lines.unshift(t('filmCreate.clickSetMainImage'))
+    }
+    return lines.join('\n\n')
+  }
+
+  function onSelectSbFrameImage(sb, img, slot) {
+    if (!sb?.id || !img) return
+    const isLast = slot === 'last'
+
+    if (isLast) {
+      sbSelectedLastImgId.value = { ...sbSelectedLastImgId.value, [sb.id]: img.id }
+    } else {
+      sbSelectedImgId.value = { ...sbSelectedImgId.value, [sb.id]: img.id }
+    }
+
+    const list = store.currentEpisode?.storyboards
+    if (Array.isArray(list)) {
+      const row = list.find((x) => Number(x.id) === Number(sb.id))
+      if (row) {
+        const now = new Date().toISOString()
+        if (isLast) {
+          row.last_frame_image_id = img.id
+          row.last_frame_image_url = img.image_url || null
+          row.last_frame_local_path = img.local_path || null
+        } else {
+          row.first_frame_image_id = img.id
+          row.image_url = img.image_url || null
+          row.local_path = img.local_path || null
+        }
+        row.updated_at = now
+      }
+    }
+
+    const patch = { updated_at: new Date().toISOString() }
+    if (isLast) {
+      patch.last_frame_image_id = img.id
+      patch.last_frame_image_url = img.image_url || null
+      patch.last_frame_local_path = img.local_path || undefined
+    } else {
+      patch.image_url = img.image_url || null
+      patch.local_path = img.local_path || undefined
+      patch.first_frame_image_id = img.id
+    }
+
+    storyboardsAPI.update(sb.id, patch).catch((e) => console.warn('[refFrame] save failed', e))
+  }
+
+  function onSelectSbMainImage(sb, img) {
+    onSelectSbFrameImage(sb, img, 'first')
+  }
+
+  function onSelectStripItem(sb, item) {
+    onSelectSbMainImage(sb, item.img)
+  }
+
+  async function onStripItemClick(sb, item) {
+    if (!storyboardUseFirstLastFrame.value) {
+      onSelectStripItem(sb, item)
+      return
+    }
+    try {
+      await ElMessageBox.confirm(t('filmCreate.bindFrameConfirmMsg'), t('filmCreate.bindFrameConfirmTitle'), {
+        confirmButtonText: t('filmCreate.setAsFirstFrame'),
+        cancelButtonText: t('filmCreate.setAsLastFrame'),
+        distinguishCancelAndClose: true,
+        type: 'info',
+      })
+      onSelectSbFrameImage(sb, item.img, 'first')
+      ElMessage.success(t('filmCreate.setAsFirstFrameSuccess'))
+    } catch (action) {
+      if (action === 'cancel') {
+        onSelectSbFrameImage(sb, item.img, 'last')
+        ElMessage.success(t('filmCreate.setAsLastFrameSuccess'))
+      }
+    }
+  }
+
+  async function onRemoveSbHistoryImage(storyboardId, imageGenId) {
+    if (!storyboardId || !imageGenId) return
+    try {
+      await ElMessageBox.confirm(t('filmCreate.confirmDeleteHistoryImage'), t('filmCreate.deleteHistoryImageTitle'), {
+        confirmButtonText: t('common.delete'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
+        distinguishCancelAndClose: true,
+      })
+      await imagesAPI.delete(imageGenId)
+      await loadSingleStoryboardMedia(storyboardId)
+      ElMessage.success(t('filmCreate.historyImageDeleted'))
+    } catch (err) {
+      if (err !== 'cancel' && err !== 'close') {
+        ElMessage.error(err?.message || t('filmCreate.msgDeleteFailed'))
+      }
+    }
+  }
+
+  function frameTypeForSlot(slot) {
+    return slot === 'last' ? 'storyboard_last' : 'storyboard_first'
+  }
+
+  function uploadingSbImageSlot(sbId) {
+    return sbImageUploadSlotById.value[sbId] || null
+  }
+
+  function onUploadSbImageClick(sb, slot = 'first') {
+    if (!sb?.id) return
+    sbImageUploadForId.value = sb.id
+    sbImageUploadSlotById.value = { ...sbImageUploadSlotById.value, [sb.id]: slot }
+    if (!storyboardUseFirstLastFrame.value) {
+      uploadingSbImageId.value = sb.id
+    }
+    if (sbImageFileInput.value) {
+      sbImageFileInput.value.value = ''
+      sbImageFileInput.value.click()
+    }
+  }
+
+  async function doUploadSbImage(sbId, file, slot = 'first') {
+    if (!file || !sbId || !dramaId.value) return
+    const useSlot = storyboardUseFirstLastFrame.value ? slot : 'first'
+    if (storyboardUseFirstLastFrame.value) {
+      sbImageUploadSlotById.value = { ...sbImageUploadSlotById.value, [sbId]: useSlot }
+    } else {
+      uploadingSbImageId.value = sbId
+    }
+    try {
+      const res = await uploadAPI.uploadImage(file, { dramaId: dramaId.value })
+      const url = res?.url || res?.path
+      const localPath = res?.local_path
+      if (!url && !localPath) {
+        ElMessage.error(t('filmCreate.uploadNoUrlReturned'))
+        return
+      }
+      const uploaded = await imagesAPI.upload({
+        storyboard_id: sbId,
+        drama_id: dramaId.value,
+        image_url: url || '',
+        local_path: localPath || undefined,
+        frame_type: storyboardUseFirstLastFrame.value ? frameTypeForSlot(useSlot) : undefined,
+      })
+      ElMessage.success(useSlot === 'last' ? t('filmCreate.lastFrameUploadSuccess') : t('filmCreate.firstFrameUploadSuccess'))
+      if (uploaded?.id) {
+        const sb = (storyboards.value || []).find((b) => b.id === sbId)
+        if (sb) onSelectSbFrameImage(sb, uploaded, useSlot)
+      } else if (!storyboardUseFirstLastFrame.value) {
+        const { [sbId]: _r, ...rest } = sbSelectedImgId.value
+        sbSelectedImgId.value = rest
+      }
+      await loadSingleStoryboardMedia(sbId)
+      restoreSelectionsFromBackend()
+    } catch (e) {
+      ElMessage.error(e.message || t('filmCreate.uploadFailed'))
+    } finally {
+      uploadingSbImageId.value = null
+      const next = { ...sbImageUploadSlotById.value }
+      delete next[sbId]
+      sbImageUploadSlotById.value = next
+    }
+  }
+
+  function onSbImageFileChange(ev) {
+    const file = ev.target?.files?.[0]
+    const sid = sbImageUploadForId.value
+    if (!file || !sid) {
+      ev.target.value = ''
+      return
+    }
+    const slot = sbImageUploadSlotById.value[sid] || 'first'
+    doUploadSbImage(sid, file, slot).finally(() => {
+      sbImageUploadForId.value = null
+      ev.target.value = ''
+    })
+  }
+
   return {
     sbImages,
     sbVideos,
@@ -326,15 +597,36 @@ export function useStoryboards({
     getSbImage,
     getSbVideo,
     hasSbImage,
+    hasSbFirstLastPair,
+    getQuadGridImage,
     getSbFirstFrameUrl,
     getSbLastFrameUrl,
     getNextStoryboard,
     getPrevStoryboard,
+    canUsePrevTailAsFirst,
     isSbVideoGenerating,
     getSbResumableFailedVideo,
     getSbVideoError,
     loadStoryboardMedia,
+    loadSingleStoryboardMedia,
     restoreSelectionsFromBackend,
     sbMainVideoPlayerKey,
+    getVideoStripItems,
+    onSelectSbMainVideo,
+    quadPanelLabel,
+    getStripItems,
+    stripItemTitle,
+    onSelectSbFrameImage,
+    onSelectSbMainImage,
+    onSelectStripItem,
+    onStripItemClick,
+    onRemoveSbHistoryImage,
+    frameTypeForSlot,
+    uploadingSbImageSlot,
+    onUploadSbImageClick,
+    doUploadSbImage,
+    onSbImageFileChange,
+    recordHasPlayableVideoUrl,
+    resolveSbImageById,
   }
 }
