@@ -287,7 +287,7 @@ function clearAndClose() {
   margin-left: 2px;
 }
 .spt-clear:hover {
-  color: var(--el-color-danger);
+  color: var(--danger-text);
 }
 .spd-search {
   display: flex;
@@ -356,8 +356,8 @@ function clearAndClose() {
 .spd-thumb-text {
   font-size: 14px;
   font-weight: bold;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  color: var(--text-muted);
+  text-shadow: none;
 }
 .spd-name {
   margin-top: 6px;
@@ -376,7 +376,7 @@ function clearAndClose() {
   width: 16px;
   height: 16px;
   background: var(--el-color-primary);
-  color: #fff;
+  color: var(--bg-page);
   border-radius: 50%;
   font-size: 10px;
   display: flex;

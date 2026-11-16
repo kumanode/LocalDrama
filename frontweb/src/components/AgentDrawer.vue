@@ -248,13 +248,13 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 .empty, .summary, .error { margin: 0; color: var(--text-secondary, #6b7280); font-size: 13px; }
-.error { color: #b42318; }
+.error { color: var(--danger-text); }
 .bubble {
   padding: 8px 10px;
   border-radius: 8px;
   background: var(--bg-card, #f4f4f5);
 }
-.bubble.user { align-self: flex-end; background: #e8f1ff; }
+.bubble.user { align-self: flex-end; background: var(--bg-inner); }
 .bubble p { margin: 0; white-space: pre-wrap; }
 .bubble img { display: block; width: 100%; margin-top: 8px; border-radius: 6px; }
 .approval { display: flex; align-items: center; gap: 8px; margin-top: 8px; }

@@ -151,7 +151,7 @@ onBeforeUnmount(() => clearInterval(timer))
 .task-center-type { font-weight:600; overflow-wrap:anywhere; }
 .task-center-message { margin:var(--space-2) 0; color:var(--text-secondary); overflow-wrap:anywhere; }
 .task-center-footer time { color:var(--text-muted); font-size:var(--font-xs); }
-.task-center-error { margin-top:var(--space-2); color:var(--el-color-danger); }
+.task-center-error { margin-top:var(--space-2); color:var(--danger-text); }
 .task-center-error pre { white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; }
 </style>
 

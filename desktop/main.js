@@ -182,9 +182,18 @@ function findFreePort(preferredPort) {
 
 function createWindow(port) {
   Menu.setApplicationMenu(null);
+  const candidateIcons = [
+    path.join(__dirname, 'build', 'icon.png'),
+    path.join(__dirname, 'frontweb-dist', 'logo', 'logo.png'),
+    path.join(__dirname, '..', 'assets', 'logo', 'logo.png'),
+    path.join(__dirname, '..', 'frontweb', 'public', 'logo', 'logo.png'),
+  ];
+  const appIcon = candidateIcons.find((p) => fs.existsSync(p));
+
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
+    icon: appIcon,
     webPreferences: { nodeIntegration: false, contextIsolation: true },
     show: false,
   });

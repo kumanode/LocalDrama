@@ -9,7 +9,6 @@
         <h2 class="page-title">{{ $t('mediaLibrary.title') }}</h2>
       </div>
       <div class="header-actions">
-        <LanguageToggle />
         <el-button type="primary" plain @click="triggerUpload">
           <el-icon><Upload /></el-icon>
           {{ $t('mediaLibrary.uploadMedia') }}
@@ -136,7 +135,6 @@ import {
 } from '@element-plus/icons-vue'
 import { uploadAPI } from '@/api/upload'
 import request from '@/utils/request'
-import LanguageToggle from '@/components/LanguageToggle.vue'
 import { useI18n } from '@/i18n'
 
 const { locale, t } = useI18n()
@@ -302,6 +300,10 @@ onMounted(loadMedia)
   align-items: center;
   gap: 12px;
 }
+.header-actions .el-button,
+.header-left .el-button {
+  height: 32px;
+}
 .filter-bar {
   display: flex;
   align-items: center;
@@ -348,7 +350,7 @@ onMounted(loadMedia)
 .media-thumb {
   position: relative;
   aspect-ratio: 16/9;
-  background: #111;
+  background: var(--bg-card);
   overflow: hidden;
 }
 .thumb-img, .thumb-video {
@@ -422,9 +424,9 @@ onMounted(loadMedia)
   transform: translateX(-50%);
   background: var(--bg-card, #fff);
   border: 1px solid var(--border-color, #e4e7ed);
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   padding: 8px 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: none;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -437,7 +439,7 @@ onMounted(loadMedia)
   align-items: center;
   max-height: 60vh;
   overflow: hidden;
-  background: #000;
+  background: rgb(0, 0, 0);
   border-radius: 6px;
 }
 .preview-video, .preview-image {

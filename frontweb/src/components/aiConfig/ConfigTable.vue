@@ -31,13 +31,13 @@
         </span>
       </template>
     </el-table-column>
-    <el-table-column prop="is_default" :label="$t('aiConfig.isDefault')" width="60">
+    <el-table-column prop="is_default" :label="$t('aiConfig.isDefault')" width="80">
       <template #default="{ row }">
         <el-tag v-if="row.is_default" type="success" size="small">✓</el-tag>
         <span v-else class="no-default">—</span>
       </template>
     </el-table-column>
-    <el-table-column :label="$t('aiConfig.actions')" width="180" fixed="right">
+    <el-table-column :label="$t('aiConfig.actions')" min-width="240" fixed="right">
       <template #default="{ row }">
         <el-button link type="primary" size="small" @click="$emit('test', row)">{{ $t('aiConfig.testConnection') }}</el-button>
         <el-button link type="primary" size="small" @click="$emit('edit', row)">{{ vendorLocked ? $t('aiConfig.modifyKey') : $t('common.edit') }}</el-button>
@@ -61,24 +61,37 @@ defineEmits(['selection-change', 'test', 'edit', 'delete'])
 
 <style scoped>
 :deep(.el-table) { width: 100%; }
+:deep(.el-table td.el-table__cell) {
+  padding: 12px 0;
+}
+:deep(.el-table th.el-table__cell) {
+  padding: 12px 0;
+}
+:deep(.el-table .cell) {
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+:deep(.el-table .el-button + .el-button) {
+  margin-left: var(--space-3);
+}
 .type-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 12px;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
   font-weight: 600;
   white-space: nowrap;
   border: 1px solid transparent;
 }
-.type-icon { font-size: 13px; flex-shrink: 0; }
-.type-text { background: rgba(59, 130, 246, .12); color: #3b82f6; border-color: rgba(59, 130, 246, .25); }
-.type-image { background: rgba(16, 185, 129, .12); color: #10b981; border-color: rgba(16, 185, 129, .25); }
+.type-icon { font-size: var(--font-sm); flex-shrink: 0; }
+.type-text { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-muted); }
+.type-image { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-muted); }
 .type-storyboard_image { background: var(--bg-inner); color: var(--text-primary); border-color: var(--border-muted); }
-.type-video { background: rgba(249, 115, 22, .12); color: #f97316; border-color: rgba(249, 115, 22, .25); }
-.type-tts { background: rgba(236, 72, 153, .12); color: #db2777; border-color: rgba(236, 72, 153, .25); }
-.type-jimeng2_character_auth { background: rgba(20, 184, 166, .14); color: #0d9488; border-color: rgba(20, 184, 166, .28); }
+.type-video { background: var(--bg-hover); color: var(--el-color-warning); border-color: var(--el-color-warning); }
+.type-tts { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-muted); }
+.type-jimeng2_character_auth { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-muted); }
 .type-model_ark_asset { background: var(--bg-inner); color: var(--text-primary); border-color: var(--border-muted); }
-.no-default { color: #9ca3af; font-size: 13px; }
+.no-default { color: var(--text-muted); font-size: var(--font-sm); }
 </style>

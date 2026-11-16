@@ -1,7 +1,7 @@
-# LocalMiniDrama – AI Film & Drama Studio
+# LocalDrama – AI Film & Drama Studio
 ## Feature Upgrade Roadmap
 
-**Project:** LocalMiniDrama Custom  
+**Project:** LocalDrama Custom  
 **Target:** AI Film & Drama Production Studio  
 **Genre:** Realistic Human Drama / Chinese Short Drama  
 **Production Scale:** 20–100 Episodes  
@@ -12,7 +12,7 @@
 
 # 1. Project Objectives
 
-Mengembangkan LocalMiniDrama menjadi aplikasi AI film production yang mampu menghasilkan drama serial secara otomatis dari naskah hingga video final.
+Mengembangkan LocalDrama menjadi aplikasi AI film production yang mampu menghasilkan drama serial secara otomatis dari naskah hingga video final.
 
 Target utama:
 

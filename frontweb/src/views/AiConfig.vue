@@ -3,12 +3,14 @@
     <header class="header">
       <div class="header-inner">
         <h1 class="logo" @click="goList">
-          <span class="logo-main">{{ $t('header.appTitle') }}</span>
-          <span class="logo-sub">{{ $t('header.appSubtitle') }}</span>
+          <img class="logo-mark" src="/logo/logo-64.png" alt="" width="28" height="28" draggable="false" />
+          <span class="logo-text">
+            <span class="logo-main">{{ $t('header.appTitle') }}</span>
+            <span class="logo-sub">{{ $t('header.appSubtitle') }}</span>
+          </span>
         </h1>
         <span class="page-title">{{ $t('aiConfig.title') }}</span>
         <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
-          <LanguageToggle />
           <el-button class="btn-back" @click="goList">
             <el-icon><ArrowLeft /></el-icon>
             {{ $t('common.back') }}
@@ -27,7 +29,6 @@
 import { useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import AIConfigContent from '@/components/AIConfigContent.vue'
-import LanguageToggle from '@/components/LanguageToggle.vue'
 
 const router = useRouter()
 
@@ -62,8 +63,24 @@ function goList() {
   margin: 0;
   cursor: pointer;
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+}
+.logo-text {
+  display: flex;
+  white-space: nowrap;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1;
+  text-align: left;
+}
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  display: block;
 }
 .logo-main {
   font-size: 18px;
@@ -81,14 +98,14 @@ function goList() {
   border-left: 1px solid var(--border-color);
 }
 .btn-back {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #ccc;
+  background: var(--bg-hover);
+  border-color: var(--border-color);
+  color: var(--text-muted);
 }
 html.light .btn-back {
   background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.1);
-  color: #555;
+  border-color: var(--border-color);
+  color: var(--text-subtle);
 }
 .main {
   max-width: 1400px;

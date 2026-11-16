@@ -1,7 +1,7 @@
 <template>
   <section class="section card">
     <h2 class="section-title">{{ $t('filmCreate.videoConfigTitle') }}</h2>
-    <div class="config-grid">
+    <el-form inline class="config-grid">
       <el-form-item :label="$t('filmCreate.resolution')">
         <el-select
           :model-value="videoResolution"
@@ -49,7 +49,7 @@
           />
         </div>
       </el-form-item>
-    </div>
+    </el-form>
     <p class="config-tip">
       {{ $t('filmCreate.aiConfigTipPrefix') }}<el-link type="primary" underline="never" @click="$emit('open-ai-config')">{{ $t('routes.aiConfig') }}</el-link>{{ $t('filmCreate.aiConfigTipSuffix') }}
     </p>
@@ -92,10 +92,22 @@ defineEmits([
 
 <style scoped>
 .config-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 28px;
   margin-bottom: 16px;
+}
+.config-grid :deep(.el-form-item) {
+  margin-bottom: 0;
+  margin-right: 0;
+  display: inline-flex;
+  align-items: center;
+}
+.config-grid :deep(.el-form-item__label) {
+  padding-right: 10px;
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
 }
 .video-option-hint {
   flex: 1;

@@ -301,12 +301,14 @@ async function confirmImport() {
   background: var(--el-fill-color-darker);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: monospace;
+  font-family: var(--font-mono);
+  font-size: var(--font-xs);
 }
 .batch-import-preview-header {
   font-size: 14px;
   font-weight: 500;
   color: var(--el-color-primary);
+  margin-bottom: var(--space-3);
 }
 .batch-import-preview-table {
   width: 100%;

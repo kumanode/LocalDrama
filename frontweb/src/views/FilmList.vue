@@ -3,8 +3,11 @@
     <header class="header">
       <div class="header-inner">
         <h1 class="logo">
-          <span class="logo-main">{{ $t('header.appTitle') }}</span>
-          <span class="logo-sub">{{ $t('header.appSubtitle') }}</span>
+          <img class="logo-mark" src="/logo/logo-64.png" alt="" width="28" height="28" draggable="false" />
+          <span class="logo-text">
+            <span class="logo-main">{{ $t('header.appTitle') }}</span>
+            <span class="logo-sub">{{ $t('header.appSubtitle') }}</span>
+          </span>
         </h1>
         <!-- 公共资源库（左侧，靛紫调） -->
         <div class="header-library">
@@ -35,13 +38,7 @@
           <el-button class="btn-settings" @click="showAiConfigDialog = true">
             <el-icon><Setting /></el-icon>{{ $t('header.aiConfig') }}
           </el-button>
-          <el-button class="btn-import" :loading="importing" @click="triggerImport">
-            <el-icon><Upload /></el-icon>{{ $t('header.importProject') }}
-          </el-button>
           <input ref="importFileInput" type="file" accept=".zip" style="display:none" @change="onImportFile" />
-          <el-button type="primary" class="btn-new" @click="goNewProject">
-            <el-icon><Plus /></el-icon>{{ $t('header.newProject') }}
-          </el-button>
         </div>
       </div>
     </header>
@@ -134,7 +131,7 @@
             <el-option :label="t('filmCreate.aspectRatio4_3')" value="4:3" />
             <el-option :label="t('filmCreate.aspectRatio21_9')" value="21:9" />
           </el-select>
-          <p style="margin: 4px 0 0; font-size: 12px; color: #71717a;">{{ t('filmList.aspectRatioHint') }}</p>
+          <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-subtle);">{{ t('filmList.aspectRatioHint') }}</p>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -815,9 +812,25 @@ onMounted(async () => {
   margin: 0;
   cursor: pointer;
   display: flex;
+  line-height: 1;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+}
+.logo-text {
+  display: flex;
+  white-space: nowrap;
   flex-direction: column;
   gap: 1px;
   line-height: 1;
+  text-align: left;
+}
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  display: block;
 }
 .logo-main {
   font-size: 1.1rem;
@@ -832,7 +845,7 @@ onMounted(async () => {
   color: var(--text-muted);
 }
 .page-title {
-  color: #a1a1aa;
+  color: var(--text-muted);
   font-size: 0.95rem;
 }
 .header-library {
@@ -845,39 +858,42 @@ onMounted(async () => {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+.header-actions .el-button {
+  height: 32px;
 }
 
 /* 资源库按钮 —— 靛紫调 */
 .btn-library {
   --el-button-bg-color: var(--bg-inner);
   --el-button-border-color: var(--border-muted);
-  --el-button-text-color: #a5b4fc;
+  --el-button-text-color: var(--text-primary);
   --el-button-hover-bg-color: var(--bg-hover);
   --el-button-hover-border-color: var(--text-muted);
-  --el-button-hover-text-color: #c7d2fe;
+  --el-button-hover-text-color: var(--text-primary);
   --el-button-active-bg-color: var(--border-color);
   --el-button-active-border-color: var(--text-bright);
 }
 html.light .btn-library {
   --el-button-bg-color: var(--bg-inner);
   --el-button-border-color: var(--border-muted);
-  --el-button-text-color: #3730a3;
+  --el-button-text-color: var(--text-primary);
   --el-button-hover-bg-color: var(--bg-hover);
   --el-button-hover-border-color: var(--text-muted);
-  --el-button-hover-text-color: #312e81;
+  --el-button-hover-text-color: var(--text-primary);
   --el-button-active-bg-color: var(--border-color);
   --el-button-active-border-color: var(--text-bright);
 }
 
 /* 主题切换按钮 */
 .btn-theme {
-  --el-button-bg-color: rgba(148, 163, 184, 0.1);
-  --el-button-border-color: rgba(148, 163, 184, 0.3);
-  --el-button-text-color: #94a3b8;
-  --el-button-hover-bg-color: rgba(148, 163, 184, 0.2);
-  --el-button-hover-border-color: rgba(148, 163, 184, 0.5);
-  --el-button-hover-text-color: #cbd5e1;
+  --el-button-bg-color: var(--bg-hover);
+  --el-button-border-color: var(--border-muted);
+  --el-button-text-color: var(--text-muted);
+  --el-button-hover-bg-color: var(--bg-hover);
+  --el-button-hover-border-color: var(--border-muted);
+  --el-button-hover-text-color: var(--text-primary);
   transition: all 0.2s;
 }
 html.light .btn-theme {
@@ -890,34 +906,24 @@ html.light .btn-theme {
 }
 
 
-/* AI配置按钮 —— 琥珀调 */
+/* AI配置按钮 —— technical (monochrome) */
 .btn-settings {
-  --el-button-bg-color: rgba(234, 179, 8, 0.1);
-  --el-button-border-color: rgba(234, 179, 8, 0.32);
-  --el-button-text-color: #fcd34d;
-  --el-button-hover-bg-color: rgba(234, 179, 8, 0.2);
-  --el-button-hover-border-color: rgba(234, 179, 8, 0.5);
-  --el-button-hover-text-color: #fde68a;
-  --el-button-active-bg-color: rgba(234, 179, 8, 0.28);
-  --el-button-active-border-color: rgba(234, 179, 8, 0.65);
-}
-html.light .btn-settings {
-  --el-button-bg-color: rgba(180, 83, 9, 0.07);
-  --el-button-border-color: rgba(180, 83, 9, 0.28);
-  --el-button-text-color: #92400e;
-  --el-button-hover-bg-color: rgba(180, 83, 9, 0.12);
-  --el-button-hover-border-color: rgba(180, 83, 9, 0.45);
-  --el-button-hover-text-color: #78350f;
-  --el-button-active-bg-color: rgba(180, 83, 9, 0.18);
-  --el-button-active-border-color: rgba(180, 83, 9, 0.6);
+  --el-button-bg-color: transparent;
+  --el-button-border-color: var(--border-muted);
+  --el-button-text-color: var(--text-primary);
+  --el-button-hover-bg-color: var(--bg-hover);
+  --el-button-hover-border-color: var(--text-bright);
+  --el-button-hover-text-color: var(--text-bright);
+  --el-button-active-bg-color: var(--bg-hover);
+  --el-button-active-border-color: var(--text-bright);
 }
 
 /* 导入按钮 —— 亮色模式下提升可读性 */
 html.light .btn-import {
-  --el-button-text-color: #374151;
-  --el-button-border-color: #d1d5db;
-  --el-button-hover-text-color: #1f2937;
-  --el-button-hover-border-color: #9ca3af;
+  --el-button-text-color: var(--text-primary);
+  --el-button-border-color: var(--border-color);
+  --el-button-hover-text-color: var(--text-primary);
+  --el-button-hover-border-color: var(--border-muted);
 }
 
 .main {
@@ -934,11 +940,11 @@ html.light .btn-import {
 }
 .empty-title {
   font-size: 1.1rem;
-  color: #e4e4e7;
+  color: var(--text-primary);
   margin: 0 0 8px;
 }
 .empty-desc {
-  color: #71717a;
+  color: var(--text-subtle);
   font-size: 0.9rem;
   margin: 0 0 20px;
 }
@@ -1002,9 +1008,17 @@ html.light .btn-import {
   gap: 12px;
   width: 100%;
   justify-content: center;
+  align-items: center;
 }
 .action-btn {
-  min-width: 150px;
+  flex: 0 1 180px;
+  min-width: 160px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .action-btn-new {
   --el-button-bg-color: var(--el-color-primary);
@@ -1012,14 +1026,14 @@ html.light .btn-import {
 .action-btn-import {
   --el-button-bg-color: var(--bg-inner);
   --el-button-border-color: var(--border-muted);
-  --el-button-text-color: #a5b4fc;
+  --el-button-text-color: var(--text-primary);
   --el-button-hover-bg-color: var(--bg-hover);
   --el-button-hover-border-color: var(--text-muted);
-  --el-button-hover-text-color: #c7d2fe;
+  --el-button-hover-text-color: var(--text-primary);
 }
 .action-card-example {
   width: 100%;
-  padding-top: 8px;
+  padding-top: 12px;
   border-top: 1px solid var(--border-color);
 }
 .example-hint {
@@ -1030,12 +1044,12 @@ html.light .btn-import {
   margin-bottom: 8px;
 }
 .example-hint-icon {
-  color: #a5b4fc;
+  color: var(--text-primary);
   font-size: 15px;
 }
 .example-hint-text {
   font-size: 0.8rem;
-  color: #71717a;
+  color: var(--text-subtle);
 }
 .example-list {
   display: flex;
@@ -1044,12 +1058,19 @@ html.light .btn-import {
   justify-content: center;
 }
 .example-btn {
-  --el-button-bg-color: rgba(34, 197, 94, 0.1);
-  --el-button-border-color: rgba(34, 197, 94, 0.3);
-  --el-button-text-color: #4ade80;
-  --el-button-hover-bg-color: rgba(34, 197, 94, 0.2);
-  --el-button-hover-border-color: rgba(34, 197, 94, 0.5);
-  --el-button-hover-text-color: #22c55e;
+  --el-button-bg-color: var(--bg-inner);
+  --el-button-border-color: var(--border-muted);
+  --el-button-text-color: var(--text-primary);
+  --el-button-hover-bg-color: var(--bg-hover);
+  --el-button-hover-border-color: var(--border-muted);
+  --el-button-hover-text-color: var(--text-primary);
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .project-card-body {
   padding-right: 56px;
@@ -1057,14 +1078,14 @@ html.light .btn-import {
 .project-title {
   font-size: 1.05rem;
   margin: 0 0 8px;
-  color: #fafafa;
+  color: var(--text-bright);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .project-desc {
   font-size: 0.875rem;
-  color: #a1a1aa;
+  color: var(--text-muted);
   margin: 0 0 12px;
   line-height: 1.4;
   display: -webkit-box;
@@ -1083,46 +1104,46 @@ html.light .btn-import {
   align-items: center;
   font-size: 0.72rem;
   padding: 2px 8px;
-  border-radius: 99px;
+  border-radius: var(--radius-sm);
   font-weight: 500;
   line-height: 1.5;
   white-space: nowrap;
 }
 .badge-status--draft {
-  background: rgba(113, 113, 122, 0.15);
-  color: #a1a1aa;
-  border: 1px solid rgba(113, 113, 122, 0.3);
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  border: 1px solid var(--border-muted);
 }
 .badge-status--published {
-  background: rgba(34, 197, 94, 0.12);
-  color: #4ade80;
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border-muted);
 }
 .badge-status--generating {
-  background: rgba(234, 179, 8, 0.12);
-  color: #fcd34d;
-  border: 1px solid rgba(234, 179, 8, 0.3);
+  background: var(--bg-hover);
+  color: var(--el-color-warning);
+  border: 1px solid var(--el-color-warning);
 }
 .badge-status--archived {
   background: var(--bg-inner);
-  color: #a5b4fc;
+  color: var(--text-primary);
   border: 1px solid var(--border-muted);
 }
 .badge-episodes {
-  background: rgba(14, 165, 233, 0.12);
-  color: #38bdf8;
-  border: 1px solid rgba(14, 165, 233, 0.28);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border-muted);
 }
 .badge-storyboards {
-  background: rgba(20, 184, 166, 0.12);
-  color: #2dd4bf;
-  border: 1px solid rgba(20, 184, 166, 0.28);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border-muted);
 }
 .badge-ratio {
-  background: rgba(251, 146, 60, 0.1);
-  color: #fb923c;
-  border: 1px solid rgba(251, 146, 60, 0.25);
-  font-family: monospace;
+  background: var(--bg-hover);
+  color: var(--el-color-warning);
+  border: 1px solid var(--el-color-warning);
+  font-family: var(--font-mono);
 }
 .badge-style {
   background: var(--bg-inner);
@@ -1130,13 +1151,13 @@ html.light .btn-import {
   border: 1px solid var(--border-muted);
 }
 .badge-genre {
-  background: rgba(249, 115, 22, 0.1);
-  color: #fb923c;
-  border: 1px solid rgba(249, 115, 22, 0.25);
+  background: var(--bg-hover);
+  color: var(--el-color-warning);
+  border: 1px solid var(--el-color-warning);
 }
 .project-meta {
   font-size: 0.75rem;
-  color: #71717a;
+  color: var(--text-subtle);
   margin: 0;
 }
 .project-card-actions {
@@ -1176,8 +1197,8 @@ html.light .btn-import {
   display: flex;
   gap: 12px;
   padding: 10px;
-  background: #1c1c1e;
-  border: 1px solid #27272a;
+  background: var(--bg-inner);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
 }
 .library-item-cover {
@@ -1186,19 +1207,19 @@ html.light .btn-import {
   flex-shrink: 0;
   border-radius: 6px;
   overflow: hidden;
-  background: #27272a;
+  background: var(--bg-inner);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 }
 .library-item-cover img { width: 100%; height: 100%; object-fit: cover; }
-.library-item-placeholder { font-size: 0.8rem; color: #71717a; }
+.library-item-placeholder { font-size: 0.8rem; color: var(--text-subtle); }
 .library-item-info { flex: 1; min-width: 0; }
-.library-item-name { font-weight: 500; margin-bottom: 4px; color: #fafafa; }
-.library-item-desc { font-size: 0.85rem; color: #a1a1aa; margin-bottom: 8px; }
+.library-item-name { font-weight: 500; margin-bottom: 4px; color: var(--text-bright); }
+.library-item-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
 .library-item-actions { display: flex; gap: 8px; }
-.library-empty { text-align: center; color: #71717a; padding: 40px 20px; }
+.library-empty { text-align: center; color: var(--text-subtle); padding: 40px 20px; }
 .library-pagination { margin-top: 12px; display: flex; justify-content: center; }
 
 /* ===== 亮色模式适配 ===== */
@@ -1249,23 +1270,23 @@ html.light .action-card-title { color: var(--text-bright); }
 html.light .project-title { color: var(--text-bright); }
 html.light .project-desc { color: var(--text-muted); }
 html.light .project-meta { color: var(--text-faint); }
-html.light .example-hint-text { color: #6b7280; }
+html.light .example-hint-text { color: var(--text-subtle); }
 html.light .library-item {
-  background: #faf9ff;
-  border-color: #e5e7eb;
+  background: var(--bg-card);
+  border-color: var(--border-color);
 }
-html.light .library-item-name { color: #1e1b4b; }
-html.light .library-item-desc { color: #4b5563; }
-html.light .library-empty { color: #6b7280; }
+html.light .library-item-name { color: var(--text-primary); }
+html.light .library-item-desc { color: var(--text-subtle); }
+html.light .library-empty { color: var(--text-subtle); }
 html.light .lib-img-thumb {
-  background: #f3f4f6;
-  border-color: #e5e7eb;
+  background: var(--bg-inner);
+  border-color: var(--border-color);
 }
-html.light .lib-img-empty { color: #9ca3af; }
+html.light .lib-img-empty { color: var(--text-muted); }
 html.light .badge-status--draft {
-  background: rgba(107, 114, 128, 0.1);
-  color: #4b5563;
-  border-color: rgba(107, 114, 128, 0.25);
+  background: var(--bg-hover);
+  color: var(--text-subtle);
+  border-color: var(--border-muted);
 }
 
 /* ===== 图片放大预览 ===== */

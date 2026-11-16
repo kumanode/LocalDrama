@@ -3,8 +3,11 @@
     <header class="header">
       <div class="header-inner">
         <h1 class="logo" @click="router.push('/')">
-          <span class="logo-main">{{ $t('header.appTitle') }}</span>
-          <span class="logo-sub">{{ $t('dramaCanvas.canvasMode') }}</span>
+          <img class="logo-mark" src="/logo/logo-64.png" alt="" width="28" height="28" draggable="false" />
+          <span class="logo-text">
+            <span class="logo-main">{{ $t('header.appTitle') }}</span>
+            <span class="logo-sub">{{ $t('dramaCanvas.canvasMode') }}</span>
+          </span>
         </h1>
         <span class="breadcrumb-sep">›</span>
         <span class="page-title">{{ drama?.title || $t('common.loading') }}</span>
@@ -14,7 +17,6 @@
           class="episode-select"
           :placeholder="$t('dramaCanvas.allEpisodes')"
           clearable
-          size="small"
           style="width: 150px"
         >
           <el-option
@@ -30,32 +32,27 @@
         <span v-else-if="layoutSaveState === 'error'" class="layout-status error">{{ $t('dramaCanvas.saveFailed') }}</span>
 
         <div class="header-actions">
-          <LanguageToggle />
-          <el-button size="small" type="warning" plain @click="focusScriptNode">
+          <el-button type="warning" plain @click="focusScriptNode">
             {{ $t('filmCreate.stepScript') }}
           </el-button>
-          <el-button size="small" @click="openCreateDialog('storyboard')">
+          <el-button @click="openCreateDialog('storyboard')">
             <el-icon><Plus /></el-icon>
             {{ $t('filmCreate.stepStoryboard') }}
           </el-button>
-          <el-button size="small" @click="openCreateDialog('character')">{{ $t('filmCreate.stepCharacters') }}</el-button>
-          <el-button size="small" @click="openCreateDialog('scene')">{{ $t('filmCreate.stepScenes') }}</el-button>
-          <el-button size="small" @click="openCreateDialog('prop')">{{ $t('filmCreate.stepProps') }}</el-button>
-          <el-button size="small" @click="openCreateDialog('episode')">
+          <el-button @click="openCreateDialog('character')">{{ $t('filmCreate.stepCharacters') }}</el-button>
+          <el-button @click="openCreateDialog('scene')">{{ $t('filmCreate.stepScenes') }}</el-button>
+          <el-button @click="openCreateDialog('prop')">{{ $t('filmCreate.stepProps') }}</el-button>
+          <el-button @click="openCreateDialog('episode')">
             <el-icon><Plus /></el-icon>
             {{ $t('dramaCanvas.episodeBtn') }}
           </el-button>
-          <el-button size="small" :loading="aligningNodes" @click="onAlignNodes">
+          <el-button :loading="aligningNodes" @click="onAlignNodes">
             <el-icon><Grid /></el-icon>
             {{ $t('dramaCanvas.alignNodes') }}
           </el-button>
           <el-button type="primary" plain @click="goListMode">
             <el-icon><List /></el-icon>
             {{ $t('dramaCanvas.listMode') }}
-          </el-button>
-          <el-button class="btn-theme" :title="isDark ? $t('header.switchToLight') : $t('header.switchToDark')" @click="toggleTheme">
-            <el-icon><Sunny v-if="isDark" /><Moon v-else /></el-icon>
-            {{ isDark ? $t('header.lightMode') : $t('header.darkMode') }}
           </el-button>
         </div>
       </div>
@@ -267,7 +264,7 @@ import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
-import { List, Moon, Plus, Sunny, Grid } from '@element-plus/icons-vue'
+import { List, Plus, Grid } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 import '@vue-flow/core/dist/style.css'
@@ -319,17 +316,25 @@ import CanvasContextMenu from '@/components/dramaCanvas/CanvasContextMenu.vue'
 import CanvasAddButtonNode from '@/components/dramaCanvas/CanvasAddButtonNode.vue'
 import CanvasFloatingToolbar from '@/components/dramaCanvas/CanvasFloatingToolbar.vue'
 import CanvasFlowAligner from '@/components/dramaCanvas/CanvasFlowAligner.vue'
-import LanguageToggle from '@/components/LanguageToggle.vue'
 import { useI18n } from '@/i18n'
 
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
-const { isDark, toggle: toggleTheme } = useTheme()
 const { imagesBySbId, videosBySbId, loadForDrama } = useCanvasStoryboardMedia()
 
 const loading = ref(false)
 const drama = ref(null)
+
+watch(
+  () => drama.value?.title,
+  (title) => {
+    if (title) {
+      document.title = `${title} - LocalDrama`
+    }
+  },
+  { immediate: true }
+)
 const nodes = ref([])
 const edges = ref([])
 const filterEpisodeId = ref(null)
@@ -983,11 +988,11 @@ onBeforeUnmount(() => {
 .workflow-progress {
   padding: 0 20px 8px;
   font-size: 12px;
-  color: #60a5fa;
+  color: var(--text-primary);
 }
 
 .workflow-progress.episode-gen {
-  color: #34d399;
+  color: var(--text-primary);
 }
 
 .generate-bar {
@@ -996,7 +1001,7 @@ onBeforeUnmount(() => {
   gap: 8px;
   padding: 0 20px 10px;
   flex-wrap: wrap;
-  border-top: 1px solid rgba(63, 63, 70, 0.35);
+  border-top: 1px solid var(--border-muted);
   margin-top: 2px;
   padding-top: 8px;
 }
@@ -1004,13 +1009,13 @@ onBeforeUnmount(() => {
 .gen-label {
   font-size: 12px;
   font-weight: 600;
-  color: #a1a1aa;
+  color: var(--text-muted);
   margin-right: 4px;
 }
 
 .gen-hint {
   font-size: 11px;
-  color: #52525b;
+  color: var(--text-subtle);
   flex: 1;
   min-width: 200px;
 }
@@ -1019,8 +1024,25 @@ onBeforeUnmount(() => {
   margin: 0;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
   line-height: 1.2;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+}
+.logo-text {
+  display: flex;
+  white-space: nowrap;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1;
+  text-align: left;
+}
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  display: block;
 }
 
 .logo-main {
@@ -1046,14 +1068,24 @@ onBeforeUnmount(() => {
 }
 
 .layout-status { font-size: 12px; }
-.layout-status.saving { color: #60a5fa; }
-.layout-status.saved { color: #34d399; }
-.layout-status.error { color: #f87171; }
+.layout-status.saving { color: var(--text-primary); }
+.layout-status.saved { color: var(--text-primary); }
+.layout-status.error { color: var(--danger-text); }
+
+.episode-select {
+  height: 32px;
+  min-width: 150px;
+}
 
 .header-actions {
   margin-left: auto;
   display: flex;
+  align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+.header-actions .el-button {
+  height: 32px;
 }
 
 .canvas-shell {
@@ -1117,8 +1149,8 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: background 0.15s;
 }
-.sidebar-item:hover { background: rgba(129, 140, 248, 0.12); }
-.sidebar-item.active { background: rgba(52, 211, 153, 0.16); color: #6ee7b7; }
+.sidebar-item:hover { background: var(--bg-hover); }
+.sidebar-item.active { background: var(--bg-hover); color: var(--text-primary); }
 
 .workflow-item { white-space: normal; }
 .wf-item-title { font-weight: 600; }
@@ -1141,31 +1173,31 @@ onBeforeUnmount(() => {
 .vue-flow-canvas {
   width: 100%;
   height: 100%;
-  background: #0c0c0f;
+  background: var(--bg-card);
 }
 
 :deep(.vue-flow__minimap) {
-  background: rgba(24, 24, 27, 0.92);
-  border: 1px solid #3f3f46;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-muted);
 }
 
 :deep(.vue-flow__controls) {
   box-shadow: none;
-  border: 1px solid #3f3f46;
+  border: 1px solid var(--border-muted);
 }
 
 :deep(.vue-flow__controls button) {
-  background: #18181b;
-  border-color: #3f3f46;
-  color: #e4e4e7;
+  background: var(--bg-inner);
+  border-color: var(--border-muted);
+  color: var(--text-primary);
 }
 
 :deep(.vue-flow__node.selected) {
-  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.8);
+  box-shadow: 0 0 0 2px var(--border-muted);
 }
 </style>
 
 <style>
 html.light .drama-canvas-page { background: var(--bg-page); }
-html.light .vue-flow-canvas { background: #eef2ff; }
+html.light .vue-flow-canvas { background: var(--bg-inner); }
 </style>

@@ -3,7 +3,7 @@
       :model-value="modelValue"
       @update:model-value="$emit('update:modelValue', $event)"
       :title="title"
-      width="520px"
+      width="580px"
       :close-on-click-modal="false"
       @closed="$emit('closed')"
     >
@@ -699,3 +699,25 @@ function validate() { return formRef.value?.validate?.() }
 function resetFields() { formRef.value?.resetFields?.() }
 defineExpose({ validate, resetFields })
 </script>
+
+<style scoped>
+:deep(.el-form-item) {
+  margin-bottom: var(--space-4);
+}
+:deep(.el-form-item__label) {
+  font-family: var(--font-sans);
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+.field-tip {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-xs);
+  color: var(--text-subtle);
+  line-height: 1.5;
+}
+.form-label-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+</style>

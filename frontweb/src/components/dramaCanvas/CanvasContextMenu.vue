@@ -54,14 +54,14 @@ function close() {
   min-width: 140px;
   padding: 6px 0;
   border-radius: 8px;
-  border: 1px solid #3f3f46;
-  background: #18181b;
+  border: 1px solid var(--border-muted);
+  background: var(--bg-inner);
   box-shadow: none; border: 1px solid var(--border-muted);
 }
 .ctx-title {
   padding: 4px 12px 6px;
   font-size: 10px;
-  color: #71717a;
+  color: var(--text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -71,18 +71,18 @@ function close() {
   padding: 8px 12px;
   border: none;
   background: transparent;
-  color: #e4e4e7;
+  color: var(--text-primary);
   font-size: 13px;
   text-align: left;
   cursor: pointer;
 }
 .ctx-item:hover {
-  background: rgba(129, 140, 248, 0.15);
-  color: #c7d2fe;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 .ctx-divider {
   height: 1px;
   margin: 4px 0;
-  background: #3f3f46;
+  background: var(--bg-hover);
 }
 </style>

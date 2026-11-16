@@ -153,8 +153,8 @@ async function onExtractAll() {
   width: min(520px, 92vw);
   padding: 10px 14px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(251, 191, 36, 0.45);
-  background: rgba(15, 15, 18, 0.97);
+  border: 1px solid var(--el-color-warning);
+  background: var(--bg-hover);
   box-shadow: none; border: 1px solid var(--border-muted);
 }
 .panel-head {
@@ -163,7 +163,7 @@ async function onExtractAll() {
   justify-content: space-between;
   font-size: 12px;
   font-weight: 700;
-  color: #fcd34d;
+  color: var(--el-color-warning);
   margin-bottom: 6px;
 }
 .head-right {
@@ -173,19 +173,19 @@ async function onExtractAll() {
 }
 .busy-tag {
   font-size: 10px;
-  color: #93c5fd;
+  color: var(--text-primary);
 }
 .flow-hint {
   margin: 0 0 10px;
   font-size: 10px;
   line-height: 1.45;
-  color: #71717a;
+  color: var(--text-subtle);
 }
 .compact-form :deep(.el-form-item) {
   margin-bottom: 8px;
 }
 .compact-form :deep(.el-form-item__label) {
-  color: #71717a;
+  color: var(--text-subtle);
   font-size: 11px;
 }
 .compact-form :deep(.el-textarea__inner) {
@@ -198,18 +198,18 @@ async function onExtractAll() {
   justify-content: space-between;
   gap: 8px;
   font-size: 10px;
-  color: #a1a1aa;
+  color: var(--text-muted);
   margin-bottom: 8px;
 }
 .len {
-  color: #71717a;
+  color: var(--text-subtle);
 }
 .panel-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding-top: 8px;
-  border-top: 1px solid rgba(63, 63, 70, 0.6);
+  border-top: 1px solid var(--border-muted);
 }
 .panel-actions :deep(.el-button) {
   margin: 0;

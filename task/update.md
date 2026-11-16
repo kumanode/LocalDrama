@@ -1,4 +1,4 @@
-# Roadmap Update — LocalMiniDrama (v1.3.x)
+# Roadmap Update — LocalDrama (v1.3.x)
 
 > Dibuat: 2026-11-15 · Basis: analisa kode `main` @ `c29d968`
 > Cakupan: (1) kebocoran bahasa Mandarin di mode English, (2) memaksimalkan fitur, (3) perbaikan UI.

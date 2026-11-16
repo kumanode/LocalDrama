@@ -3,8 +3,11 @@
   <header class="header">
     <div class="header-inner">
       <button type="button" class="logo" @click="goList">
-        <span class="logo-main">{{ $t('header.appTitle') }}</span>
-        <span class="logo-sub">{{ $t('header.appSubtitle') }}</span>
+        <img class="logo-mark" src="/logo/logo-64.png" alt="" width="28" height="28" draggable="false" />
+        <span class="logo-text">
+          <span class="logo-main">{{ $t('header.appTitle') }}</span>
+          <span class="logo-sub">{{ $t('header.appSubtitle') }}</span>
+        </span>
       </button>
       <span class="breadcrumb-sep">›</span>
       <span class="page-title">{{ dramaId ? (dramaTitle || $t('common.project')) : $t('filmCreate.newStoryTitle') }}</span>
@@ -14,7 +17,6 @@
         class="header-episode-select"
         :placeholder="$t('filmCreate.selectEpisode')"
         clearable
-        size="small"
         @update:model-value="$emit('update:selectedEpisodeId', $event)"
         @change="$emit('episodeSelect', $event)"
       >
@@ -34,11 +36,6 @@
         {{ $t('filmCreate.canvasMode') }}
       </el-button>
       <div class="header-actions">
-        <LanguageToggle />
-        <el-button class="btn-theme" :title="isDark ? $t('header.switchToLight') : $t('header.switchToDark')" @click="toggleTheme">
-          <el-icon><Sunny v-if="isDark" /><Moon v-else /></el-icon>
-          {{ isDark ? $t('header.lightMode') : $t('header.darkMode') }}
-        </el-button>
         <el-button class="btn-ai-config" @click="$emit('openAiConfig')">
           <el-icon><Setting /></el-icon>
           {{ $t('header.aiConfig') }}
@@ -73,18 +70,13 @@
         :aria-label="step.label"
         @click="$emit('scrollToAnchor', step.anchor)"
       >
-        <!-- 左侧连接线 -->
-        <div class="step-connector-wrap">
-          <div v-if="idx > 0" class="step-line step-line-top" :class="{ filled: navSteps[idx - 1].status === 'done' }" />
-          <div
-            class="step-dot"
-            :class="['dot-' + step.status]"
-          >
-            <el-icon v-if="step.status === 'done'" class="dot-icon"><Check /></el-icon>
-            <el-icon v-else-if="step.status === 'generating'" class="dot-icon spin"><Loading /></el-icon>
-            <span v-else class="dot-num">{{ idx + 1 }}</span>
-          </div>
-          <div v-if="idx < navSteps.length - 1" class="step-line step-line-bottom" :class="{ filled: step.status === 'done' }" />
+        <div
+          class="step-dot"
+          :class="['dot-' + step.status]"
+        >
+          <el-icon v-if="step.status === 'done'" class="dot-icon"><Check /></el-icon>
+          <el-icon v-else-if="step.status === 'generating'" class="dot-icon spin"><Loading /></el-icon>
+          <span v-else class="dot-num">{{ idx + 1 }}</span>
         </div>
 
         <!-- 右侧文字 + 状态徽章 -->
@@ -187,13 +179,9 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { useTheme } from '@/composables/useTheme'
-import LanguageToggle from '@/components/LanguageToggle.vue'
 import {
   ArrowLeft,
   Grid,
-  Sunny,
-  Moon,
   Setting,
   Expand,
   Fold,
@@ -230,7 +218,6 @@ defineEmits([
 ])
 
 const router = useRouter()
-const { isDark, toggle: toggleTheme } = useTheme()
 
 function goList() {
   router.push('/')
@@ -247,16 +234,16 @@ function goCanvasMode() {
 .header {
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
-  padding: 10px 28px;
+  padding: 10px 24px;
   position: sticky;
   top: 0;
   z-index: 200;
   box-shadow: none;
-  margin-left: 180px;
+  margin-left: 200px;
   transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
 }
 :global(.sidebar-collapsed) .header {
-  margin-left: 48px;
+  margin-left: 52px;
 }
 :global(html.light) .header {
   background: var(--bg-card) !important;
@@ -266,23 +253,40 @@ function goCanvasMode() {
 .header-inner {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 .logo {
   margin: 0;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: 1px;
   line-height: 1;
-  transition: filter 0.3s;
+  transition: opacity 0.2s;
   padding: 0;
   border: 0;
   background: transparent;
   color: inherit;
   text-align: left;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
-.logo:hover { filter: none; }
+.logo-text {
+  display: flex;
+  white-space: nowrap;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1;
+  text-align: left;
+}
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  display: block;
+}
+.logo:hover { opacity: 0.85; }
 .logo:focus-visible,
 .nav-toggle:focus-visible,
 .nav-step:focus-visible,
@@ -293,80 +297,84 @@ function goCanvasMode() {
   outline-offset: 2px;
 }
 .logo-main {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-bright);
   letter-spacing: -0.01em;
 }
 .logo-sub {
-  font-size: 0.65rem;
-  font-weight: 400;
+  font-size: 0.62rem;
+  font-weight: 500;
   letter-spacing: 0.04em;
-  color: #52525e;
-  -webkit-text-fill-color: #52525e;
+  color: var(--text-subtle);
   text-transform: uppercase;
 }
 :global(html.light) .logo-main {
   color: var(--text-bright);
 }
 :global(html.light) .logo-sub {
-  color: #9ca3af;
-  -webkit-text-fill-color: #9ca3af;
+  color: var(--text-muted);
 }
 .breadcrumb-sep {
-  color: #3a3a44;
+  color: var(--text-subtle);
   font-size: 0.9rem;
-  font-weight: 300;
+  font-weight: 400;
   flex-shrink: 0;
   user-select: none;
 }
-:global(html.light) .breadcrumb-sep { color: #d1d5db; }
+:global(html.light) .breadcrumb-sep { color: var(--text-muted); }
 .page-title {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: #7a7a88;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  padding: 4px 12px;
-  max-width: 220px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  background: transparent;
+  border: none;
+  padding: 0;
+  max-width: 260px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 :global(html.light) .page-title {
-  color: #6b7280;
-  background: var(--bg-inner);
-  border-color: var(--border-muted);
+  color: var(--text-bright);
+  background: transparent;
+  border: none;
 }
 .header-episode-select {
   flex-shrink: 0;
-  min-width: 130px;
+  min-width: 150px;
   width: auto;
   max-width: 200px;
+  height: 32px;
 }
-.btn-back-drama {
+.btn-back-drama,
+.btn-canvas-mode {
   flex-shrink: 0;
+  height: 32px;
 }
 .header-actions {
   margin-left: auto;
   display: flex;
+  align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
+.header-actions .el-button {
+  height: 32px;
+}
 .btn-theme {
-  --el-button-bg-color: rgba(255, 255, 255, 0.04);
-  --el-button-border-color: rgba(255, 255, 255, 0.08);
-  --el-button-text-color: #8b8b96;
-  --el-button-hover-bg-color: rgba(255, 255, 255, 0.08);
-  --el-button-hover-border-color: rgba(255, 255, 255, 0.18);
-  --el-button-hover-text-color: #c8c8d0;
+  --el-button-bg-color: var(--bg-inner);
+  --el-button-border-color: var(--border-color);
+  --el-button-text-color: var(--text-subtle);
+  --el-button-hover-bg-color: var(--bg-hover);
+  --el-button-hover-border-color: var(--border-muted);
+  --el-button-hover-text-color: var(--text-muted);
   transition: all 0.2s ease;
 }
 :global(html.light) .btn-theme {
   --el-button-bg-color: var(--bg-inner);
   --el-button-border-color: var(--border-muted);
-  --el-button-text-color: #6b7280;
+  --el-button-text-color: var(--text-subtle);
   --el-button-hover-bg-color: var(--bg-hover);
   --el-button-hover-border-color: var(--border-muted);
   --el-button-hover-text-color: var(--text-bright);
@@ -385,7 +393,7 @@ function goCanvasMode() {
   background: var(--bg-card);
   border-right: 1px solid var(--border-color);
   box-shadow: none;
-  width: 180px;
+  width: 200px;
   overflow-y: auto;
   overflow-x: hidden;
   transition: width 0.25s cubic-bezier(.4,0,.2,1), padding 0.25s cubic-bezier(.4,0,.2,1);
@@ -396,10 +404,10 @@ function goCanvasMode() {
   box-shadow: none !important;
 }
 .quick-nav::-webkit-scrollbar { width: 4px; }
-.quick-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.quick-nav::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
 .quick-nav::-webkit-scrollbar-track { background: transparent; }
 .quick-nav.collapsed {
-  width: 48px;
+  width: 52px;
   padding: 12px 0;
 }
 .quick-nav.collapsed .nav-steps,
@@ -407,7 +415,7 @@ function goCanvasMode() {
   display: none;
 }
 @media (max-width: 768px) {
-  .quick-nav { width: 48px; padding: 12px 0; }
+  .quick-nav { width: 52px; padding: 12px 0; }
   .quick-nav .nav-steps, .quick-nav .nav-group { display: none; }
   .quick-nav .nav-sidebar-title { display: none; }
   .quick-nav .nav-sidebar-header { justify-content: center; padding: 0 4px 8px; }
@@ -416,7 +424,7 @@ function goCanvasMode() {
 /* 当前任务面板 */
 .atp-panel {
   margin-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--border-color);
   padding: 6px 0 4px;
 }
 .atp-header {
@@ -474,7 +482,7 @@ function goCanvasMode() {
   min-width: 0;
   cursor: default;
 }
-.atp-item:hover { background: rgba(255,255,255,0.05); }
+.atp-item:hover { background: var(--bg-inner); }
 .atp-item-dot {
   display: inline-block;
   width: 4px;
@@ -486,7 +494,7 @@ function goCanvasMode() {
 }
 .atp-item-label {
   font-size: 0.72rem;
-  color: #a1a1aa;
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -503,7 +511,7 @@ function goCanvasMode() {
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: #71717a;
+  color: var(--text-subtle);
   cursor: pointer;
   flex-shrink: 0;
   opacity: 0;
@@ -514,12 +522,12 @@ function goCanvasMode() {
   opacity: 1;
 }
 .atp-item-close:hover {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  background: var(--danger-soft);
+  color: var(--danger-text);
 }
 .atp-more {
   font-size: 0.68rem;
-  color: #71717a;
+  color: var(--text-subtle);
   padding: 2px 10px 2px 19px;
 }
 /* 折叠态任务徽章 */
@@ -541,18 +549,18 @@ function goCanvasMode() {
 :global(html.light) .atp-count-badge { background: var(--bg-inner); color: var(--text-primary); }
 :global(html.light) .atp-spin-dot { background: var(--el-color-danger); }
 :global(html.light) .atp-item-dot { background: var(--text-bright); }
-:global(html.light) .atp-item-label { color: #374151; }
+:global(html.light) .atp-item-label { color: var(--text-primary); }
 :global(html.light) .atp-item:hover { background: rgba(0,0,0,0.04); }
-:global(html.light) .atp-item-close { color: #9ca3af; }
-:global(html.light) .atp-item-close:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
+:global(html.light) .atp-item-close { color: var(--text-muted); }
+:global(html.light) .atp-item-close:hover { background: var(--danger-soft); color: var(--danger-text); }
 :global(html.light) .atp-panel { border-top-color: var(--border-muted); }
 .nav-sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 10px 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  margin-bottom: 8px;
+  padding: 0 12px 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 10px;
   flex-shrink: 0;
 }
 :global(html.light) .nav-sidebar-header { border-bottom-color: var(--border-muted); }
@@ -561,10 +569,10 @@ function goCanvasMode() {
   padding: 0 4px 8px;
 }
 .nav-sidebar-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #7a7a88;
-  letter-spacing: 0.06em;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-subtle);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
@@ -577,7 +585,7 @@ function goCanvasMode() {
   width: 28px;
   height: 28px;
   cursor: pointer;
-  color: #5a5a66;
+  color: var(--text-subtle);
   transition: color 0.15s, background 0.15s;
   border-radius: 6px;
   flex-shrink: 0;
@@ -586,57 +594,39 @@ function goCanvasMode() {
   padding: 0;
   background: transparent;
 }
-.nav-toggle:hover { color: #c8c8d0; background: rgba(255,255,255,0.06); }
-:global(html.light) .nav-toggle { color: #9ca3af; }
-:global(html.light) .nav-toggle:hover { color: #374151; background: rgba(0,0,0,0.05); }
+.nav-toggle:hover { color: var(--text-muted); background: var(--bg-hover); }
+:global(html.light) .nav-toggle { color: var(--text-muted); }
+:global(html.light) .nav-toggle:hover { color: var(--text-primary); background: rgba(0,0,0,0.05); }
 
 /* ─── Steps ─── */
 .nav-steps {
   display: flex;
   flex-direction: column;
-  padding: 0 10px 0 10px;
+  padding: 0 8px;
+  gap: 3px;
 }
 .nav-step {
   display: flex;
-  align-items: stretch;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
-  border-radius: 6px;
-  padding: 3px 6px 3px 0;
-  transition: background 0.2s ease;
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  transition: background 0.15s ease, color 0.15s ease;
   user-select: none;
   width: 100%;
   border: 0;
-  color: inherit;
+  color: var(--text-secondary);
   font: inherit;
   text-align: left;
   background: transparent;
 }
-.nav-step:hover { background: rgba(255,255,255,0.04); }
+.nav-step:hover { background: var(--bg-hover); color: var(--text-primary); }
 :global(html.light) .nav-step:hover { background: var(--bg-hover); }
-.nav-step.is-active { background: var(--bg-hover); }
+.nav-step.is-active { background: var(--bg-hover); color: var(--text-bright); }
 :global(html.light) .nav-step.is-active { background: var(--bg-hover); }
-.nav-step.is-active .step-label { color: var(--text-bright) !important; }
+.nav-step.is-active .step-label { color: var(--text-bright) !important; font-weight: 600; }
 :global(html.light) .nav-step.is-active .step-label { color: var(--text-bright) !important; font-weight: 700; }
-
-/* connector column */
-.step-connector-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 20px;
-  flex-shrink: 0;
-}
-.step-line {
-  width: 2px;
-  flex: 1;
-  min-height: 6px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 1px;
-  transition: background 0.3s;
-}
-:global(html.light) .step-line { background: rgba(0,0,0,0.1); }
-.step-line.filled { background: rgba(34, 197, 94, 0.5); }
 
 /* dot */
 .step-dot {
@@ -649,23 +639,30 @@ function goCanvasMode() {
   flex-shrink: 0;
   font-size: 11px;
   font-weight: 700;
-  transition: all 0.25s;
-  border: 2px solid transparent;
+  transition: all 0.2s;
+  border: 1px solid var(--border-color);
+  background: var(--bg-inner);
+  color: var(--text-subtle);
+}
+.nav-step.is-active .step-dot {
+  border-color: var(--text-bright);
+  color: var(--text-bright);
+  background: var(--bg-page);
 }
 .dot-pending {
-  background: rgba(39,39,42,0.6);
-  border-color: rgba(63,63,70,0.4);
-  color: #52525b;
+  background: var(--bg-inner);
+  border-color: var(--border-muted);
+  color: var(--text-subtle);
 }
 :global(html.light) .dot-pending {
-  background: rgba(229,231,235,0.6);
-  border-color: rgba(156,163,175,0.3);
-  color: #9ca3af;
+  background: var(--bg-hover);
+  border-color: var(--border-muted);
+  color: var(--text-muted);
 }
 .dot-partial {
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.45);
-  color: #f59e0b;
+  background: var(--bg-inner);
+  border-color: var(--el-color-warning);
+  color: var(--el-color-warning);
 }
 .dot-generating {
   background: var(--bg-inner);
@@ -674,53 +671,52 @@ function goCanvasMode() {
   box-shadow: none;
 }
 .dot-done {
-  background: rgba(34, 197, 94, 0.12);
-  border-color: rgba(34, 197, 94, 0.5);
-  color: #22c55e;
+  background: var(--text-bright);
+  border-color: var(--text-bright);
+  color: var(--bg-page);
   box-shadow: none;
 }
-.dot-icon { font-size: 13px; }
-.dot-num { font-size: 11px; line-height: 1; }
+.dot-icon { font-size: 12px; }
+.dot-num { font-size: 11px; line-height: 1; font-family: var(--font-mono); }
 
 /* step body */
 .step-body {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex: 1;
-  padding: 3px 0;
   min-width: 0;
 }
 .step-label {
   flex: 1;
   font-size: 13px;
   font-weight: 500;
-  color: #71717a;
+  color: var(--text-subtle);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   transition: color 0.2s ease;
 }
-:global(html.light) .step-label { color: #6b7280; }
-.nav-step:hover .step-label { color: #d4d4d8; }
-:global(html.light) .nav-step:hover .step-label { color: #1e1b4b; }
-.status-done .step-label { color: #6ee7b7; }
-:global(html.light) .status-done .step-label { color: #059669; }
+:global(html.light) .step-label { color: var(--text-subtle); }
+.nav-step:hover .step-label { color: var(--text-primary); }
+:global(html.light) .nav-step:hover .step-label { color: var(--text-primary); }
+.status-done .step-label { color: var(--text-primary); }
+:global(html.light) .status-done .step-label { color: var(--text-primary); }
 .status-generating .step-label { color: var(--text-bright); }
 :global(html.light) .status-generating .step-label { color: var(--text-bright); }
-.status-partial .step-label { color: #fbbf24; }
-:global(html.light) .status-partial .step-label { color: #d97706; }
+.status-partial .step-label { color: var(--el-color-warning); }
+:global(html.light) .status-partial .step-label { color: var(--el-color-warning); }
 
 .step-count {
   font-size: 10px;
-  color: #52525b;
-  background: rgba(255,255,255,0.04);
+  color: var(--text-subtle);
+  background: var(--bg-inner);
   border-radius: 10px;
   padding: 1px 5px;
   flex-shrink: 0;
   font-weight: 500;
 }
-:global(html.light) .step-count { background: rgba(0,0,0,0.04); color: #9ca3af; }
+:global(html.light) .step-count { background: rgba(0,0,0,0.04); color: var(--text-muted); }
 
 .step-badge {
   display: flex;
@@ -728,7 +724,7 @@ function goCanvasMode() {
   font-size: 11px;
   flex-shrink: 0;
 }
-.partial-badge { color: #f59e0b; }
+.partial-badge { color: var(--el-color-warning); }
 .gen-badge { color: var(--text-bright); }
 
 /* spin animation */
@@ -746,7 +742,7 @@ function goCanvasMode() {
   gap: 6px;
   padding: 5px 12px;
   font-size: 12px;
-  color: #5a5a66;
+  color: var(--text-subtle);
   cursor: pointer;
   width: 100%;
   border: 0;
@@ -754,11 +750,11 @@ function goCanvasMode() {
   text-align: left;
   font: inherit;
   transition: color 0.15s;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid var(--border-color);
 }
-:global(html.light) .nav-sub-toggle { border-top-color: rgba(0,0,0,0.07); color: #9ca3af; }
-.nav-sub-toggle:hover { color: #e4e4e7; }
-:global(html.light) .nav-sub-toggle:hover { color: #374151; }
+:global(html.light) .nav-sub-toggle { border-top-color: var(--border-color); color: var(--text-muted); }
+.nav-sub-toggle:hover { color: var(--text-primary); }
+:global(html.light) .nav-sub-toggle:hover { color: var(--text-primary); }
 .nav-sub-list {
   background: rgba(0,0,0,0.15);
   padding: 4px 0;
@@ -768,7 +764,7 @@ function goCanvasMode() {
 .nav-sub-item {
   padding: 4px 10px 4px 26px;
   font-size: 11.5px;
-  color: #52525b;
+  color: var(--text-subtle);
   cursor: pointer;
   width: 100%;
   border: 0;
@@ -782,8 +778,8 @@ function goCanvasMode() {
   border-radius: 4px;
   margin: 0 4px;
 }
-:global(html.light) .nav-sub-item { color: #9ca3af; }
-.nav-sub-item:hover { color: #d4d4d8; background: rgba(255,255,255,0.04); }
+:global(html.light) .nav-sub-item { color: var(--text-muted); }
+.nav-sub-item:hover { color: var(--text-primary); background: var(--bg-inner); }
 :global(html.light) .nav-sub-item:hover { color: var(--text-bright); background: var(--bg-hover); }
 .nav-segment-label {
   display: flex;

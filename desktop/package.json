@@ -1,13 +1,13 @@
 {
-  "name": "localminidrama-desktop",
+  "name": "localdrama-desktop",
   "version": "1.2.9",
-  "description": "LocalMiniDrama 本地桌面客户端",
+  "description": "LocalDrama 本地桌面客户端",
   "main": "main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/kumanode/LocalDrama.git"
   },
-  "author": "LocalMiniDrama",
+  "author": "LocalDrama",
   "license": "MIT",
   "scripts": {
     "prestart": "node scripts/copy-backend.js",
@@ -95,14 +95,14 @@
         "nsis",
         "portable"
       ],
-      "icon": null,
+      "icon": "build/icon.ico",
       "signAndEditExecutable": false,
-      "artifactName": "LocalMiniDrama ${version}.${ext}"
+      "artifactName": "LocalDrama ${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "LocalMiniDrama Setup ${version}.${ext}"
+      "artifactName": "LocalDrama Setup ${version}.${ext}"
     }
   }
 }

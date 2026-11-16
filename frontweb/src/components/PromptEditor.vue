@@ -356,7 +356,7 @@ watch(locale, () => {
 }
 
 .section-label--locked {
-  color: #2563eb;
+  color: var(--text-primary);
 }
 
 .section-icon {
@@ -368,23 +368,23 @@ watch(locale, () => {
 }
 
 .prompt-textarea :deep(textarea) {
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 12.5px;
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
   line-height: 1.6;
 }
 
 .prompt-locked-section {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .locked-content {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 12px;
-  font-family: 'Consolas', 'Monaco', monospace;
-  color: #1e40af;
+  background: var(--bg-inner);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
   white-space: pre-wrap;
   line-height: 1.6;
   user-select: none;
@@ -392,9 +392,9 @@ watch(locale, () => {
 
 .prompt-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-3);
   justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color, #e4e4e7);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-color);
 }
 </style>

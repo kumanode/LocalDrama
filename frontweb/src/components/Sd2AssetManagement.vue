@@ -17,6 +17,7 @@
       </template>
     </el-alert>
 
+    <div class="sd2-config-card">
     <el-form label-width="120px" class="sd2-form">
       <el-form-item label="Base URL">
         <el-input
@@ -105,9 +106,11 @@
         </div>
       </el-form-item>
     </el-form>
+    </div>
 
-    <el-row :gutter="16">
+    <el-row :gutter="24" class="sd2-tables-row">
       <el-col :span="11">
+        <div class="sd2-table-card">
         <div class="panel-title">{{ t('sd2Asset.assetGroupsTitle') }}</div>
         <div class="panel-actions">
           <el-button type="primary" size="small" :loading="loadingGroups" @click="refreshGroups">{{ t('sd2Asset.refreshList') }}</el-button>
@@ -131,8 +134,10 @@
             </template>
           </el-table-column>
         </el-table>
+        </div>
       </el-col>
       <el-col :span="13">
+        <div class="sd2-table-card">
         <div class="panel-title">{{ t('sd2Asset.assetsTitle') }}</div>
         <div class="panel-actions row-gap">
           <el-input v-model="assetGroupIdInput" :placeholder="t('sd2Asset.assetGroupIdPlaceholder')" clearable style="flex: 1; min-width: 140px" />
@@ -151,11 +156,14 @@
             </template>
           </el-table-column>
         </el-table>
+        </div>
       </el-col>
     </el-row>
 
-    <div class="panel-title" style="margin-top: 16px">{{ t('sd2Asset.lastResponseTitle') }}</div>
-    <el-input v-model="lastRawJson" type="textarea" :rows="6" readonly class="mono" />
+    <div class="sd2-response-card">
+      <div class="panel-title">{{ t('sd2Asset.lastResponseTitle') }}</div>
+      <el-input v-model="lastRawJson" type="textarea" :rows="6" readonly class="mono" />
+    </div>
 
     <!-- 新建资产组 -->
     <el-dialog v-model="dlgGroupCreate" title="CreateAssetGroup" width="480px" destroy-on-close>
@@ -807,7 +815,21 @@ async function deleteAsset(row) {
 
 <style scoped>
 .sd2-asset-mgmt {
-  max-width: 1100px;
+  max-width: 1200px;
+}
+.sd2-config-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-5);
+}
+.sd2-response-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-top: var(--space-5);
 }
 .sd2-intro {
   margin-bottom: 14px;
@@ -828,10 +850,22 @@ async function deleteAsset(row) {
 .field-hint code {
   font-size: 11px;
 }
+.sd2-tables-row {
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+.sd2-table-card {
+  background: var(--bg-inner);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+}
 .panel-title {
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 .panel-actions {
@@ -845,7 +879,7 @@ async function deleteAsset(row) {
   flex-wrap: nowrap;
 }
 .mono :deep(textarea) {
-  font-family: Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
 }
 .sd2-save-row {
@@ -856,7 +890,7 @@ async function deleteAsset(row) {
 }
 .sd2-saved-hint {
   font-size: 12px;
-  color: #67c23a;
+  color: var(--text-primary);
   line-height: 1.5;
 }
 </style>

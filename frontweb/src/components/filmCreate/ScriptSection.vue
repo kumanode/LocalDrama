@@ -18,62 +18,66 @@
               class="story-textarea"
               @update:model-value="$emit('update:storyInput', $event)"
             />
-            <div class="row gap mt-10 fw">
-              <el-select
-                :model-value="storyStyle"
-                :placeholder="$t('filmCreate.storyStyle')"
-                clearable
-                class="sel-120"
-                @update:model-value="$emit('update:storyStyle', $event)"
-                @change="$emit('saveProjectSettings', false)"
-              >
-                <el-option :label="$t('filmCreate.styleModern')" value="modern" />
-                <el-option :label="$t('filmCreate.styleAncient')" value="ancient" />
-                <el-option :label="$t('filmCreate.styleFantasy')" value="fantasy" />
-                <el-option :label="$t('filmCreate.styleDaily')" value="daily" />
-              </el-select>
-              <el-select
-                :model-value="storyType"
-                :placeholder="$t('filmCreate.storyType')"
-                clearable
-                class="sel-120"
-                @update:model-value="$emit('update:storyType', $event)"
-                @change="$emit('saveProjectSettings', false)"
-              >
-                <el-option :label="$t('filmCreate.typeDrama')" value="drama" />
-                <el-option :label="$t('filmCreate.typeComedy')" value="comedy" />
-                <el-option :label="$t('filmCreate.typeAdventure')" value="adventure" />
-              </el-select>
-              <div class="inline-row-sm">
-                <span>{{ $t('filmCreate.episodes') }}</span>
-                <el-input-number
-                  :model-value="storyEpisodeCount"
-                  :min="1"
-                  :step="1"
-                  :precision="0"
-                  controls-position="right"
-                  class="inp-num-100"
-                  @update:model-value="$emit('update:storyEpisodeCount', $event)"
-                />
+            <div class="story-controls-bar">
+              <div class="story-controls-inputs">
+                <el-select
+                  :model-value="storyStyle"
+                  :placeholder="$t('filmCreate.storyStyle')"
+                  clearable
+                  class="sel-story-style"
+                  @update:model-value="$emit('update:storyStyle', $event)"
+                  @change="$emit('saveProjectSettings', false)"
+                >
+                  <el-option :label="$t('filmCreate.styleModern')" value="modern" />
+                  <el-option :label="$t('filmCreate.styleAncient')" value="ancient" />
+                  <el-option :label="$t('filmCreate.styleFantasy')" value="fantasy" />
+                  <el-option :label="$t('filmCreate.styleDaily')" value="daily" />
+                </el-select>
+                <el-select
+                  :model-value="storyType"
+                  :placeholder="$t('filmCreate.storyType')"
+                  clearable
+                  class="sel-story-type"
+                  @update:model-value="$emit('update:storyType', $event)"
+                  @change="$emit('saveProjectSettings', false)"
+                >
+                  <el-option :label="$t('filmCreate.typeDrama')" value="drama" />
+                  <el-option :label="$t('filmCreate.typeComedy')" value="comedy" />
+                  <el-option :label="$t('filmCreate.typeAdventure')" value="adventure" />
+                </el-select>
+                <div class="inline-row-sm episodes-control">
+                  <span class="episodes-label">{{ $t('filmCreate.episodes') }}</span>
+                  <el-input-number
+                    :model-value="storyEpisodeCount"
+                    :min="1"
+                    :step="1"
+                    :precision="0"
+                    controls-position="right"
+                    class="inp-num-100"
+                    @update:model-value="$emit('update:storyEpisodeCount', $event)"
+                  />
+                </div>
               </div>
-              <el-button type="primary" :loading="isStoryGenRunning" @click="$emit('generateStory')">
-                {{ $t('filmCreate.generateScript') }}
-              </el-button>
-              <el-button plain @click="$emit('openNovelImport')">
-                <el-icon><DocumentAdd /></el-icon>
-                {{ $t('filmCreate.importNovel') }}
-              </el-button>
+              <div class="story-controls-actions">
+                <el-button type="primary" :loading="isStoryGenRunning" class="btn-gen-script" @click="$emit('generateStory')">
+                  {{ $t('filmCreate.generateScript') }}
+                </el-button>
+                <el-button plain class="btn-import-novel" @click="$emit('openNovelImport')">
+                  <el-icon><DocumentAdd /></el-icon>
+                  {{ $t('filmCreate.importNovel') }}
+                </el-button>
+              </div>
             </div>
           </div>
           <div class="script-sub-divider" />
           <div id="anchor-script" class="script-sub-block">
             <h2 class="section-title">{{ $t('filmCreate.scriptSection') }}</h2>
-            <div class="row gap mb-10 fw">
+            <div class="episode-bar">
               <el-select
                 :model-value="selectedEpisodeId"
                 :placeholder="$t('filmCreate.selectEpisode')"
                 clearable
-                class="sel-130"
+                class="sel-episode"
                 :disabled="!dramaId"
                 @update:model-value="$emit('update:selectedEpisodeId', $event)"
                 @change="$emit('episodeSelect', $event)"
@@ -88,7 +92,7 @@
               <el-input
                 :model-value="scriptTitle"
                 :placeholder="$t('filmCreate.episodeTitlePlaceholder')"
-                class="sel-150"
+                class="input-episode-title"
                 @update:model-value="$emit('update:scriptTitle', $event)"
               />
               <el-button v-if="dramaId" class="btn-add-episode" @click="$emit('addEpisode')">
@@ -250,6 +254,68 @@ defineEmits([
 </script>
 
 <style scoped>
+.story-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.story-controls-inputs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.story-controls-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.sel-story-style {
+  min-width: 160px;
+  width: 160px;
+}
+.sel-story-type {
+  min-width: 140px;
+  width: 140px;
+}
+.episodes-control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.episodes-label {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.btn-gen-script,
+.btn-import-novel {
+  height: 36px;
+  padding: 0 16px;
+}
+.episode-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+.sel-episode {
+  min-width: 180px;
+  width: 190px;
+}
+.input-episode-title {
+  flex: 1;
+  min-width: 200px;
+}
+.btn-add-episode {
+  height: 36px;
+  white-space: nowrap;
+  margin-left: auto;
+}
 .script-workbench-unified {
   margin-bottom: 0;
 }
@@ -283,10 +349,10 @@ defineEmits([
 }
 .script-sub-divider {
   margin: 20px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--border-color);
 }
 :global(html.light) .script-sub-divider {
-  border-top-color: rgba(0, 0, 0, 0.08);
+  border-top-color: var(--border-color);
 }
 .script-mode-hint {
   margin-top: 0;
@@ -299,10 +365,10 @@ defineEmits([
   margin: 16px 0 8px;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #a1a1aa;
+  color: var(--text-muted);
 }
 :global(html.light) .preview-block-title {
-  color: #64748b;
+  color: var(--text-subtle);
 }
 .preview-block-title:first-of-type {
   margin-top: 0;
@@ -312,7 +378,7 @@ defineEmits([
 }
 .script-select-empty {
   margin-top: 16px;
-  color: #71717a;
+  color: var(--text-subtle);
   font-size: 14px;
 }
 .select-script-list {
@@ -323,20 +389,20 @@ defineEmits([
 .select-script-item {
   padding: 12px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
   margin-bottom: 8px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 .select-script-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-hover);
   border-color: var(--text-bright);
 }
 .select-script-item.disabled,
 .select-script-item.disabled:hover {
   cursor: not-allowed;
   opacity: 0.55;
-  border-color: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-color);
   background: transparent;
 }
 :global(html.light) .select-script-item {
@@ -347,20 +413,20 @@ defineEmits([
 }
 .select-script-title {
   font-weight: 600;
-  color: #e4e4e7;
+  color: var(--text-primary);
   margin-bottom: 6px;
 }
 :global(html.light) .select-script-title {
-  color: #1e1b4b;
+  color: var(--text-primary);
 }
 .select-script-desc {
   font-size: 13px;
-  color: #9ca0b2;
+  color: var(--text-muted);
   line-height: 1.45;
 }
 .select-script-empty {
   text-align: center;
-  color: #71717a;
+  color: var(--text-subtle);
   padding: 24px;
 }
 .preview-ep-tabs {

@@ -78,7 +78,7 @@ const isNodeBusy = computed(() => {
   width: 200px;
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(129, 140, 248, 0.35);
+  border: 1px solid var(--border-muted);
   background: var(--bg-card, #18181b);
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -98,14 +98,14 @@ const isNodeBusy = computed(() => {
 .num {
   font-size: 12px;
   font-weight: 700;
-  color: #a5b4fc;
+  color: var(--text-primary);
 }
 .wf-badge {
   font-size: 10px;
   padding: 1px 6px;
-  border-radius: 999px;
-  background: rgba(251, 191, 36, 0.18);
-  color: #fcd34d;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  color: var(--el-color-warning);
   max-width: 88px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -113,7 +113,7 @@ const isNodeBusy = computed(() => {
 }
 .seg {
   font-size: 10px;
-  color: #71717a;
+  color: var(--text-subtle);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -121,7 +121,7 @@ const isNodeBusy = computed(() => {
 .mode-badge {
   font-size: 10px;
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   background: var(--border-muted);
   color: var(--text-primary);
 }
@@ -142,15 +142,15 @@ const isNodeBusy = computed(() => {
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #a1a1aa;
+  background: var(--bg-hover);
+  color: var(--text-muted);
 }
-.st-completed { color: #34d399 !important; background: rgba(52, 211, 153, 0.12) !important; }
-.st-processing { color: #60a5fa !important; }
-.st-failed { color: #f87171 !important; }
+.st-completed { color: var(--text-primary) !important; background: var(--bg-hover) !important; }
+.st-processing { color: var(--text-primary) !important; }
+.st-failed { color: var(--danger-text) !important; }
 .processing {
   animation: sb-pulse 1.4s ease-in-out infinite;
-  border-color: #60a5fa;
+  border-color: var(--border-muted);
 }
 .highlighted {
   border-color: var(--text-bright); box-shadow: none;
@@ -159,11 +159,11 @@ const isNodeBusy = computed(() => {
   opacity: 0.28;
 }
 @keyframes sb-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.35); }
-  50% { box-shadow: 0 0 0 6px rgba(96, 165, 250, 0.08); }
+  0%, 100% { box-shadow: 0 0 0 0 var(--border-muted); }
+  50% { box-shadow: 0 0 0 6px var(--border-muted); }
 }
 .hint {
   font-size: 10px;
-  color: #52525b;
+  color: var(--text-subtle);
 }
 </style>

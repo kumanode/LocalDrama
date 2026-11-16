@@ -95,7 +95,7 @@ export default {
   },
 
   header: {
-    appTitle: 'LocalMiniDrama',
+    appTitle: 'LocalDrama',
     appSubtitle: 'AI Short Drama Studio',
     characterLib: 'Character Assets',
     sceneLib: 'Scene Assets',
@@ -118,8 +118,8 @@ export default {
 
   filmList: {
     quickStart: 'Quick Start',
-    newDramaProject: 'New Drama Project',
-    importDramaProject: 'Import Drama Project',
+    newDramaProject: 'New Project',
+    importDramaProject: 'Import Project',
     beginnerHint: 'New here? Import an example project to explore right away',
     sampleChinese: 'Sample (Chinese)',
     unnamedProject: 'Untitled Project',

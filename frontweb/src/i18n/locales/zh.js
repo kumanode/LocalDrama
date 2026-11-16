@@ -96,7 +96,7 @@ export default {
 
   header: {
     appTitle: '本地短剧助手',
-    appSubtitle: 'LocalMiniDrama',
+    appSubtitle: 'LocalDrama',
     characterLib: '素材角色',
     sceneLib: '素材场景',
     propLib: '素材道具',
@@ -118,8 +118,8 @@ export default {
 
   filmList: {
     quickStart: '快速开始',
-    newDramaProject: '新建短剧项目',
-    importDramaProject: '导入短剧项目',
+    newDramaProject: '新建项目',
+    importDramaProject: '导入项目',
     beginnerHint: '新手？试试导入示例项目快速体验',
     sampleChinese: '中文示例',
     unnamedProject: '未命名项目',

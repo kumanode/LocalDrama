@@ -40,7 +40,7 @@ const storyboardCount = computed(() =>
 .title {
   font-size: 16px;
   font-weight: 700;
-  color: #f4f4f5;
+  color: var(--text-primary);
   margin-bottom: 6px;
 }
 .meta {
@@ -48,6 +48,6 @@ const storyboardCount = computed(() =>
   flex-wrap: wrap;
   gap: 10px;
   font-size: 12px;
-  color: #a1a1aa;
+  color: var(--text-muted);
 }
 </style>

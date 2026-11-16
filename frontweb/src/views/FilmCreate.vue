@@ -771,6 +771,16 @@ watch(() => route.params.id, async () => {
   await nextTick()
   restoreScrollPosition()
 })
+
+watch(
+  () => store.drama?.title,
+  (title) => {
+    if (title) {
+      document.title = `${title} - LocalDrama`
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped src="./FilmCreate.css"></style>

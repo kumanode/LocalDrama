@@ -24,7 +24,7 @@
       >
         <el-table-column prop="key" :label="t('sceneModelMap.sceneKeyCol')" min-width="220">
           <template #default="{ row }">
-            <div class="">
+            <div class="scene-key-cell">
               <code class="scene-key">{{ row.key }}</code>
               <span class="scene-key-label">{{ getSceneKeyLabel(row.key) }}</span>
             </div>
@@ -50,7 +50,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="description" :label="t('common.description')" min-width="200" show-overflow-tooltip />
-        <el-table-column :label="$t('common.actions')" width="150" fixed="right">
+        <el-table-column :label="$t('common.actions')" width="160" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openEdit(row)">{{ $t('common.edit') }}</el-button>
             <el-button link type="danger" size="small" @click="onDelete(row)">{{ $t('common.delete') }}</el-button>
@@ -368,6 +368,12 @@ onMounted(() => {
   padding: 0;
 }
 
+.scene-key-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -377,7 +383,7 @@ onMounted(() => {
 
 .page-desc {
   margin: 0;
-  color: #666;
+  color: var(--text-subtle);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -387,10 +393,10 @@ onMounted(() => {
 }
 
 .scene-key {
-  background: #f5f7fa;
+  background: var(--bg-inner);
   padding: 2px 8px;
   border-radius: 4px;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
   color: var(--el-color-primary);
   width: fit-content;
@@ -398,27 +404,27 @@ onMounted(() => {
 
 .scene-key-label {
   font-size: 12px;
-  color: #666;
+  color: var(--text-subtle);
 }
 
 .model-override {
-  background: #e6f7ff;
+  background: var(--bg-inner);
   padding: 2px 8px;
   border-radius: 4px;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
-  color: #096dd9;
+  color: var(--text-primary);
 }
 
 .text-muted {
-  color: #999;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
 .field-tip {
   margin: 6px 0 0;
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
   line-height: 1.4;
 }
 </style>

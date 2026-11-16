@@ -104,17 +104,17 @@ const resourcePanelCollapsed = ref(false)
   transition: background 0.2s;
 }
 .collapse-header:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-inner);
 }
 .resource-panel .collapse-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border-color);
 }
 .resource-panel .collapse-header .section-title {
   margin: 0;
 }
 .collapse-icon {
   font-size: 1.1rem;
-  color: #a1a1aa;
+  color: var(--text-muted);
   flex-shrink: 0;
   margin-left: 8px;
 }
@@ -131,7 +131,7 @@ const resourcePanelCollapsed = ref(false)
 }
 :deep(.resource-block-header) {
   padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border-color);
 }
 :deep(.resource-block-header .collapse-icon) {
   font-size: 1rem;
@@ -140,10 +140,10 @@ const resourcePanelCollapsed = ref(false)
   font-size: 1rem;
   font-weight: 600;
   margin: 0;
-  color: #e4e4e7;
+  color: var(--text-primary);
 }
 :deep(html.light .resource-block-title) {
-  color: #18181b;
+  color: var(--text-primary);
 }
 :deep(.resource-block-body) {
   padding: 12px 14px 14px;
@@ -165,7 +165,7 @@ const resourcePanelCollapsed = ref(false)
   gap: 20px;
 }
 :deep(.asset-item) {
-  background: #22232d;
+  background: var(--bg-inner);
   border-radius: 8px;
   overflow: hidden;
   display: flex;
@@ -194,7 +194,7 @@ const resourcePanelCollapsed = ref(false)
 :deep(.asset-item-left-right .asset-desc-full) {
   flex: 1;
   font-size: 0.875rem;
-  color: #a1a1aa;
+  color: var(--text-muted);
   line-height: 1.5;
   margin-bottom: 12px;
   white-space: pre-wrap;
@@ -214,7 +214,7 @@ const resourcePanelCollapsed = ref(false)
 :deep(.asset-cover) {
   width: 100%;
   aspect-ratio: 1;
-  background: #2a2b36;
+  background: var(--bg-inner);
   position: relative;
   overflow: hidden;
 }
@@ -231,12 +231,12 @@ const resourcePanelCollapsed = ref(false)
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #5a5a66;
+  color: var(--text-subtle);
   font-size: 0.85rem;
 }
 :deep(.cover-placeholder.error) {
-  background: #450a0a;
-  color: #f87171;
+  background: var(--danger-soft);
+  color: var(--danger-text);
   font-size: 0.8rem;
   padding: 8px;
   line-height: 1.4;
@@ -246,7 +246,7 @@ const resourcePanelCollapsed = ref(false)
 :deep(.asset-cover--dragover) {
   outline: 2px dashed var(--el-color-primary);
   outline-offset: -2px;
-  background: rgba(64, 158, 255, 0.08);
+  background: var(--bg-hover);
 }
 :deep(.asset-cover-drop-hint) {
   position: absolute;
@@ -255,15 +255,15 @@ const resourcePanelCollapsed = ref(false)
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.6);
-  color: #fff;
+  color: var(--text-bright);
   font-size: 0.9rem;
   pointer-events: none;
 }
 :deep(.asset-info) { padding: 10px; }
-:deep(.asset-name) { font-weight: 600; margin-bottom: 4px; color: #e4e4e7; }
+:deep(.asset-name) { font-weight: 600; margin-bottom: 4px; color: var(--text-primary); }
 :deep(.asset-desc-full) {
   font-size: 0.875rem;
-  color: #a1a1aa;
+  color: var(--text-muted);
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
@@ -281,7 +281,7 @@ const resourcePanelCollapsed = ref(false)
   display: flex;
   gap: 6px;
   padding: 6px 8px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--border-color);
 }
 :deep(.asset-cover-actions .el-button) { flex: 1; justify-content: center; }
 :deep(html.light .asset-cover-actions) { border-top-color: var(--border-color); }
@@ -310,8 +310,8 @@ const resourcePanelCollapsed = ref(false)
   right: 1px;
   width: 16px;
   height: 16px;
-  background: rgba(239,68,68,0.85);
-  color: #fff;
+  background: var(--danger-soft);
+  color: var(--text-bright);
   border: none;
   border-radius: 50%;
   font-size: 11px;
@@ -328,8 +328,8 @@ const resourcePanelCollapsed = ref(false)
   left: 1px;
   width: 16px;
   height: 16px;
-  background: rgba(59,130,246,0.85);
-  color: #fff;
+  background: var(--bg-hover);
+  color: var(--text-bright);
   border: none;
   border-radius: 50%;
   font-size: 9px;
@@ -352,7 +352,7 @@ const resourcePanelCollapsed = ref(false)
 :deep(.extra-thumb:hover .thumb-preview-btn) { opacity: 1; }
 :deep(html.light .extra-images-strip) { background: var(--bg-inner); }
 :deep(.empty-tip) {
-  color: #5a5a66;
+  color: var(--text-subtle);
   font-size: 0.9rem;
   padding: 16px 0;
 }
@@ -366,12 +366,12 @@ const resourcePanelCollapsed = ref(false)
   box-shadow: none;
   transition: border-color var(--dur-fast) var(--ease-mech);
 }
-:deep(html.light .asset-cover) { background: #f3f4f6; }
-:deep(html.light .asset-name) { color: #18181b; }
-:deep(html.light .asset-desc-full) { color: #6b7280; }
-:deep(html.light .cover-placeholder) { color: #9ca3af; background: #f3f4f6; }
-:deep(html.light .cover-placeholder.error) { background: #fef2f2; color: #dc2626; }
-:deep(html.light .empty-tip) { color: #9ca3af; }
+:deep(html.light .asset-cover) { background: var(--bg-inner); }
+:deep(html.light .asset-name) { color: var(--text-primary); }
+:deep(html.light .asset-desc-full) { color: var(--text-subtle); }
+:deep(html.light .cover-placeholder) { color: var(--text-muted); background: var(--bg-inner); }
+:deep(html.light .cover-placeholder.error) { background: var(--bg-inner); color: var(--danger-text); }
+:deep(html.light .empty-tip) { color: var(--text-muted); }
 
 /* 关联分镜 chip */
 :deep(.asset-storyboard-link) {
@@ -409,7 +409,7 @@ const resourcePanelCollapsed = ref(false)
 :deep(.asl-chip:hover) {
   background: var(--bg-hover);
   box-shadow: none;
-  color: #c7d2fe;
+  color: var(--text-primary);
 }
 :deep(.asl-regen-btn) {
   margin-left: auto !important;
@@ -418,20 +418,20 @@ const resourcePanelCollapsed = ref(false)
   padding: 0 10px !important;
   font-size: 11px !important;
   font-weight: 500 !important;
-  background: rgba(251, 146, 60, 0.15) !important;
-  border: 1px solid rgba(251, 146, 60, 0.5) !important;
-  color: #fb923c !important;
+  background: var(--bg-hover) !important;
+  border: 1px solid var(--el-color-warning) !important;
+  color: var(--el-color-warning) !important;
   border-radius: 11px !important;
   transition: background 0.15s, box-shadow 0.15s !important;
 }
 :deep(.asl-regen-btn:not(.is-loading):hover) {
-  background: rgba(251, 146, 60, 0.28) !important;
+  background: var(--bg-hover) !important;
   box-shadow: none !important;
-  color: #fdba74 !important;
+  color: var(--el-color-warning) !important;
 }
 :deep(.asl-progress) {
   font-size: 11px;
-  color: #fb923c;
+  color: var(--el-color-warning);
   margin-left: 4px;
   flex-shrink: 0;
 }
@@ -446,14 +446,14 @@ const resourcePanelCollapsed = ref(false)
 :deep(.ref-image-box) {
   width: 120px;
   height: 120px;
-  border: 2px dashed #c0c4cc;
+  border: 2px dashed var(--border-muted);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
-  background: #fafafa;
+  background: var(--bg-card);
   flex-shrink: 0;
   transition: border-color 0.2s;
 }
@@ -538,7 +538,7 @@ const resourcePanelCollapsed = ref(false)
 }
 :deep(.library-item-info) { flex: 1; min-width: 0; }
 :deep(.library-item-name) { font-weight: 500; margin-bottom: 4px; }
-:deep(.library-item-desc) { font-size: 0.85rem; color: #7a7a88; margin-bottom: 8px; }
+:deep(.library-item-desc) { font-size: 0.85rem; color: var(--text-subtle); margin-bottom: 8px; }
 :deep(.library-item-actions) { display: flex; gap: 8px; }
 :deep(.library-empty) {
   text-align: center;

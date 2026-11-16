@@ -434,12 +434,7 @@
                   <el-button size="small" :loading="state.uploadingSbImageId === sb.id" @click="actions.onUploadSbImageClick(sb)">{{ $t('common.upload') }}</el-button>
                 </template>
                 <template v-else-if="state.generatingSbImageIds?.has(sb.id)">
-                  <el-skeleton class="sb-image-skeleton" animated aria-hidden="true">
-                    <template #template>
-                      <el-skeleton-item variant="image" class="sb-image-skeleton__image" />
-                      <el-skeleton-item variant="text" class="sb-image-skeleton__line" />
-                    </template>
-                  </el-skeleton>
+                  <div class="sb-image-loading" aria-hidden="true">[LOADING…]</div>
                   <span class="sr-only" role="status">{{ $t('filmCreate.generatingStoryboardImage') }}</span>
                 </template>
                 <template v-else>
@@ -695,9 +690,7 @@ function uploadingSbImageSlot(sbId) {
 </script>
 
 <style scoped>
-.sb-image-skeleton { width:100%; display:grid; gap:8px; }
-.sb-image-skeleton__image { width:100%; height:220px; }
-.sb-image-skeleton__line { width:72%; }
+.sb-image-loading { width:100%; height:220px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border-color); border-radius:var(--radius-md); font:var(--font-xs) var(--font-mono); letter-spacing:.05em; color:var(--text-subtle); }
 .sr-only {
   position:absolute;
   width:1px;
@@ -732,7 +725,7 @@ function uploadingSbImageSlot(sbId) {
 .sb-ctrl-bar--compact { height:auto; min-height:48px; margin:0; padding:var(--space-2); }
 .sb-ctrl-num {
   background: var(--el-color-primary);
-  color: #fff;
+  color: var(--bg-page);
   border-radius: 5px;
   width: 22px;
   height: 22px;
@@ -746,14 +739,14 @@ function uploadingSbImageSlot(sbId) {
 .sb-ctrl-title {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #e4e4e7;
+  color: var(--text-primary);
   max-width: 12em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 html.light .sb-ctrl-title {
-  color: #000;
+  color: var(--text-primary);
 }
 .sb-movement-tag.el-tag {
   height: 18px;
@@ -825,7 +818,7 @@ html.light .storyboard-row:hover {
   flex: 1;
   min-width: 0;
   padding: 14px 16px;
-  border-right: 1px solid rgba(255,255,255,0.05);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
 }
@@ -840,11 +833,11 @@ html.light .sb-panel {
   margin-bottom: 8px;
 }
 .sb-select { flex: 1; min-width: 0; }
-.sb-select-empty { font-size: 0.8rem; color: #71717a; padding: 8px; }
+.sb-select-empty { font-size: 0.8rem; color: var(--text-subtle); padding: 8px; }
 .sb-selected-thumbs {
   margin: 10px 0;
   padding: 8px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border-color);
 }
 .sb-thumb-row {
   display: flex;
@@ -855,7 +848,7 @@ html.light .sb-panel {
 .sb-thumb-row:last-child { margin-bottom: 0; }
 .sb-thumb-label {
   font-size: 0.8rem;
-  color: #71717a;
+  color: var(--text-subtle);
   flex-shrink: 0;
   width: 36px;
 }
@@ -869,7 +862,7 @@ html.light .sb-panel {
   flex-shrink: 0;
   border-radius: 6px;
   overflow: hidden;
-  background: #22232d;
+  background: var(--bg-inner);
 }
 .sb-thumb-item.sb-thumb-clickable {
   cursor: pointer;
@@ -890,7 +883,7 @@ html.light .sb-panel {
   width: 12px;
   height: 12px;
   background: var(--el-color-warning);
-  color: #fff;
+  color: var(--text-bright);
   border-radius: 50%;
   font-size: 9px;
   font-weight: bold;
@@ -918,23 +911,23 @@ html.light .sb-panel {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border: 1.5px dashed #52525b;
+  border: 1.5px dashed var(--border-muted);
   background: transparent;
-  color: #a1a1aa;
+  color: var(--text-muted);
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 .sb-thumb-add-char:hover {
-  color: #e4e4e7;
-  border-color: #71717a;
-  background: rgba(63, 63, 70, 0.5);
+  color: var(--text-primary);
+  border-color: var(--border-muted);
+  background: var(--bg-hover);
 }
 html.light .sb-thumb-add-char {
-  border-color: #d4d4d8;
-  color: #71717a;
+  border-color: var(--border-color);
+  color: var(--text-subtle);
 }
 html.light .sb-thumb-add-char:hover {
-  color: #18181b;
-  border-color: #a1a1aa;
+  color: var(--text-primary);
+  border-color: var(--border-muted);
 }
 .sb-thumb-placeholder {
   width: 100%;
@@ -943,8 +936,8 @@ html.light .sb-thumb-add-char:hover {
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
-  color: #7a7a88;
-  background: #2a2b36;
+  color: var(--text-subtle);
+  background: var(--bg-inner);
 }
 .sb-prompt-label {
   display: flex;
@@ -952,7 +945,7 @@ html.light .sb-thumb-add-char:hover {
   gap: 8px;
   margin-bottom: 8px;
   font-size: 0.85rem;
-  color: #e4e4e7;
+  color: var(--text-primary);
 }
 .sb-prompt-row {
   display: flex;
@@ -962,7 +955,7 @@ html.light .sb-thumb-add-char:hover {
 }
 .sb-prompt-text {
   font-size: 0.85rem;
-  color: #a1a1aa;
+  color: var(--text-muted);
   line-height: 1.5;
   flex: 1;
 }
@@ -979,7 +972,7 @@ html.light .sb-thumb-add-char:hover {
   min-height: 200px;
   max-height: 320px;
   background: var(--bg-inner);
-  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border: 1px dashed var(--border-color);
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -991,7 +984,7 @@ html.light .sb-thumb-add-char:hover {
   transition: border-color 0.2s, background 0.2s;
 }
 .sb-image-area:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-muted);
 }
 html.light .sb-image-area {
   background: var(--bg-inner);
@@ -1003,7 +996,7 @@ html.light .sb-image-area:hover {
 .sb-image-area--dragover {
   outline: 2px dashed var(--el-color-primary);
   outline-offset: -2px;
-  background: rgba(64, 158, 255, 0.1);
+  background: var(--bg-hover);
 }
 .sb-image-area-drop-hint {
   position: absolute;
@@ -1012,7 +1005,7 @@ html.light .sb-image-area:hover {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.6);
-  color: #fff;
+  color: var(--text-bright);
   font-size: 0.9rem;
   border-radius: 8px;
   pointer-events: none;
@@ -1041,7 +1034,7 @@ html.light .sb-image-area:hover {
   left: 0;
   right: 0;
   background: rgba(0, 0, 0, 0.7);
-  color: #d1d5db;
+  color: var(--text-primary);
   font-size: 11px;
   line-height: 1.4;
   padding: 4px 8px;
@@ -1053,7 +1046,7 @@ html.light .sb-image-area:hover {
   -webkit-box-orient: vertical;
 }
 .sb-image-error {
-  color: #f87171;
+  color: var(--danger-text);
   font-size: 0.8rem;
   text-align: center;
   padding: 8px;
@@ -1094,12 +1087,12 @@ html.light .sb-image-area:hover {
 .sb-fl-slot-label {
   font-size: 0.72rem;
   font-weight: 600;
-  color: #a1a1aa;
+  color: var(--text-muted);
 }
 .sb-fl-slot-body {
   flex: 1;
   min-height: 120px;
-  background: #14151b;
+  background: var(--bg-inner);
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -1108,13 +1101,13 @@ html.light .sb-image-area:hover {
 }
 .sb-fl-empty {
   font-size: 0.75rem;
-  color: #71717a;
+  color: var(--text-subtle);
   text-align: center;
   padding: 8px;
 }
 .sb-fl-slot-prompt {
   font-size: 0.7rem;
-  color: #71717a;
+  color: var(--text-subtle);
   line-height: 1.3;
   max-height: 32px;
   overflow: hidden;
@@ -1132,7 +1125,7 @@ html.light .sb-image-area:hover {
 .sb-fl-arrow {
   display: flex;
   align-items: center;
-  color: #71717a;
+  color: var(--text-subtle);
   font-size: 1.1rem;
 }
 .sb-fl-first-lock-opt {
@@ -1148,7 +1141,7 @@ html.light .sb-image-area:hover {
   width: 100%;
 }
 .sb-strip-hint-icon {
-  color: #71717a;
+  color: var(--text-subtle);
   font-size: 14px;
   flex-shrink: 0;
 }
@@ -1160,7 +1153,7 @@ html.light .sb-image-area:hover {
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
 }
 .sb-img-thumb img {
   width: 100%;
@@ -1173,7 +1166,7 @@ html.light .sb-image-area:hover {
   left: 0;
   right: 0;
   background: rgba(0, 0, 0, 0.6);
-  color: #fff;
+  color: var(--text-bright);
   font-size: 9px;
   text-align: center;
   padding: 1px 0;
@@ -1184,7 +1177,7 @@ html.light .sb-image-area:hover {
   left: 2px;
   background: rgba(0, 0, 0, 0.6);
   border: none;
-  color: #fff;
+  color: var(--text-bright);
   border-radius: 2px;
   cursor: pointer;
   padding: 2px;
@@ -1195,9 +1188,9 @@ html.light .sb-image-area:hover {
   position: absolute;
   top: 2px;
   right: 2px;
-  background: rgba(239, 68, 68, 0.8);
+  background: var(--danger-soft);
   border: none;
-  color: #fff;
+  color: var(--text-bright);
   border-radius: 2px;
   cursor: pointer;
   font-size: 10px;
@@ -1214,7 +1207,7 @@ html.light .sb-image-area:hover {
   flex: 1;
   min-height: 200px;
   max-height: 320px;
-  background: #14151b;
+  background: var(--bg-inner);
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -1231,10 +1224,10 @@ html.light .sb-image-area:hover {
   object-fit: contain;
 }
 .sb-video-placeholder {
-  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border: 1px dashed var(--border-color);
 }
 .sb-video-error {
-  color: #f87171;
+  color: var(--danger-text);
   font-size: 0.8rem;
   text-align: center;
   padding: 8px;
@@ -1247,7 +1240,7 @@ html.light .sb-image-area:hover {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #a1a1aa;
+  color: var(--text-muted);
   font-size: 0.85rem;
 }
 .sb-generate-video-btn {
@@ -1269,7 +1262,7 @@ html.light .sb-image-area:hover {
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
 }
 .sb-video-thumb-player {
   width: 100%;
@@ -1283,7 +1276,7 @@ html.light .sb-image-area:hover {
   left: 0;
   right: 0;
   background: rgba(0,0,0,0.55);
-  color: #e4e4e7;
+  color: var(--text-primary);
   font-size: 0.65rem;
   text-align: center;
   padding: 1px 0;
@@ -1302,7 +1295,7 @@ html.light .sb-image-area:hover {
   gap: 8px;
   margin-top: 8px;
   font-size: 0.85rem;
-  color: #e4e4e7;
+  color: var(--text-primary);
 }
 .sb-dot {
   display: inline-block;
@@ -1320,7 +1313,7 @@ html.light .sb-image-area:hover {
 }
 .sb-video-prompt-text {
   font-size: 0.85rem;
-  color: #a1a1aa;
+  color: var(--text-muted);
   line-height: 1.5;
   flex: 1;
 }
@@ -1338,24 +1331,24 @@ html.light .sb-image-area:hover {
   word-break: break-word;
 }
 .sb-ctrl-mode-btn.el-button {
-  border-color: rgba(34, 197, 94, 0.35);
-  color: #86efac;
-  background: rgba(34, 197, 94, 0.08);
+  border-color: var(--border-muted);
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 .sb-ctrl-mode-btn.el-button:hover {
-  border-color: #22c55e;
-  color: #fff;
-  background: rgba(34, 197, 94, 0.45);
+  border-color: var(--border-muted);
+  color: var(--text-bright);
+  background: var(--bg-hover);
 }
 html.light .sb-ctrl-mode-btn.el-button {
-  border-color: rgba(22, 163, 74, 0.35);
-  color: #15803d;
-  background: rgba(22, 163, 74, 0.06);
+  border-color: var(--border-muted);
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 html.light .sb-ctrl-mode-btn.el-button:hover {
-  border-color: #16a34a;
-  color: #fff;
-  background: #16a34a;
+  border-color: var(--border-muted);
+  color: var(--text-bright);
+  background: var(--bg-hover);
 }
 .sb-universal-label-row {
   display: flex;
@@ -1368,7 +1361,7 @@ html.light .sb-ctrl-mode-btn.el-button:hover {
   gap: 8px;
 }
 .sb-universal-hint-icon {
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 14px;
   cursor: help;
 }

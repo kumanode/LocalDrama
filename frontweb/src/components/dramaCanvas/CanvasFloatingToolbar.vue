@@ -33,15 +33,15 @@ function create(type) {
   gap: 6px;
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid #3f3f46;
-  background: rgba(24, 24, 27, 0.94);
+  border: 1px solid var(--border-muted);
+  background: var(--bg-hover);
   box-shadow: none; border: 1px solid var(--border-muted);
   flex-wrap: wrap;
   max-width: calc(100% - 24px);
 }
 .toolbar-label {
   font-size: 11px;
-  color: #71717a;
+  color: var(--text-subtle);
   margin-right: 4px;
   white-space: nowrap;
 }

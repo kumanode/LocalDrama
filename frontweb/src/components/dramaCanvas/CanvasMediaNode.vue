@@ -81,7 +81,7 @@ const kindLabel = computed(() => {
   padding: 8px;
   border-radius: 10px;
   border: 1px solid var(--border-muted, #3f3f46);
-  background: rgba(24, 24, 27, 0.95);
+  background: var(--bg-hover);
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -99,7 +99,7 @@ const kindLabel = computed(() => {
   margin: 0;
   font-size: 11px;
   line-height: 1.45;
-  color: #d4d4d8;
+  color: var(--text-primary);
   display: -webkit-box;
   -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
@@ -110,14 +110,14 @@ const kindLabel = computed(() => {
   height: 92px;
   object-fit: cover;
   border-radius: 6px;
-  background: #09090b;
+  background: var(--bg-card);
 }
 .media-vid {
   width: 100%;
   height: 92px;
   object-fit: cover;
   border-radius: 6px;
-  background: #000;
+  background: rgb(0, 0, 0);
 }
 .audio-wrap {
   display: flex;
@@ -125,11 +125,11 @@ const kindLabel = computed(() => {
   gap: 8px;
   padding: 24px 8px;
   font-size: 12px;
-  color: #fbbf24;
+  color: var(--el-color-warning);
 }
 .empty {
   font-size: 11px;
-  color: #71717a;
+  color: var(--text-subtle);
   padding: 20px 0;
   text-align: center;
 }
@@ -138,10 +138,10 @@ const kindLabel = computed(() => {
 }
 .kind-universal { border-color: var(--border-muted); }
 .kind-universal .tag { color: var(--text-primary); }
-.kind-image { border-color: rgba(129, 140, 248, 0.4); }
-.kind-video { border-color: rgba(244, 114, 182, 0.4); }
-.kind-audio { border-color: rgba(251, 191, 36, 0.4); }
-.canvas-media-node.processing { border-color: #60a5fa; }
+.kind-image { border-color: var(--border-muted); }
+.kind-video { border-color: var(--border-muted); }
+.kind-audio { border-color: var(--el-color-warning); }
+.canvas-media-node.processing { border-color: var(--border-muted); }
 .highlighted { border-color: var(--text-bright); }
 .dimmed { opacity: 0.28; }
 </style>

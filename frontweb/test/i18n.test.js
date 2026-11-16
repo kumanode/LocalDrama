@@ -10,7 +10,7 @@ test('i18n core - translation in zh and en', async () => {
 
   currentLocale.value = 'en'
   assert.equal(t('common.save'), 'Save')
-  assert.equal(t('header.appTitle'), 'LocalMiniDrama')
+  assert.equal(t('header.appTitle'), 'LocalDrama')
 })
 
 test('i18n core - interpolation', () => {

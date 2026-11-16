@@ -145,8 +145,8 @@ async function runStep(step) {
   width: min(360px, 90vw);
   padding: 10px 12px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(129, 140, 248, 0.4);
-  background: rgba(15, 15, 18, 0.96);
+  border: 1px solid var(--border-muted);
+  background: var(--bg-hover);
   box-shadow: none; border: 1px solid var(--border-muted);
 }
 .panel-head {
@@ -155,7 +155,7 @@ async function runStep(step) {
   justify-content: space-between;
   font-size: 11px;
   font-weight: 700;
-  color: #a5b4fc;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 .head-right {
@@ -165,7 +165,7 @@ async function runStep(step) {
 }
 .busy-tag {
   font-size: 10px;
-  color: #93c5fd;
+  color: var(--text-primary);
 }
 .panel-body {
   display: flex;
@@ -179,7 +179,7 @@ async function runStep(step) {
   margin: 0;
   font-size: 11px;
   line-height: 1.45;
-  color: #d4d4d8;
+  color: var(--text-primary);
   max-height: 72px;
   overflow-y: auto;
 }
@@ -190,7 +190,7 @@ async function runStep(step) {
   flex-shrink: 0;
   border-radius: 6px;
   overflow: hidden;
-  background: #09090b;
+  background: var(--bg-card);
 }
 .preview-img,
 .preview-vid {
@@ -205,7 +205,7 @@ async function runStep(step) {
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: #71717a;
+  color: var(--text-subtle);
 }
 .preview-loading {
   position: absolute;
@@ -215,14 +215,14 @@ async function runStep(step) {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  background: rgba(9, 9, 11, 0.85);
+  background: var(--bg-hover);
   font-size: 10px;
-  color: #d4d4d8;
+  color: var(--text-primary);
 }
 .spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.12);
+  border: 2px solid var(--border-color);
   border-top-color: var(--text-bright);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
@@ -233,16 +233,16 @@ async function runStep(step) {
 }
 .audio-label {
   font-size: 11px;
-  color: #fbbf24;
+  color: var(--el-color-warning);
   width: 100%;
 }
 .panel-actions {
   display: flex;
   gap: 8px;
 }
-.kind-video { border-color: rgba(244, 114, 182, 0.45); }
+.kind-video { border-color: var(--border-muted); }
 .kind-universal { border-color: var(--border-muted); }
-.kind-audio { border-color: rgba(251, 191, 36, 0.45); }
+.kind-audio { border-color: var(--el-color-warning); }
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

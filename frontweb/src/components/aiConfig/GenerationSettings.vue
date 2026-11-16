@@ -108,18 +108,75 @@ defineEmits([
 </script>
 
 <style scoped>
-.gs-section-title { margin-bottom: 8px; font-size: 14px; font-weight: 600; color: var(--text-primary); }
-.gs-desc { margin-bottom: 20px; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
-.gs-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.gs-label { color: var(--text-primary); font-size: 13px; font-weight: 500; white-space: nowrap; }
-.gs-unit { color: var(--text-secondary); font-size: 13px; white-space: nowrap; }
-.concurrency-select { width: 180px; }
-.content-language-title { margin-top: 24px; }
-.content-language-select { width: 180px; }
-.gs-video-row { margin-top: 10px; }
-.gs-save-row { margin-top: 14px; }
-.gs-saved-alert { margin-top: 12px; width: fit-content; }
-.gs-tip-box { margin-top: 20px; padding: 14px 16px; border-radius: 8px; background: var(--bg-inner); font-size: 13px; }
-.gs-tip-title { margin-bottom: 8px; color: var(--text-primary); font-weight: 600; }
-.gs-tip-list { margin: 0 0 8px 16px; padding: 0; color: var(--text-secondary); line-height: 1.8; }
+.generation-settings {
+  max-width: 680px;
+}
+.gs-section-title {
+  margin-bottom: var(--space-2);
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--text-bright);
+}
+.gs-desc {
+  margin-bottom: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+.gs-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.gs-label {
+  min-width: 140px;
+  color: var(--text-primary);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.gs-unit {
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  white-space: nowrap;
+}
+.concurrency-select {
+  width: 200px;
+}
+.content-language-title {
+  margin-top: var(--space-6);
+}
+.content-language-select {
+  width: 200px;
+}
+.gs-video-row {
+  margin-top: var(--space-2);
+}
+.gs-save-row {
+  margin-top: var(--space-5);
+}
+.gs-saved-alert {
+  margin-top: var(--space-3);
+  width: fit-content;
+}
+.gs-tip-box {
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--bg-inner);
+  border: 1px solid var(--border-color);
+  font-size: var(--font-sm);
+}
+.gs-tip-title {
+  margin-bottom: var(--space-2);
+  color: var(--text-bright);
+  font-weight: 600;
+}
+.gs-tip-list {
+  margin: 0 0 var(--space-2) var(--space-4);
+  padding: 0;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
 </style>

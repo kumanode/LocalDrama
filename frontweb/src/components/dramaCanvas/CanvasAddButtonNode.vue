@@ -42,8 +42,8 @@ function onClick() {
   width: 176px;
   padding: 14px 12px;
   border-radius: 10px;
-  border: 1px dashed rgba(129, 140, 248, 0.45);
-  background: rgba(24, 24, 27, 0.65);
+  border: 1px dashed var(--border-muted);
+  background: var(--bg-hover);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -52,14 +52,14 @@ function onClick() {
 }
 .canvas-add-node:hover {
   border-color: var(--border-muted);
-  background: rgba(129, 140, 248, 0.12);
+  background: var(--bg-hover);
 }
 .add-icon {
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  background: rgba(129, 140, 248, 0.2);
-  color: #a5b4fc;
+  background: var(--bg-hover);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -69,13 +69,13 @@ function onClick() {
 }
 .add-label {
   font-size: 12px;
-  color: #a1a1aa;
+  color: var(--text-muted);
 }
-.kind-character { border-color: rgba(52, 211, 153, 0.4); }
-.kind-character .add-icon { background: rgba(52, 211, 153, 0.18); color: #6ee7b7; }
-.kind-scene { border-color: rgba(96, 165, 250, 0.4); }
-.kind-scene .add-icon { background: rgba(96, 165, 250, 0.18); color: #93c5fd; }
-.kind-prop { border-color: rgba(251, 191, 36, 0.4); }
-.kind-prop .add-icon { background: rgba(251, 191, 36, 0.18); color: #fcd34d; }
+.kind-character { border-color: var(--border-muted); }
+.kind-character .add-icon { background: var(--bg-hover); color: var(--text-primary); }
+.kind-scene { border-color: var(--border-muted); }
+.kind-scene .add-icon { background: var(--bg-hover); color: var(--text-primary); }
+.kind-prop { border-color: var(--el-color-warning); }
+.kind-prop .add-icon { background: var(--bg-hover); color: var(--el-color-warning); }
 .kind-storyboard { border-color: var(--border-muted); width: 200px; }
 </style>

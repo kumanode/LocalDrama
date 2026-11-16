@@ -115,13 +115,13 @@ defineEmits(['update:modelValue', 'update:imageText', 'update:polishedText', 'up
 .sb-prompt-section-title {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #e4e4e7;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 .sb-prompt-section-title--video {
   margin-top: 12px;
 }
 html.light .sb-prompt-section-title {
-  color: #18181b;
+  color: var(--text-primary);
 }
 </style>

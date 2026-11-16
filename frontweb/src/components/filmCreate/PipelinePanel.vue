@@ -245,7 +245,7 @@ defineEmits([
   padding: 1px 7px;
   border-radius: 10px;
   background: var(--el-color-primary);
-  color: #fff;
+  color: var(--bg-page);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
@@ -263,8 +263,8 @@ defineEmits([
   gap: 5px;
   padding: 2px 10px 2px 6px;
   border-radius: 12px;
-  background: rgba(64, 158, 255, 0.12);
-  border: 1px solid rgba(64, 158, 255, 0.3);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-muted);
   color: var(--el-color-primary);
   font-size: 12px;
   white-space: nowrap;
@@ -284,11 +284,11 @@ defineEmits([
 .pipeline-error-log {
   margin-top: 0;
   padding: 12px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--danger-soft);
+  border: 1px solid var(--el-color-danger);
   border-radius: 8px;
   font-size: 13px;
-  color: #fca5a5;
+  color: var(--danger-text);
   max-height: 200px;
   overflow-y: auto;
 }
@@ -310,8 +310,8 @@ defineEmits([
   gap: 16px;
   margin: 10px 0 8px;
   padding: 12px 14px;
-  background: rgba(103, 194, 58, 0.08);
-  border: 1px solid rgba(103, 194, 58, 0.35);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-muted);
   border-radius: 10px;
 }
 .pipeline-countdown-ring {
@@ -322,8 +322,8 @@ defineEmits([
   min-width: 54px;
   height: 54px;
   border-radius: 50%;
-  background: rgba(103, 194, 58, 0.15);
-  border: 2px solid rgba(103, 194, 58, 0.6);
+  background: var(--bg-hover);
+  border: 2px solid var(--border-muted);
   flex-shrink: 0;
 }
 .pipeline-countdown-num {

@@ -377,14 +377,27 @@ async function runSelected(action) {
 </script>
 
 <style scoped>
+.section-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.step-desc {
+  font-size: var(--font-xs);
+  font-weight: 400;
+  color: var(--text-muted);
+}
 .sb-bulk-ratio { min-width: 96px; width: auto; }
 .sb-grid-mode-select { min-width:110px; width:auto; }
 .sb-narration-export-row { margin-top:10px; flex-wrap:wrap; align-items:center; gap:12px; }
 .sb-config-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 14px;
 }
 .sb-view-tools { display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-2); margin:var(--space-3) 0; }
 .sb-selection-count { color:var(--text-muted); font-size:var(--font-sm); }
@@ -445,7 +458,7 @@ async function runSelected(action) {
   font-weight: 500;
 }
 .batch-failed {
-  color: var(--el-color-danger);
+  color: var(--danger-text);
   font-size: 12px;
 }
 .batch-stopping {
@@ -454,18 +467,18 @@ async function runSelected(action) {
 }
 .batch-error-log {
   padding: 10px 12px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--danger-soft);
+  border: 1px solid var(--el-color-danger);
   border-radius: 6px;
   font-size: 13px;
-  color: #fca5a5;
+  color: var(--danger-text);
   max-height: 160px;
   overflow-y: auto;
 }
 .batch-error-title {
   font-weight: 600;
   margin-bottom: 6px;
-  color: #f87171;
+  color: var(--danger-text);
 }
 .batch-error-line {
   margin-bottom: 3px;
@@ -487,10 +500,10 @@ async function runSelected(action) {
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  background: rgba(234, 179, 8, 0.12);
-  border: 1px solid rgba(234, 179, 8, 0.35);
+  background: var(--bg-hover);
+  border: 1px solid var(--el-color-warning);
   border-radius: 8px;
-  color: #eab308;
+  color: var(--el-color-warning);
   font-size: 13px;
   margin: 12px 0;
 }
@@ -521,13 +534,13 @@ async function runSelected(action) {
 .segment-title-text {
   font-size: 14px;
   font-weight: 600;
-  color: #d4d4d8;
+  color: var(--text-primary);
   flex: 1;
   letter-spacing: -0.01em;
 }
 .segment-shot-range {
   font-size: 11px;
-  color: #52525b;
+  color: var(--text-subtle);
   white-space: nowrap;
 }
 html.light .segment-header-inner {
@@ -560,7 +573,7 @@ html.light .segment-shot-range { color: var(--text-muted); }
 }
 .empty-tip {
   text-align: center;
-  color: #71717a;
+  color: var(--text-subtle);
   padding: 32px 0;
   font-size: 14px;
 }

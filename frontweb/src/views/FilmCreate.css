@@ -10,12 +10,12 @@ html.light .film-create {
 }
 
 @media (max-width: 768px) {
-  .main { margin-left: 48px !important; padding: 16px 12px 48px; }
+  .main { margin-left: 52px !important; padding: 16px 12px 48px; }
   .asset-list-two { grid-template-columns: 1fr; }
 }
 
 .main {
-  margin-left: 180px;
+  margin-left: 200px;
   margin-right: 0;
   padding: 24px 32px 48px;
   transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
@@ -28,11 +28,11 @@ html.light .film-create {
   .card { padding: 18px; }
 }
 @media (max-width: 959px) {
-  .main { margin-left: 48px !important; padding: 16px 12px 40px; }
+  .main { margin-left: 52px !important; padding: 16px 12px 40px; }
   .card { padding: 14px; }
 }
 .sidebar-collapsed .main {
-  margin-left: 48px;
+  margin-left: 52px;
 }
 .section {
   margin-bottom: var(--space-5);

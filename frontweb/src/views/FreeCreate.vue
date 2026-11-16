@@ -8,9 +8,6 @@
         </el-button>
         <h2 class="page-title">{{ $t('freeCreate.title') }}</h2>
       </div>
-      <div style="display: flex; align-items: center; gap: 12px; margin-left: auto;">
-        <LanguageToggle />
-      </div>
       <p class="page-desc">{{ $t('freeCreate.subtitle') }}</p>
     </div>
 
@@ -155,7 +152,6 @@ import { imagesAPI } from '@/api/images'
 import { videosAPI } from '@/api/videos'
 import { uploadAPI } from '@/api/upload'
 import { generationSettingsAPI } from '@/api/prompts'
-import LanguageToggle from '@/components/LanguageToggle.vue'
 import { useI18n } from '@/i18n'
 
 const { locale, t } = useI18n()
@@ -337,7 +333,7 @@ async function pollVideoTask(taskId, item) {
 <style scoped>
 .free-create-page {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: var(--bg-inner);
   padding: 20px;
 }
 
@@ -355,12 +351,12 @@ async function pollVideoTask(taskId, item) {
 .page-title {
   font-size: 22px;
   font-weight: 600;
-  color: #1a1a2e;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .page-desc {
-  color: #6b7280;
+  color: var(--text-subtle);
   font-size: 14px;
   margin: 0;
 }
@@ -374,10 +370,10 @@ async function pollVideoTask(taskId, item) {
 .input-panel {
   width: 380px;
   flex-shrink: 0;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  box-shadow: none;
 }
 
 .mode-tabs {
@@ -391,12 +387,12 @@ async function pollVideoTask(taskId, item) {
 .form-label {
   font-size: 13px;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-primary);
   margin-bottom: 6px;
 }
 
 .required {
-  color: #ef4444;
+  color: var(--danger-text);
 }
 
 .prompt-input :deep(.el-textarea__inner) {
@@ -417,7 +413,7 @@ async function pollVideoTask(taskId, item) {
 }
 
 .ref-image-zone {
-  border: 2px dashed #d1d5db;
+  border: 2px dashed var(--border-color);
   border-radius: 8px;
   padding: 20px;
   text-align: center;
@@ -448,12 +444,12 @@ async function pollVideoTask(taskId, item) {
 
 .upload-icon {
   font-size: 28px;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .upload-tip {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .generate-btn {
@@ -463,10 +459,10 @@ async function pollVideoTask(taskId, item) {
 
 .result-panel {
   flex: 1;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  box-shadow: none;
   min-height: 400px;
 }
 
@@ -480,7 +476,7 @@ async function pollVideoTask(taskId, item) {
 .result-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a2e;
+  color: var(--text-primary);
 }
 
 .empty-result {
@@ -489,7 +485,7 @@ async function pollVideoTask(taskId, item) {
   align-items: center;
   justify-content: center;
   height: 300px;
-  color: #9ca3af;
+  color: var(--text-muted);
   gap: 12px;
 }
 
@@ -513,13 +509,13 @@ async function pollVideoTask(taskId, item) {
 }
 
 .result-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;
 }
 
 .result-media {
-  background: #f9fafb;
+  background: var(--bg-card);
   aspect-ratio: 16/9;
   display: flex;
   align-items: center;
@@ -546,12 +542,12 @@ async function pollVideoTask(taskId, item) {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  color: #6b7280;
+  color: var(--text-subtle);
   font-size: 12px;
 }
 
 .media-error {
-  color: #ef4444;
+  color: var(--danger-text);
 }
 
 .result-meta {
@@ -560,7 +556,7 @@ async function pollVideoTask(taskId, item) {
 
 .result-prompt {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-subtle);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

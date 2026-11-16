@@ -55,10 +55,10 @@ defineEmits(['generate-video'])
   font-size: 1.15rem;
   font-weight: 600;
   margin: 0 0 16px;
-  color: #f4f4f5;
+  color: var(--text-primary);
 }
 html.light .section-title {
-  color: #18181b;
+  color: var(--text-primary);
 }
 .video-progress, .video-done, .video-error {
   margin-top: 16px;
@@ -66,18 +66,18 @@ html.light .section-title {
 .video-preview-wrap {
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border-color);
 }
 .video-preview-label {
   margin: 0 0 10px;
   font-size: 0.95rem;
-  color: #a1a1aa;
+  color: var(--text-muted);
 }
 .video-preview-player {
   display: block;
   max-width: 100%;
   max-height: 360px;
   border-radius: 8px;
-  background: #1a1b24;
+  background: var(--bg-inner);
 }
 </style>

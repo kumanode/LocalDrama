@@ -24,10 +24,10 @@ defineProps({
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-muted);
-  background: rgba(76, 29, 149, 0.35);
-  color: #e9d5ff;
+  background: var(--bg-hover);
+  color: var(--text-primary);
   font-size: 13px;
   white-space: nowrap;
 }

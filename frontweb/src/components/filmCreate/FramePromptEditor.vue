@@ -71,50 +71,50 @@ defineEmits(['update:modelValue', 'update:promptText', 'regenerate', 'save'])
 }
 .frame-prompt-editor-hint {
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-subtle);
   margin-bottom: 10px;
   line-height: 1.5;
 }
 html.light .frame-prompt-editor-hint {
-  color: #475569;
+  color: var(--text-primary);
 }
 .frame-prompt-editor-textarea :deep(.el-textarea__inner) {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 13px;
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
   line-height: 1.65;
 }
 
 .frame-layout-anchor {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 8px 10px;
   margin-bottom: 10px;
 }
 html.light .frame-layout-anchor {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: var(--bg-inner);
+  border-color: var(--border-color);
 }
 .frame-layout-anchor-label {
   font-size: 12px;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-primary);
   margin-bottom: 4px;
 }
 .frame-layout-anchor-text {
   font-size: 12.5px;
   line-height: 1.5;
-  color: #1e293b;
-  background: #fff;
+  color: var(--text-primary);
+  background: var(--bg-card);
   padding: 6px 8px;
   border-radius: 4px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   white-space: pre-wrap;
   word-break: break-word;
 }
 .frame-layout-anchor-note {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-subtle);
   margin-top: 4px;
   line-height: 1.4;
 }

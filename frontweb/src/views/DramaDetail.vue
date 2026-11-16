@@ -3,8 +3,11 @@
     <header class="header">
       <div class="header-inner">
         <h1 class="logo" @click="router.push('/')">
-          <span class="logo-main">{{ t('header.appTitle') }}</span>
-          <span class="logo-sub">{{ t('header.appSubtitle') }}</span>
+          <img class="logo-mark" src="/logo/logo-64.png" alt="" width="28" height="28" draggable="false" />
+          <span class="logo-text">
+            <span class="logo-main">{{ t('header.appTitle') }}</span>
+            <span class="logo-sub">{{ t('header.appSubtitle') }}</span>
+          </span>
         </h1>
         <span class="breadcrumb-sep">›</span>
         <span class="page-title">{{ drama?.title || t('dramaDetail.title') }}</span>
@@ -12,11 +15,6 @@
           <el-icon><ArrowLeft /></el-icon>{{ t('dramaDetail.backToList') }}
         </el-button>
         <div class="header-actions">
-          <LanguageToggle />
-          <el-button class="btn-theme" :title="isDark ? t('common.light') : t('common.dark')" @click="toggleTheme">
-            <el-icon><Sunny v-if="isDark" /><Moon v-else /></el-icon>
-            {{ isDark ? t('common.light') : t('common.dark') }}
-          </el-button>
           <el-button type="primary" @click="goCreate">
             <el-icon><VideoPlay /></el-icon>{{ t('dramaDetail.enterCreation') }}
           </el-button>
@@ -528,12 +526,10 @@
 import { ref, reactive, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, VideoPlay, Plus, Delete, Sunny, Moon, PictureFilled, Grid } from '@element-plus/icons-vue'
+import { ArrowLeft, VideoPlay, Plus, Delete, PictureFilled, Grid } from '@element-plus/icons-vue'
 import EpisodeBatchImportDialog from '@/components/EpisodeBatchImportDialog.vue'
 import StylePickerButton from '@/components/StylePickerButton.vue'
-import LanguageToggle from '@/components/LanguageToggle.vue'
 import { useI18n } from '@/i18n'
-import { useTheme } from '@/composables/useTheme'
 import { useAgentContext } from '@/stores/agentContext'
 import { dramaAPI } from '@/api/drama'
 import { characterLibraryAPI } from '@/api/characterLibrary'
@@ -554,7 +550,6 @@ import {
 
 const route = useRoute()
 const { t } = useI18n()
-const { isDark, toggle: toggleTheme } = useTheme()
 const router = useRouter()
 const dramaId = Number(route.params.id)
 
@@ -1241,10 +1236,26 @@ onBeforeUnmount(() => {
   margin: 0;
   cursor: pointer;
   display: flex;
+  line-height: 1;
+  transition: filter 0.3s;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+}
+.logo-text {
+  display: flex;
+  white-space: nowrap;
   flex-direction: column;
   gap: 1px;
   line-height: 1;
-  transition: filter 0.3s;
+  text-align: left;
+}
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  display: block;
 }
 .logo:hover { opacity: 0.85; }
 .logo-main {
@@ -1258,8 +1269,8 @@ onBeforeUnmount(() => {
   font-size: 0.68rem;
   font-weight: 400;
   letter-spacing: 0.02em;
-  color: #6d6d7a;
-  -webkit-text-fill-color: #6d6d7a;
+  color: var(--text-subtle);
+  -webkit-text-fill-color: var(--text-subtle);
 }
 html.light .drama-detail .logo-main {
   color: var(--text-bright);
@@ -1267,24 +1278,24 @@ html.light .drama-detail .logo-main {
   background-clip: text;
 }
 html.light .drama-detail .logo-sub {
-  color: #9ca3af;
-  -webkit-text-fill-color: #9ca3af;
+  color: var(--text-muted);
+  -webkit-text-fill-color: var(--text-muted);
 }
 .header-inner { max-width: min(1200px, 96vw); margin: 0 auto; display: flex; align-items: center; gap: 16px; }
 .breadcrumb-sep {
-  color: #3f3f46;
+  color: var(--text-primary);
   font-size: 1rem;
   font-weight: 300;
   flex-shrink: 0;
   user-select: none;
 }
-html.light .breadcrumb-sep { color: #d1d5db; }
+html.light .breadcrumb-sep { color: var(--text-primary); }
 .page-title {
   font-size: 0.88rem;
   font-weight: 500;
-  color: #a1a1aa;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 3px 10px;
   max-width: 220px;
@@ -1293,7 +1304,7 @@ html.light .breadcrumb-sep { color: #d1d5db; }
   text-overflow: ellipsis;
 }
 html.light .page-title {
-  color: #6b7280;
+  color: var(--text-subtle);
   background: var(--bg-inner);
   border-color: var(--border-muted);
 }
@@ -1317,19 +1328,19 @@ html.light .section.card:hover {
   border-color: var(--border-muted);
   box-shadow: none;
 }
-.section-title { font-size: 1rem; font-weight: 600; color: #fafafa; margin-bottom: 16px; }
-html.light .section-title { color: #18181b; }
+.section-title { font-size: 1rem; font-weight: 600; color: var(--text-bright); margin-bottom: 16px; }
+html.light .section-title { color: var(--text-primary); }
 .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .section-header .section-title { margin-bottom: 0; }
-.section-count { color: #71717a; font-size: 0.85rem; }
+.section-count { color: var(--text-subtle); font-size: 0.85rem; }
 .info-form { max-width: 100%; }
-.empty-tip { color: #71717a; text-align: center; padding: 32px; }
+.empty-tip { color: var(--text-subtle); text-align: center; padding: 32px; }
 
 /* 分集卡片 */
 .episode-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 .episode-card {
-  background: rgba(28, 28, 30, 0.8);
-  border: 1px solid rgba(63, 63, 70, 0.6);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-muted);
   border-radius: 12px;
   padding: 16px;
   cursor: pointer;
@@ -1362,9 +1373,9 @@ html.light .section-title { color: #18181b; }
 .episode-enter {
   margin-top: 10px;
   padding-top: 8px;
-  border-top: 1px solid #27272a;
+  border-top: 1px solid var(--border-color);
   font-size: 0.78rem;
-  color: #52525b;
+  color: var(--text-subtle);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1376,32 +1387,32 @@ html.light .section-title { color: #18181b; }
   transition: transform 0.2s;
 }
 .episode-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.episode-num { font-size: 0.8rem; color: #71717a; }
-.episode-title { font-weight: 500; color: #fafafa; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.episode-preview { font-size: 0.78rem; color: #71717a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; }
+.episode-num { font-size: 0.8rem; color: var(--text-subtle); }
+.episode-title { font-weight: 500; color: var(--text-bright); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.episode-preview { font-size: 0.78rem; color: var(--text-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; }
 .episode-stats { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.ep-stat { font-size: 0.72rem; color: #71717a; }
-.ep-stat-num { color: #38bdf8; font-weight: 600; }
-.ep-stat--status { padding: 1px 7px; border-radius: 99px; font-size: 0.7rem; }
-.ep-status--draft { background: rgba(113,113,122,0.15); color: #a1a1aa; }
-.ep-status--processing { background: rgba(234,179,8,0.12); color: #fcd34d; }
-.ep-status--completed { background: rgba(34,197,94,0.12); color: #4ade80; }
-.ep-status--failed { background: rgba(239,68,68,0.12); color: #f87171; }
+.ep-stat { font-size: 0.72rem; color: var(--text-subtle); }
+.ep-stat-num { color: var(--text-primary); font-weight: 600; }
+.ep-stat--status { padding: 1px 7px; border-radius: var(--radius-sm); font-size: 0.7rem; }
+.ep-status--draft { background: var(--bg-hover); color: var(--text-muted); }
+.ep-status--processing { background: var(--bg-hover); color: var(--el-color-warning); }
+.ep-status--completed { background: var(--bg-hover); color: var(--text-primary); }
+.ep-status--failed { background: var(--danger-soft); color: var(--danger-text); }
 
 /* 资源库 */
 .library-toolbar { margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
-.import-tip { font-size: 0.8rem; color: #71717a; }
+.import-tip { font-size: 0.8rem; color: var(--text-subtle); }
 .import-list { max-height: 480px; }
 .library-list { min-height: 120px; display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
-.library-item { display: flex; gap: 12px; padding: 10px; background: #1c1c1e; border: 1px solid #27272a; border-radius: 8px; }
-.library-item-cover { width: 72px; height: 72px; flex-shrink: 0; border-radius: 6px; overflow: hidden; background: #27272a; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.library-item { display: flex; gap: 12px; padding: 10px; background: var(--bg-inner); border: 1px solid var(--border-color); border-radius: 8px; }
+.library-item-cover { width: 72px; height: 72px; flex-shrink: 0; border-radius: 6px; overflow: hidden; background: var(--bg-inner); display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .library-item-cover img { width: 100%; height: 100%; object-fit: cover; }
-.library-placeholder { font-size: 0.8rem; color: #71717a; }
+.library-placeholder { font-size: 0.8rem; color: var(--text-subtle); }
 .library-item-info { flex: 1; min-width: 0; }
-.library-item-name { font-weight: 500; color: #fafafa; margin-bottom: 4px; }
-.library-item-desc { font-size: 0.85rem; color: #a1a1aa; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.library-item-name { font-weight: 500; color: var(--text-bright); margin-bottom: 4px; }
+.library-item-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .library-item-actions { display: flex; gap: 8px; }
-.library-empty { text-align: center; color: #71717a; padding: 40px 20px; }
+.library-empty { text-align: center; color: var(--text-subtle); padding: 40px 20px; }
 .library-pagination { margin-top: 12px; display: flex; justify-content: center; }
 
 /* ——— 编辑器风格 Tab 栏 ——— */
@@ -1460,8 +1471,8 @@ html.light .section-title { color: #18181b; }
 }
 .res-tab:hover { color: var(--text-primary); background: var(--bg-inner, rgba(255,255,255,0.04)); }
 /* 资源库激活 */
-.res-tab--lib.active { color: #60a5fa; font-size: 14px; font-weight: 600; }
-.res-tab--lib.active::after { background: #60a5fa; }
+.res-tab--lib.active { color: var(--text-primary); font-size: 14px; font-weight: 600; }
+.res-tab--lib.active::after { background: var(--bg-hover); }
 /* 制作资源激活 */
 .res-tab--drama.active { color: var(--text-bright); font-size: 14px; font-weight: 600; }
 .res-tab--drama.active::after { background: var(--text-bright); }
@@ -1472,12 +1483,12 @@ html.light .episode-card:hover {
   background: var(--bg-hover);
 }
 html.light .episode-card::before { background: none; }
-html.light .episode-enter { border-top-color: #e4e4e7; color: #a1a1aa; }
+html.light .episode-enter { border-top-color: var(--border-color); color: var(--text-muted); }
 html.light .episode-card:hover .episode-enter { color: var(--el-color-primary); }
-html.light .episode-title { color: #18181b; }
+html.light .episode-title { color: var(--text-primary); }
 html.light .res-tab:hover { background: rgba(0,0,0,0.04); }
-html.light .res-tab--lib.active { color: #2563eb; }
-html.light .res-tab--lib.active::after { background: #2563eb; }
+html.light .res-tab--lib.active { color: var(--text-primary); }
+html.light .res-tab--lib.active::after { background: var(--bg-hover); }
 html.light .res-tab--drama.active { color: var(--text-bright); }
 html.light .res-tab--drama.active::after { background: var(--text-bright); }
 
@@ -1505,12 +1516,12 @@ html.light .res-tab--drama.active::after { background: var(--text-bright); }
 
 /* 主题切换按钮 */
 .btn-theme {
-  --el-button-bg-color: rgba(148, 163, 184, 0.1);
-  --el-button-border-color: rgba(148, 163, 184, 0.3);
-  --el-button-text-color: #94a3b8;
-  --el-button-hover-bg-color: rgba(148, 163, 184, 0.2);
-  --el-button-hover-border-color: rgba(148, 163, 184, 0.5);
-  --el-button-hover-text-color: #cbd5e1;
+  --el-button-bg-color: var(--bg-hover);
+  --el-button-border-color: var(--border-muted);
+  --el-button-text-color: var(--text-muted);
+  --el-button-hover-bg-color: var(--bg-hover);
+  --el-button-hover-border-color: var(--border-muted);
+  --el-button-hover-text-color: var(--text-primary);
   transition: all 0.2s;
 }
 html.light .btn-theme {

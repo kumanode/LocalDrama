@@ -101,22 +101,22 @@ const statusChip = computed(() => {
   overflow: hidden;
   border: 1px solid var(--border-muted, #3f3f46);
   background: var(--bg-card, #18181b);
-  box-shadow: var(--shadow, 0 4px 16px rgba(0, 0, 0, 0.35));
+  box-shadow: none;
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .canvas-asset-node.focused {
-  border-color: #34d399;
-  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.45), 0 8px 24px rgba(0, 0, 0, 0.35);
+  border-color: var(--border-muted);
+  box-shadow: 0 0 0 1px var(--border-muted);
 }
 .canvas-asset-node.processing {
-  border-color: #60a5fa;
+  border-color: var(--border-muted);
   animation: asset-pulse 1.4s ease-in-out infinite;
 }
 .cover {
   position: relative;
   height: 108px;
-  background: #09090b;
+  background: var(--bg-card);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,30 +153,30 @@ const statusChip = computed(() => {
   font-size: 9px;
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #a1a1aa;
+  background: var(--bg-hover);
+  color: var(--text-muted);
 }
 .status-chip.st-busy,
-.status-chip.st-processing { color: #60a5fa; background: rgba(96, 165, 250, 0.15); }
-.status-chip.st-ready { color: #34d399; background: rgba(52, 211, 153, 0.12); }
-.status-chip.st-failed { color: #f87171; background: rgba(248, 113, 113, 0.12); }
+.status-chip.st-processing { color: var(--text-primary); background: var(--bg-hover); }
+.status-chip.st-ready { color: var(--text-primary); background: var(--bg-hover); }
+.status-chip.st-failed { color: var(--danger-text); background: var(--danger-soft); }
 .kind {
   font-size: 11px;
   color: var(--text-subtle, #71717a);
   margin-top: 2px;
 }
-.kind-character { border-color: rgba(52, 211, 153, 0.45); }
-.kind-scene { border-color: rgba(96, 165, 250, 0.45); }
-.kind-prop { border-color: rgba(251, 191, 36, 0.45); }
+.kind-character { border-color: var(--border-muted); }
+.kind-scene { border-color: var(--border-muted); }
+.kind-prop { border-color: var(--el-color-warning); }
 .highlighted {
-  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.65), 0 8px 24px rgba(52, 211, 153, 0.2);
+  box-shadow: 0 0 0 2px var(--border-muted);
 }
 .dimmed {
   opacity: 0.28;
   filter: grayscale(0.35);
 }
 @keyframes asset-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.25); }
-  50% { box-shadow: 0 0 0 5px rgba(96, 165, 250, 0.06); }
+  0%, 100% { box-shadow: 0 0 0 0 var(--border-muted); }
+  50% { box-shadow: 0 0 0 5px var(--border-muted); }
 }
 </style>

@@ -549,8 +549,8 @@ async function doExtractFromRef() {
   font-size: 12px;
 }
 .char-code-textarea {
-  font-size: 11px;
-  font-family: monospace;
+  font-size: var(--font-xs);
+  font-family: var(--font-mono);
 }
 .char-no-anchors-tip {
   font-size: 12px;

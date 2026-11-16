@@ -50,7 +50,7 @@ const router = createRouter({
   ]
 })
 
-const APP_NAME = 'LocalMiniDrama'
+const APP_NAME = 'LocalDrama'
 
 function applyDocumentTitle(titleKey) {
   if (typeof document === 'undefined') return

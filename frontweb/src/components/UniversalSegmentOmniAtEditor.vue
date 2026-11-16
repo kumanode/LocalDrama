@@ -509,9 +509,9 @@ html.light .omni-at-copy-btn {
   padding: 8px 11px;
   font-size: 13px;
   line-height: 1.55;
-  color: #e5e7eb;
+  color: var(--text-primary);
   background: var(--omni-editor-bg, #141414);
-  border: 1px solid #4c4d4f;
+  border: 1px solid var(--border-muted);
   border-radius: 4px;
   outline: none;
   white-space: pre-wrap;
@@ -523,7 +523,7 @@ html.light .omni-at-copy-btn {
 }
 .omni-at-editor:empty::before {
   content: attr(data-placeholder);
-  color: #6b7280;
+  color: var(--text-subtle);
   pointer-events: none;
 }
 :deep(.omni-at-chip) {
@@ -546,7 +546,7 @@ html.light .omni-at-copy-btn {
   border-color: var(--text-bright);
 }
 html.light .omni-at-editor {
-  color: #1f2937;
+  color: var(--text-primary);
   background: var(--el-fill-color-blank, #fff);
   border-color: var(--el-border-color, #dcdfe6);
 }
@@ -571,24 +571,24 @@ html.light :deep(.omni-at-chip:hover) {
   overflow-y: auto;
   padding: 8px;
   border-radius: 8px;
-  background: #1e293b;
-  border: 1px solid rgba(248, 250, 252, 0.18);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-muted);
   box-shadow: none; border: 1px solid var(--border-muted);
 }
 html.light .omni-at-menu {
-  background: #fff;
-  border-color: #e2e8f0;
+  background: var(--bg-card);
+  border-color: var(--border-color);
   box-shadow: none; border: 1px solid var(--border-muted);
 }
 .omni-at-menu-empty {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-muted);
   padding: 8px 6px;
   max-width: 260px;
   line-height: 1.45;
 }
 html.light .omni-at-menu-empty {
-  color: #64748b;
+  color: var(--text-subtle);
 }
 .omni-at-menu-item {
   display: flex;
@@ -600,7 +600,7 @@ html.light .omni-at-menu-empty {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #f1f5f9;
+  color: var(--text-primary);
   cursor: pointer;
   text-align: left;
 }
@@ -608,13 +608,13 @@ html.light .omni-at-menu-empty {
   margin-bottom: 0;
 }
 .omni-at-menu-item:hover {
-  background: rgba(148, 163, 184, 0.15);
+  background: var(--bg-hover);
 }
 html.light .omni-at-menu-item {
-  color: #0f172a;
+  color: var(--text-primary);
 }
 html.light .omni-at-menu-item:hover {
-  background: #f1f5f9;
+  background: var(--bg-inner);
 }
 .omni-at-menu-thumb-wrap {
   flex-shrink: 0;
@@ -622,12 +622,12 @@ html.light .omni-at-menu-item:hover {
   height: 44px;
   border-radius: 6px;
   overflow: hidden;
-  background: #0f172a;
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-muted);
 }
 html.light .omni-at-menu-thumb-wrap {
-  background: #f8fafc;
-  border-color: #e2e8f0;
+  background: var(--bg-card);
+  border-color: var(--border-color);
 }
 .omni-at-menu-thumb {
   width: 100%;
@@ -643,7 +643,7 @@ html.light .omni-at-menu-thumb-wrap {
   height: 100%;
   font-size: 16px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-subtle);
 }
 .omni-at-menu-meta {
   display: flex;
@@ -659,62 +659,62 @@ html.light .omni-at-menu-thumb-wrap {
   width: fit-content;
   padding: 1px 5px;
   border-radius: 3px;
-  background: rgba(148, 163, 184, 0.2);
-  color: #cbd5e1;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 .omni-at-menu-tag--scene {
-  background: rgba(34, 197, 94, 0.2);
-  color: #86efac;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 .omni-at-menu-tag--character {
-  background: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 .omni-at-menu-tag--prop {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fcd34d;
+  background: var(--bg-hover);
+  color: var(--el-color-warning);
 }
 html.light .omni-at-menu-tag {
-  color: #475569;
-  background: #e2e8f0;
+  color: var(--text-primary);
+  background: var(--bg-inner);
 }
 html.light .omni-at-menu-tag--scene {
-  color: #166534;
-  background: #dcfce7;
+  color: var(--text-primary);
+  background: var(--bg-inner);
 }
 html.light .omni-at-menu-tag--character {
-  color: #1e40af;
-  background: #dbeafe;
+  color: var(--text-primary);
+  background: var(--bg-inner);
 }
 html.light .omni-at-menu-tag--prop {
-  color: #92400e;
-  background: #fef3c7;
+  color: var(--el-color-warning);
+  background: var(--bg-inner);
 }
 .omni-at-menu-name {
   font-size: 12px;
   font-weight: 500;
-  color: #e2e8f0;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 html.light .omni-at-menu-name {
-  color: #334155;
+  color: var(--text-primary);
 }
 .omni-at-menu-at {
   font-size: 11px;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   color: var(--text-bright);
 }
 .omni-at-menu-at-sub {
   font-size: 10px;
-  font-family: ui-monospace, monospace;
-  color: #94a3b8;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
 }
 html.light .omni-at-menu-at {
   color: var(--text-primary);
 }
 html.light .omni-at-menu-at-sub {
-  color: #64748b;
+  color: var(--text-subtle);
 }
 </style>
