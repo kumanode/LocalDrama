@@ -310,6 +310,7 @@ import { useFramePrompts } from '@/composables/filmCreate/useFramePrompts'
 import { useUniversalSegments } from '@/composables/filmCreate/useUniversalSegments'
 import { useStoryboardPromptDialog } from '@/composables/filmCreate/useStoryboardPromptDialog'
 import { useStoryboardVideo } from '@/composables/filmCreate/useStoryboardVideo'
+import { useStoryboardImages } from '@/composables/filmCreate/useStoryboardImages'
 
 const route = useRoute()
 const router = useRouter()
@@ -1177,169 +1178,51 @@ async function recoverAndSyncEpisodeTasks(epId) {
   }
 }
 
-async function onGenerateSbFrameImage(sb, slot) {
-  if (!dramaId.value || !sb?.id) return
-  const isLast = slot === 'last'
-  const loadingSet = isLast ? generatingSbLastImageIds : generatingSbFirstImageIds
-  const meta = buildSbGenMeta(
-    sb,
-    isLast ? GEN_RESOURCE.SB_LAST_IMAGE : GEN_RESOURCE.SB_FIRST_IMAGE,
-    isLast ? t('filmCreate.lastFrame') : t('filmCreate.firstFrame')
-  )
-  sb.errorMsg = ''
-  sb.error_msg = ''
-  loadingSet.add(sb.id)
-  genStore.markRunning(meta)
-  try {
-    let idsToSave = sbCharacterIds.value[sb.id]
-    if (idsToSave === undefined) {
-      const sbRowForChars = (store.storyboards || []).find((b) => b.id === sb.id)
-      const charList = Array.isArray(sbRowForChars?.characters) ? sbRowForChars.characters : []
-      idsToSave = charList
-        .map((c) => Number(typeof c === 'object' && c != null ? c.id : c))
-        .filter((n) => Number.isFinite(n))
-    }
-    const sbRow = (store.storyboards || []).find((b) => b.id === sb.id)
-    let prompt = ''
-    if (storyboardUseFirstLastFrame.value) {
-      // 须在 update(character_ids) 之前读取缓存：后端在角色未变时保留 frame_prompts，但先读可避免旧版误删
-      prompt = await ensureProfessionalFramePrompt(sb, isLast ? 'last' : 'first')
-    } else if (isLast) {
-      prompt = buildLastFrameImagePrompt(sb.id) || sbRow?.image_prompt || sbRow?.description || ''
-    } else {
-      prompt = sbRow?.polished_prompt || sbRow?.image_prompt || sbRow?.description || ''
-    }
-    try {
-      await storyboardsAPI.update(sb.id, { character_ids: Array.isArray(idsToSave) ? idsToSave : [] })
-    } catch (e) {
-      ElMessage.warning(t('filmCreate.saveSbCharFailed'))
-      return
-    }
-    // 尾帧可选附带首帧作构图/站位参考（「首帧站位」勾选时；后端亦会按 use_first_frame_layout_lock 兜底）
-    let refImagesForCreate = undefined
-    const useFirstLayoutLock = isLast && lastFrameUseFirstLayoutLock.value
-    if (useFirstLayoutLock) {
-      const firstImg = getSbFirstImage(sb.id)
-      if (firstImg) {
-        const firstUrl = assetImageUrl(firstImg) || firstImg.image_url || firstImg.local_path
-        if (firstUrl) {
-          refImagesForCreate = [firstUrl]
-        }
-      }
-    }
-    const res = await imagesAPI.create({
-      storyboard_id: sb.id,
-      drama_id: dramaId.value,
-      prompt,
-      model: undefined,
-      style: getSelectedStyle(),
-      frame_type: frameTypeForSlot(slot),
-      aspect_ratio: projectAspectRatio.value || '16:9',
-      reference_images: refImagesForCreate,
-      use_first_frame_layout_lock: isLast ? !!lastFrameUseFirstLayoutLock.value : undefined,
-    })
-    ElMessage.success(isLast ? t('filmCreate.lastFrameTaskSubmitted') : t('filmCreate.firstFrameTaskSubmitted'))
-    if (res?.task_id) {
-      const pollRes = await pollTask(res.task_id, () => loadSingleStoryboardMedia(sb.id), meta)
-      if (pollRes?.status === 'failed') {
-        sb.errorMsg = pollRes.error || t('filmCreate.generationFailed')
-      } else {
-        await loadDrama()
-        restoreSelectionsFromBackend()
-
-        // 关键修复：专用首/尾帧生成成功后，立即清除手动选择残留
-        // 让 getSbLastImage / getSbFirstImage 严格走服务器已更新的 sb.last_frame_image_id（避免新图跑到历史列表）
-        if (storyboardUseFirstLastFrame.value) {
-          if (isLast) {
-            delete sbSelectedLastImgId.value[sb.id]
-          } else {
-            delete sbSelectedImgId.value[sb.id]
-          }
-        }
-      }
-    } else {
-      await loadSingleStoryboardMedia(sb.id)
-      restoreSelectionsFromBackend()
-
-      if (storyboardUseFirstLastFrame.value) {
-        if (isLast) {
-          delete sbSelectedLastImgId.value[sb.id]
-        } else {
-          delete sbSelectedImgId.value[sb.id]
-        }
-      }
-    }
-  } catch (e) {
-    sb.errorMsg = e.message || t('filmCreate.generationFailed')
-    ElMessage.error(e.message || t('filmCreate.generationFailed'))
-  } finally {
-    loadingSet.delete(sb.id)
-    genStore.markDone(meta)
-  }
-}
-
-async function onGenerateSbFramePair(sb) {
-  const hasFirst = !!(getSbFirstImage(sb.id) || (sb.image_url || sb.composed_image))
-  if (!hasFirst) {
-    await onGenerateSbFrameImage(sb, 'first')
-    if (!getSbFirstImage(sb.id) && !(sb.image_url || sb.composed_image)) return
-  }
-  await onGenerateSbFrameImage(sb, 'last')
-}
-
-// ──────────────────────────────────────────────────────────────────────
-
-async function onGenerateSbImage(sb) {
-  if (!dramaId.value || !sb?.id) return
-  sb.errorMsg = ''
-  sb.error_msg = ''
-  const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_IMAGE, t('filmCreate.storyboardImage'))
-  generatingSbImageIds.add(sb.id)
-  genStore.markRunning(meta)
-  try {
-    let idsToSave = sbCharacterIds.value[sb.id]
-    if (idsToSave === undefined) {
-      const charList = Array.isArray(sb.characters) ? sb.characters : []
-      idsToSave = charList
-        .map((c) => Number(typeof c === 'object' && c != null ? c.id : c))
-        .filter((n) => Number.isFinite(n))
-    }
-    try {
-      await storyboardsAPI.update(sb.id, { character_ids: Array.isArray(idsToSave) ? idsToSave : [] })
-    } catch (e) {
-      console.warn('[sbImage] save character check failed', e)
-      ElMessage.warning(t('filmCreate.saveSbCharFailedRetry'))
-      return
-    }
-    const res = await imagesAPI.create({
-      storyboard_id: sb.id,
-      drama_id: dramaId.value,
-      prompt: sb.polished_prompt || sb.image_prompt || sb.description || '',
-      model: undefined,
-      style: getSelectedStyle(),
-      frame_type: gridMode.value !== 'single' ? gridMode.value : undefined,
-      aspect_ratio: projectAspectRatio.value || '16:9',
-    })
-    ElMessage.success(t('filmCreate.sbImageTaskSubmitted'))
-    if (res?.task_id) {
-      const pollRes = await pollTask(res.task_id, () => loadSingleStoryboardMedia(sb.id), meta)
-      if (pollRes?.status === 'failed') {
-        sb.errorMsg = pollRes.error || t('filmCreate.generationFailed')
-      } else {
-        ElMessage.success(t('filmCreate.sbImageGenDone'))
-      }
-    } else {
-      await loadSingleStoryboardMedia(sb.id)
-    }
-  } catch (e) {
-    console.error(e)
-    sb.errorMsg = e.message || t('filmCreate.generationFailed')
-    ElMessage.error(e.message || t('filmCreate.generationFailed'))
-  } finally {
-    generatingSbImageIds.delete(sb.id)
-    genStore.markDone(meta)
-  }
-}
+// ── Composable: Storyboard Images ─────────────────────
+const {
+  onGenerateSbFrameImage,
+  onGenerateSbFramePair,
+  onGenerateSbImage,
+  getSbLocalImage,
+  onUpscaleSbImage,
+  onLinkTailFrameToNext,
+  onUsePrevTailAsFirst,
+} = useStoryboardImages({
+  store,
+  dramaId,
+  storyboardUseFirstLastFrame,
+  lastFrameUseFirstLayoutLock,
+  gridMode,
+  generatingSbFirstImageIds,
+  generatingSbLastImageIds,
+  generatingSbImageIds,
+  upscalingSbIds,
+  linkingTailFrameIds,
+  usingPrevTailAsFirstIds,
+  sbCharacterIds,
+  sbSelectedImgId,
+  sbSelectedLastImgId,
+  ensureProfessionalFramePrompt: (...args) => ensureProfessionalFramePrompt(...args),
+  buildLastFrameImagePrompt: (...args) => buildLastFrameImagePrompt(...args),
+  getSbFirstImage,
+  getSbLastImage,
+  getSbImage,
+  getSbVideo,
+  getNextStoryboard,
+  getPrevStoryboard,
+  getSelectedStyle,
+  projectAspectRatio,
+  assetImageUrl,
+  frameTypeForSlot,
+  buildSbGenMeta,
+  pollTask: (...args) => pollTask(...args),
+  loadDrama: (...args) => loadDrama(...args),
+  loadSingleStoryboardMedia: (...args) => loadSingleStoryboardMedia(...args),
+  refreshStoryboardsOnly: (...args) => refreshStoryboardsOnly(...args),
+  restoreSelectionsFromBackend: (...args) => restoreSelectionsFromBackend(...args),
+  onSelectSbFrameImage,
+  genStore,
+})
 
 function syncStoryboardStateFromEpisode(ep) {
   syncAssociationsFromEpisode(ep)
@@ -1450,27 +1333,6 @@ async function saveProjectSettings(includeGenerationStyle = false) {
     payload.style = generationStyle.value || undefined
   }
   dramaAPI.saveOutline(store.dramaId, payload).catch(e => console.error('Settings auto-save failed', e))
-}
-
-/** 获取分镜主图的本地路径（用于超分辨率判断） */
-function getSbLocalImage(sb) {
-  const img = getSbImage(sb.id)
-  return img?.local_path || sb.local_path || null
-}
-
-/** P0-3: 对分镜图执行超分辨率（2x） */
-async function onUpscaleSbImage(sb) {
-  if (!sb?.id || upscalingSbIds.has(sb.id)) return
-  upscalingSbIds.add(sb.id)
-  try {
-    await storyboardsAPI.upscale(sb.id)
-    ElMessage.success(t('filmCreate.upscaleSuccess'))
-    await loadSingleStoryboardMedia(sb.id)
-  } catch (e) {
-    ElMessage.error(e.message || t('filmCreate.upscaleFailed'))
-  } finally {
-    upscalingSbIds.delete(sb.id)
-  }
 }
 
 /** 导出当前集分镜表（每镜一行；首尾帧模式含首/尾帧专用提示词） */
@@ -1610,93 +1472,6 @@ const {
   loadSingleStoryboardMedia: (...args) => loadSingleStoryboardMedia(...args),
   genStore,
 })
-
-/** 尾帧衔接：提取当前视频最后一帧，设为下一个分镜的首帧 */
-async function onLinkTailFrameToNext(sb) {
-  if (!dramaId.value || !sb?.id) return
-  const nextSb = getNextStoryboard(sb.id)
-  if (!nextSb) {
-    ElMessage.warning(t('filmCreate.alreadyLastShotWarning'))
-    return
-  }
-  const video = getSbVideo(sb.id)
-  if (!video) {
-    ElMessage.warning(t('filmCreate.shotNoVideoWarning'))
-    return
-  }
-  try {
-    await ElMessageBox.confirm(
-      t('filmCreate.tailLinkConfirmMsg', { cur: sb.storyboard_number ?? sb.id, next: nextSb.storyboard_number ?? nextSb.id }),
-      t('filmCreate.tailLinkTitle'),
-      { confirmButtonText: t('common.confirm'), cancelButtonText: t('common.cancel'), type: 'warning' }
-    )
-  } catch {
-    return
-  }
-  linkingTailFrameIds.add(sb.id)
-  try {
-    const data = await storyboardsAPI.linkTailFrame(sb.id, { drama_id: dramaId.value })
-    if (data?.error) {
-      throw new Error(data.error)
-    }
-    ElMessage.success(t('filmCreate.tailLinkSuccess', { num: nextSb.storyboard_number ?? nextSb.id }))
-    // 刷新两个分镜的媒体
-    await Promise.all([
-      loadSingleStoryboardMedia(sb.id),
-      loadSingleStoryboardMedia(nextSb.id)
-    ])
-  } catch (e) {
-    ElMessage.error(e.message || t('filmCreate.tailLinkFailed'))
-  } finally {
-    linkingTailFrameIds.delete(sb.id)
-  }
-}
-
-/** 上镜尾帧：直接把上一分镜的尾帧图片（高清原图）设为当前分镜的首帧，无需 ffmpeg 提取视频帧，画面更清晰 */
-async function onUsePrevTailAsFirst(sb) {
-  if (!dramaId.value || !sb?.id) return
-  const prevSb = getPrevStoryboard(sb.id)
-  if (!prevSb) {
-    ElMessage.warning(t('filmCreate.alreadyFirstShotWarning'))
-    return
-  }
-  const prevLastImg = getSbLastImage(prevSb.id)
-  if (!prevLastImg) {
-    ElMessage.warning(t('filmCreate.prevShotNoLastFrameWarning', { num: prevSb.storyboard_number ?? prevSb.id }))
-    return
-  }
-
-  // 直接执行，不再弹确认框（用户已通过按钮 + tooltip 明确意图）
-  usingPrevTailAsFirstIds.add(sb.id)
-  try {
-    // 通过 upload 接口在“当前分镜”下创建一个 image 记录（复用上一镜尾帧的物理文件路径/URL），frame_type 触发后端自动 bind
-    const uploaded = await imagesAPI.upload({
-      storyboard_id: sb.id,
-      drama_id: dramaId.value,
-      image_url: prevLastImg.image_url || '',
-      local_path: prevLastImg.local_path || undefined,
-      prompt: t('filmCreate.prevTailFramePrompt', { num: prevSb.storyboard_number ?? prevSb.id }),
-      frame_type: 'storyboard_first'
-    })
-    if (uploaded?.id) {
-      // 手动设置本地选中，确保显示立即切换；同时调用 onSelect 做一次 server patch（与 upload 里的 bind 互补）
-      onSelectSbFrameImage(sb, uploaded, 'first')
-    }
-    ElMessage.success(t('filmCreate.prevTailFrameSuccess', { num: prevSb.storyboard_number ?? prevSb.id }))
-
-    // 刷新分镜元数据（拿回服务器最新的 first_frame_image_id）+ 媒体列表
-    await Promise.all([
-      refreshStoryboardsOnly(),
-      loadSingleStoryboardMedia(sb.id)
-    ])
-    // 清除可能残留的手动选中（让服务器权威绑定 id 生效）
-    delete sbSelectedImgId.value[sb.id]
-  } catch (e) {
-    ElMessage.error(e.message || t('filmCreate.prevTailFrameFailed'))
-  } finally {
-    usingPrevTailAsFirstIds.delete(sb.id)
-  }
-}
 
 // ── Composable: Batch Generation ──────────────────────
 const {
