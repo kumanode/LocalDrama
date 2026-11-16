@@ -254,7 +254,7 @@ import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Setting, Plus, Minus, Sunny,
 import { useTheme } from '@/composables/useTheme'
 import { useFilmStore } from '@/stores/film'
 import { useGenerationTaskStore, GEN_RESOURCE } from '@/stores/generationTaskStore'
-import { syncGeneratingSetsFromStore, buildEpisodeContext, buildExtractTaskMeta, isEpisodeExtractRunning } from '@/composables/useGenerationTaskSync'
+import { isEpisodeExtractRunning } from '@/composables/useGenerationTaskSync'
 import { dramaAPI } from '@/api/drama'
 import { generationAPI } from '@/api/generation'
 import { aiAPI } from '@/api/ai'
@@ -269,7 +269,6 @@ import { characterLibraryAPI } from '@/api/characterLibrary'
 import { sceneLibraryAPI } from '@/api/sceneLibrary'
 import { propLibraryAPI } from '@/api/propLibrary'
 import { generationSettingsAPI } from '@/api/prompts'
-import { exportStoryboardSheet } from '@/utils/exportStoryboardSheet'
 import StylePickerButton from '@/components/StylePickerButton.vue'
 import AIConfigContent from '@/components/AIConfigContent.vue'
 import LanguageToggle from '@/components/LanguageToggle.vue'
@@ -292,7 +291,6 @@ import {
   getStylePromptEn,
   getStylePromptZh,
   stylePromptMetadataForSave,
-  backfillDramaStylePromptMetadataIfNeeded,
   CUSTOM_STYLE_VALUE,
 } from '@/constants/styleOptions'
 import { useNavigation } from '@/composables/filmCreate/useNavigation'
@@ -311,6 +309,10 @@ import { useUniversalSegments } from '@/composables/filmCreate/useUniversalSegme
 import { useStoryboardPromptDialog } from '@/composables/filmCreate/useStoryboardPromptDialog'
 import { useStoryboardVideo } from '@/composables/filmCreate/useStoryboardVideo'
 import { useStoryboardImages } from '@/composables/filmCreate/useStoryboardImages'
+import { useTaskPolling } from '@/composables/filmCreate/useTaskPolling'
+import { useProjectSettings } from '@/composables/filmCreate/useProjectSettings'
+import { useActiveTasks } from '@/composables/filmCreate/useActiveTasks'
+import { useStepNavigation } from '@/composables/filmCreate/useStepNavigation'
 
 const route = useRoute()
 const router = useRouter()
@@ -346,11 +348,6 @@ const storyEpisodeCount = ref(1)
 const scriptWorkbenchMode = ref('create')
 // P1-2: 小说导入
 const showNovelImport = ref(false)
-function onNovelImported({ multiple }) {
-  if (multiple) {
-    loadDrama()
-  }
-}
 const scriptTitle = ref('')
 const selectedEpisodeId = ref(null)
 /** 保存剧本后用于恢复选中集（后端重插后 id 会变，用 episode_number 匹配） */
@@ -401,6 +398,10 @@ function getSelectedStylePromptZh() {
 
 function projectStylePromptMetadata() {
   return stylePromptMetadataForSave(generationStyle.value, customStylePrompt.value)
+}
+
+function getSelectedStyle() {
+  return getSelectedStylePrompt()
 }
 
 const scriptContent = computed({
@@ -467,15 +468,44 @@ const {
 } = assetMedia
 
 // ── Composable: Characters ────────────────────────────
-const charComposable = useCharacters({ store, dramaId, currentEpisodeId, getSelectedStyle, loadDrama, pollTask, pollUntilResourceHasImage, hasAssetImage })
+const charComposable = useCharacters({
+  store,
+  dramaId,
+  currentEpisodeId,
+  getSelectedStyle,
+  loadDrama: (...args) => loadDrama(...args),
+  pollTask: (...args) => pollTask(...args),
+  pollUntilResourceHasImage: (...args) => pollUntilResourceHasImage(...args),
+  hasAssetImage,
+})
 const { charactersGenerating, generatingCharIds } = charComposable
 
 // ── Composable: Props ──────────────────────────────────
-const propComposable = usePropsComposable({ store, dramaId, currentEpisodeId, getSelectedStyle, loadDrama, pollTask, pollUntilResourceHasImage, hasAssetImage })
+const propComposable = usePropsComposable({
+  store,
+  dramaId,
+  currentEpisodeId,
+  getSelectedStyle,
+  loadDrama: (...args) => loadDrama(...args),
+  pollTask: (...args) => pollTask(...args),
+  pollUntilResourceHasImage: (...args) => pollUntilResourceHasImage(...args),
+  hasAssetImage,
+})
 const { propsExtracting, generatingPropIds } = propComposable
 
 // ── Composable: Scenes ─────────────────────────────────
-const sceneComposable = useScenes({ store, dramaId, currentEpisodeId, getSelectedStyle, scriptLanguage, loadDrama, pollTask, pollUntilResourceHasImage, hasAssetImage, dramaAPI })
+const sceneComposable = useScenes({
+  store,
+  dramaId,
+  currentEpisodeId,
+  getSelectedStyle,
+  scriptLanguage,
+  loadDrama: (...args) => loadDrama(...args),
+  pollTask: (...args) => pollTask(...args),
+  pollUntilResourceHasImage: (...args) => pollUntilResourceHasImage(...args),
+  hasAssetImage,
+  dramaAPI,
+})
 const { scenesExtracting, generatingSceneIds } = sceneComposable
 
 // ── Composable: Video Params ───────────────────────────
@@ -483,7 +513,7 @@ const videoParamsComposable = useVideoParams({
   store,
   dramaId,
   currentEpisodeId,
-  loadDrama,
+  loadDrama: (...args) => loadDrama(...args),
   refreshStoryboardsOnly: (...args) => refreshStoryboardsOnly(...args),
 })
 const {
@@ -690,166 +720,6 @@ const propUseQuadGrid = ref(false)  // 道具四视图（与场景四宫格同�
 // 分镜行内编辑状态（按 storyboard id 存储）
 // navCollapsed/storyboardMenuExpanded/toggleNav → 已移至 useNavigation composable
 
-/** 左侧导航各步骤状态 */
-const navSteps = computed(() => {
-  const epRunning = genStore.getRunningForEpisode(dramaId.value, currentEpisodeId.value)
-  // 剧本
-  const hasScript = !!(scriptContent?.value?.trim())
-  const scriptStatus = isStoryGenRunning.value
-    ? 'generating'
-    : hasScript ? 'done' : 'pending'
-
-  // 角色
-  const charList = characters.value || []
-  const charDone = charList.length > 0 && charList.every(c => hasAssetImage(c))
-  const charGen = charactersGenerating.value || generatingCharIds.size > 0
-    || epRunning.some((t) => t.resourceType === GEN_RESOURCE.CHAR_IMAGE || t.resourceType === GEN_RESOURCE.EXTRACT_CHARACTERS)
-  const charStatus = charGen ? 'generating' : charDone ? 'done' : charList.length > 0 ? 'partial' : 'pending'
-
-  // 道具
-  const propList = props.value || []
-  const propDone = propList.length > 0 && propList.every(p => hasAssetImage(p))
-  const propGen = propsExtracting.value || generatingPropIds.size > 0
-    || epRunning.some((t) => t.resourceType === GEN_RESOURCE.PROP_IMAGE || t.resourceType === GEN_RESOURCE.EXTRACT_PROPS)
-  const propStatus = propGen ? 'generating' : propDone ? 'done' : propList.length > 0 ? 'partial' : 'pending'
-
-  // 场景
-  const sceneList = scenes.value || []
-  const sceneDone = sceneList.length > 0 && sceneList.every(s => hasAssetImage(s))
-  const sceneGen = scenesExtracting.value || generatingSceneIds.size > 0
-    || epRunning.some((t) => t.resourceType === GEN_RESOURCE.SCENE_IMAGE || t.resourceType === GEN_RESOURCE.EXTRACT_SCENES)
-  const sceneStatus = sceneGen ? 'generating' : sceneDone ? 'done' : sceneList.length > 0 ? 'partial' : 'pending'
-
-  // 分镜脚本
-  const sbList = storyboards.value || []
-  const sbScriptDone = sbList.length > 0
-  const sbScriptGen = storyboardGenerating.value || universalOmniPolishRunning.value
-    || epRunning.some((t) => t.resourceType === GEN_RESOURCE.GENERATE_STORYBOARD)
-  const sbScriptStatus = sbScriptGen ? 'generating' : sbScriptDone ? 'done' : 'pending'
-
-  // 分镜图
-  const sbImgDone = sbList.length > 0 && sbList.every(sb => hasSbImage(sb))
-  const sbImgGen = generatingSbImageIds.size > 0 || batchImageRunning.value || epRunning.some((t) =>
-    t.resourceType === GEN_RESOURCE.SB_IMAGE
-    || t.resourceType === GEN_RESOURCE.SB_FIRST_IMAGE
-    || t.resourceType === GEN_RESOURCE.SB_LAST_IMAGE
-  )
-  const sbImgStatus = sbImgGen ? 'generating' : sbImgDone ? 'done' : sbList.length > 0 ? 'partial' : 'pending'
-
-  // 视频
-  const sbVideoAllDone = sbList.length > 0 && sbList.every(sb => getSbAllVideos(sb.id).length > 0)
-  const sbVideoSome = sbList.some(sb => getSbAllVideos(sb.id).length > 0)
-  const sbVideoGen = batchVideoRunning.value || generatingSbVideoIds.size > 0
-    || epRunning.some((t) => t.resourceType === GEN_RESOURCE.SB_VIDEO)
-  const videoStatus = sbVideoGen ? 'generating' : sbVideoAllDone ? 'done' : sbVideoSome ? 'partial' : 'pending'
-
-  return [
-    { key: 'script',   label: t('filmCreate.stepScript'),   anchor: 'anchor-script',     status: scriptStatus,    count: hasScript ? 1 : 0 },
-    { key: 'chars',    label: t('filmCreate.stepCharacters'), anchor: 'anchor-characters', status: charStatus,      count: charList.length },
-    { key: 'props',    label: t('filmCreate.stepProps'),      anchor: 'anchor-props',      status: propStatus,      count: propList.length },
-    { key: 'scenes',   label: t('filmCreate.stepScenes'),     anchor: 'anchor-scenes',     status: sceneStatus,     count: sceneList.length },
-    { key: 'sb',       label: t('filmCreate.stepStoryboard'), anchor: 'anchor-storyboard', status: sbScriptStatus,  count: sbList.length },
-    { key: 'sbimg',    label: t('filmCreate.stepStoryboardImages'), anchor: 'anchor-storyboard', status: sbImgStatus, count: sbList.length },
-    { key: 'video',    label: t('filmCreate.stepVideos'),     anchor: 'anchor-video',      status: videoStatus,     count: 0 },
-  ]
-})
-
-/** 聚合所有当前正在运行的任务，用于悬浮任务面板（含跨剧跨集） */
-const allActiveTaskItems = computed(() => {
-  const items = []
-  const seen = new Set()
-  function addItem(item) {
-    const id = item.id || item.label
-    if (!id || seen.has(id)) return
-    seen.add(id)
-    items.push(item)
-  }
-  for (const tTask of genStore.getAllRunningTasks()) {
-    addItem({
-      id: `gen:${tTask.key || tTask.taskId || tTask.label}`,
-      label: tTask.label || t('filmCreate.taskRunning'),
-      kind: 'genStore',
-      task: tTask,
-    })
-  }
-  if (pipelineRunning.value) {
-    const step = pipelineCurrentStep.value
-    addItem({
-      id: 'pipeline',
-      label: step ? step.replace(/^\[步骤 \d+\/\d+\] /, '') : t('filmCreate.pipelineRunningEllipsis'), // i18n-scan-ignore: regex
-      kind: 'pipeline',
-    })
-  }
-  if (isStoryGenRunning.value && !genStore.getAllRunningTasks().some((tTask) => tTask.resourceType === GEN_RESOURCE.GENERATE_STORY)) {
-    addItem({ id: 'story-gen-local', label: t('filmCreate.storyGenEllipsis'), kind: 'storyGenLocal' })
-  }
-  if (universalOmniPolishRunning.value) {
-    const p = universalOmniPolishProgress.value
-    addItem({
-      id: 'universal-omni-polish',
-      label: t('filmCreate.polishOmniProgress', { current: p.current, total: p.total, label: p.label ? ' ' + p.label : '' }),
-      kind: 'universalOmniPolish',
-    })
-  }
-  if (batchImageRunning.value) {
-    addItem({ id: 'batch-image', label: t('filmCreate.batchImageEllipsis'), kind: 'batchImage' })
-  }
-  if (batchVideoRunning.value) {
-    const p = batchVideoProgress.value
-    const suffix = p?.total ? ` ${p.current}/${p.total}` : ''
-    addItem({ id: 'batch-video', label: t('filmCreate.batchVideoEllipsis', { suffix }), kind: 'batchVideo' })
-  }
-  return items
-})
-
-const allActiveTaskLabels = computed(() => allActiveTaskItems.value.map((t) => t.label))
-
-async function cancelActiveTask(item) {
-  if (!item) return
-  try {
-    if (item.kind === 'genStore' && item.task) {
-      await genStore.cancelTask(item.task)
-      ElMessage.success(t('filmCreate.taskCancelled'))
-      return
-    }
-    if (item.kind === 'pipeline') {
-      pipelineAbortRequested.value = true
-      pipelineRunning.value = false
-      pipelinePaused.value = false
-      for (const tTask of genStore.getAllRunningTasks()) {
-        if (tTask.taskId) await genStore.cancelTask(tTask)
-      }
-      ElMessage.success(t('filmCreate.pipelineStopped'))
-      return
-    }
-    if (item.kind === 'storyGenLocal') {
-      storyGenerating.value = false
-      scriptGenerating.value = false
-      const storyTask = genStore.getAllRunningTasks().find((tTask) => tTask.resourceType === GEN_RESOURCE.GENERATE_STORY)
-      if (storyTask) await genStore.cancelTask(storyTask)
-      ElMessage.success(t('filmCreate.storyGenCancelled'))
-      return
-    }
-    if (item.kind === 'universalOmniPolish') {
-      universalOmniPolishAbort.value = true
-      ElMessage.success(t('filmCreate.stoppingPolish'))
-      return
-    }
-    if (item.kind === 'batchImage') {
-      batchImageStopping.value = true
-      ElMessage.info(t('filmCreate.stoppingBatchImage'))
-      return
-    }
-    if (item.kind === 'batchVideo') {
-      batchVideoStopping.value = true
-      ElMessage.info(t('filmCreate.stoppingBatchVideo'))
-      return
-    }
-  } catch (e) {
-    ElMessage.error(e?.message || t('filmCreate.cancelFailed'))
-  }
-}
-
 // P0-1: 连贯帧模式
 const videoFrameContiguity = ref(false)
 const {
@@ -879,7 +749,6 @@ const {
 const dragOverSbId = ref(null)
 // 公共库弹窗状态已移至各 composable
 const storyboardUseFirstLastFrame = ref(false)
-const exportingStoryboardSheet = ref(false)
 /** 生成尾帧时是否注入首帧作站位/构图参考（默认开启） */
 const lastFrameUseFirstLayoutLock = ref(true)
 const gridMode = ref('single') // 序列图模式：single / quad_grid / nine_grid
@@ -956,6 +825,31 @@ const {
   storyboardUseFirstLastFrame,
   isSbUniversalMode,
   genStore,
+})
+
+// ── Composable: Task Polling ──────────────────────────
+const {
+  getGeneratingSetsBag,
+  buildSbGenMeta,
+  resolvePollMeta,
+  pollTask,
+  pollUntilResourceHasImage,
+  recoverAndSyncEpisodeTasks,
+} = useTaskPolling({
+  store,
+  dramaId,
+  currentEpisodeId,
+  genStore,
+  loadDrama: (...args) => loadDrama(...args),
+  loadSingleStoryboardMedia: (...args) => loadSingleStoryboardMedia(...args),
+  generatingCharIds,
+  generatingPropIds,
+  generatingSceneIds,
+  generatingSbImageIds,
+  generatingSbFirstImageIds,
+  generatingSbLastImageIds,
+  generatingSbVideoIds,
+  videoErrorMsg,
 })
 
 // ── Composable: Storyboard Associations ───────────────
@@ -1060,8 +954,8 @@ const {
   savedCurrentEpisodeNumber,
   selectedEpisodeId,
   scriptWorkbenchMode,
-  loadDrama,
-  pollTask,
+  loadDrama: (...args) => loadDrama(...args),
+  pollTask: (...args) => pollTask(...args),
   genStore,
   getSelectedStyle,
   projectStylePromptMetadata,
@@ -1069,7 +963,7 @@ const {
   sbTruncatedWarning,
   sbTruncatedDismissed,
   trackFilmCreateAction,
-  onEpisodeSelect,
+  onEpisodeSelect: (...args) => onEpisodeSelect(...args),
 })
 
 const selectableScriptDramas = computed(() => {
@@ -1078,14 +972,6 @@ const selectableScriptDramas = computed(() => {
   if (cur == null) return list
   return list.filter((d) => Number(d.id) !== Number(cur))
 })
-
-const isStoryGenRunning = computed(() => {
-  if (storyGenerating.value || scriptGenerating.value) return true
-  return genStore.getAllRunningTasks().some(
-    (t) => Number(t.dramaId) === Number(dramaId.value) && t.resourceType === GEN_RESOURCE.GENERATE_STORY
-  )
-})
-
 
 function onSbImageDragOver(e, sbId) {
   e.preventDefault()
@@ -1105,77 +991,6 @@ function onSbImageDrop(e, sb) {
   dragOverSbId.value = null
   const file = getFirstImageFile(e.dataTransfer)
   if (file && sb?.id) doUploadSbImage(sb.id, file)
-}
-
-function getSelectedStyle() {
-  return getSelectedStylePrompt()
-}
-
-function onStoryboardUseFirstLastFrameChange() {
-  if (storyboardUseFirstLastFrame.value && gridMode.value !== 'single') {
-    gridMode.value = 'single'
-    ElMessage.info(t('filmCreate.firstLastFrameSingleGridTip'))
-  }
-  saveProjectSettings(false)
-}
-
-function getGeneratingSetsBag() {
-  return {
-    generatingCharIds,
-    generatingPropIds,
-    generatingSceneIds,
-    generatingSbImageIds,
-    generatingSbFirstImageIds,
-    generatingSbLastImageIds,
-    generatingSbVideoIds,
-  }
-}
-
-function buildSbGenMeta(sb, resourceType, labelPrefix) {
-  const num = sb?.storyboard_number ?? sb?.id
-  const epNum = store.currentEpisode?.episode_number
-  const dramaTitle = store.drama?.title || ''
-  const epText = t('filmCreate.episodeNum', { num: epNum ?? '' })
-  const epLabel = dramaTitle ? `${dramaTitle} · ${epText}` : epText
-  return {
-    dramaId: dramaId.value,
-    episodeId: currentEpisodeId.value,
-    dramaTitle,
-    episodeNumber: epNum,
-    resourceType,
-    resourceId: sb.id,
-    label: `${epLabel} ${labelPrefix} #${num}`,
-  }
-}
-
-async function recoverAndSyncEpisodeTasks(epId) {
-  const did = dramaId.value
-  const eid = epId ?? currentEpisodeId.value
-  if (!did || !eid) return
-  const ctx = buildEpisodeContext(store, did, eid)
-  await genStore.recoverPendingForEpisode({
-    ...ctx,
-    ElMessage,
-    callbacks: {
-      onStoryboardMedia: (sbId) => loadSingleStoryboardMedia(sbId),
-      onDramaRefresh: () => loadDrama(),
-      onEpisodeMergeComplete: () => {
-        store.setVideoStatus('done', did, eid)
-        store.setVideoProgress(100, did, eid)
-      },
-      onEpisodeMergeFailed: (err) => {
-        store.setVideoStatus('error', did, eid)
-        videoErrorMsg.value = err || t('filmCreate.videoGenFailed')
-      },
-    },
-  })
-  syncGeneratingSetsFromStore(genStore, did, eid, getGeneratingSetsBag())
-  const mergeRunning = genStore.getRunningForEpisode(did, eid).some(
-    (t) => t.resourceType === GEN_RESOURCE.EPISODE_MERGE
-  )
-  if (mergeRunning) {
-    store.setVideoStatus('generating', did, eid)
-  }
 }
 
 // ── Composable: Storyboard Images ─────────────────────
@@ -1224,211 +1039,69 @@ const {
   genStore,
 })
 
-function syncStoryboardStateFromEpisode(ep) {
-  syncAssociationsFromEpisode(ep)
-  syncVideoParamsFromStoryboards(ep?.storyboards || [])
-}
-
-function onEpisodeSelect(epId) {
-  if (epId == null) {
-    store.setCurrentEpisode(null)
-    store.setScriptContent('')
-    scriptTitle.value = ''
-    syncStoryboardStateFromEpisode(null)
-    return
-  }
-  const list = store.drama?.episodes || []
-  const ep = list.find((e) => Number(e.id) === Number(epId))
-  if (!ep) return
-  store.setCurrentEpisode(ep)
-  store.setScriptContent(ep.script_content || '')
-  scriptTitle.value = ep.title || t('filmCreate.episodeNum', { num: ep.episode_number || 0 })
-  syncStoryboardStateFromEpisode(ep)
-  loadStoryboardMedia()
-  recoverAndSyncEpisodeTasks(epId)
-}
-
-async function loadDrama() {
-  if (!store.dramaId) return
-  try {
-    let d = await dramaAPI.get(store.dramaId)
-    d = await backfillDramaStylePromptMetadataIfNeeded(dramaAPI, store.dramaId, d)
-    store.setDrama(d)
-    // 恢复「故事生成」框的梗概（项目 description 存的是故事梗概）
-    storyInput.value = (d.description || '').toString().trim()
-    storyStyle.value = (d.metadata && d.metadata.story_style) ? d.metadata.story_style : ''
-    storyType.value = d.genre || ''
-    generationStyle.value = d.style || ''
-    if ((d.style || '') === CUSTOM_STYLE_VALUE) {
-      customStylePrompt.value = (d.metadata?.style_prompt_zh || d.metadata?.style_prompt_en || '').toString()
-    } else {
-      customStylePrompt.value = ''
-    }
-    projectAspectRatio.value = (d.metadata && d.metadata.aspect_ratio) ? d.metadata.aspect_ratio : '16:9'
-    videoClipDuration.value = (d.metadata && d.metadata.video_clip_duration) ? Number(d.metadata.video_clip_duration) : 5
-    storyboardIncludeNarration.value = !!(d.metadata && d.metadata.storyboard_include_narration)
-    storyboardUniversalOmni.value = !!(d.metadata && d.metadata.storyboard_universal_omni)
-    storyboardUseFirstLastFrame.value = !!(d.metadata && d.metadata.storyboard_use_first_last_frame)
-    lastFrameUseFirstLayoutLock.value = d.metadata?.last_frame_use_first_layout_lock !== false
-    if (storyboardUseFirstLastFrame.value && gridMode.value !== 'single') {
-      gridMode.value = 'single'
-    }
-    const list = d.episodes || []
-    // 优先保持当前选中的集（按 id 在最新列表中查找），避免 AI 生成角色等操作后误切到其他集
-    const currentId = selectedEpisodeId.value
-    let ep = currentId != null ? list.find((e) => Number(e.id) === Number(currentId)) : null
-    if (!ep) {
-      const wantNum = savedCurrentEpisodeNumber.value
-      ep = list.find((e) => Number(e.episode_number) === Number(wantNum)) || list[0] || null
-    }
-    store.setCurrentEpisode(ep)
-    if (ep) {
-      store.setScriptContent(ep.script_content || '')
-      scriptTitle.value = ep.title || t('filmCreate.episodeNum', { num: ep.episode_number || 0 })
-      selectedEpisodeId.value = ep.id
-    } else {
-      store.setScriptContent('')
-      scriptTitle.value = ''
-      selectedEpisodeId.value = null
-    }
-    syncStoryboardStateFromEpisode(ep)
-    await loadStoryboardMedia()
-    await recoverAndSyncEpisodeTasks(ep?.id)
-  } catch (e) {
-    ElMessage.error(e.message || t('filmCreate.loadFailed'))
-  }
-}
-
-function onLastFrameLayoutLockChange() {
-  saveProjectSettings()
-}
-
-function updateStoryboardDialogue(sbId) {
-  // 可在此防抖后调用后端更新 dialogue
-}
-
-/**
- * @param {boolean} includeGenerationStyle - 仅在选择「画面风格」为 true：写入 dramas.style 与 style_prompt_*。
- * 其它项目设置改为 false，避免界面未刷新时仍用旧的 generationStyle 覆盖外部已更新的画风（如直接调 API PUT outline）。
- */
-async function saveProjectSettings(includeGenerationStyle = false) {
-  if (!store.dramaId) return
-  const metadata = {
-    story_style: storyStyle.value || undefined,
-    aspect_ratio: projectAspectRatio.value || '16:9',
-    video_clip_duration: videoClipDuration.value || 5,
-    storyboard_include_narration: !!storyboardIncludeNarration.value,
-    storyboard_universal_omni: !!storyboardUniversalOmni.value,
-    storyboard_use_first_last_frame: !!storyboardUseFirstLastFrame.value,
-    last_frame_use_first_layout_lock: !!lastFrameUseFirstLayoutLock.value,
-  }
-  if (includeGenerationStyle) {
-    Object.assign(metadata, projectStylePromptMetadata())
-  }
-  const payload = {
-    genre: storyType.value || undefined,
-    metadata,
-  }
-  if (includeGenerationStyle) {
-    payload.style = generationStyle.value || undefined
-  }
-  dramaAPI.saveOutline(store.dramaId, payload).catch(e => console.error('Settings auto-save failed', e))
-}
-
-/** 导出当前集分镜表（每镜一行；首尾帧模式含首/尾帧专用提示词） */
-async function onExportStoryboardSheet() {
-  const boards = storyboards.value || []
-  if (!boards.length) {
-    ElMessage.warning(t('filmCreate.noStoryboardsWarning'))
-    return
-  }
-  const epNum = store.currentEpisode?.episode_number
-  const dramaTitle = (store.drama?.title || 'project').replace(/[\\/:*?"<>|]/g, '_')
-  const epLabel = epNum != null ? t('filmCreate.episodeNum', { num: epNum }) : `ep${currentEpisodeId.value || '1'}`
-  const filenameBase = `${dramaTitle}-${epLabel}-${t('filmCreate.storyboardSheetFilename')}`
-  const useFirstLast = !!storyboardUseFirstLastFrame.value
-
-  exportingStoryboardSheet.value = true
-  const framePromptBySbId = {}
-  try {
-    await Promise.all(
-      boards.map(async (sb) => {
-        try {
-          const res = await storyboardsAPI.getFramePrompts(sb.id)
-          const fps = res?.frame_prompts || []
-          framePromptBySbId[sb.id] = {
-            first: fps.find((r) => r.frame_type === 'first')?.prompt?.trim() || '',
-            last: fps.find((r) => r.frame_type === 'last')?.prompt?.trim() || '',
-          }
-        } catch (_) {
-          framePromptBySbId[sb.id] = { first: '', last: '' }
-        }
-      })
-    )
-  } finally {
-    exportingStoryboardSheet.value = false
-  }
-
-  function resolveFirstFramePrompt(sbId) {
-    const cached = framePromptBySbId[sbId]?.first
-    if (cached) return cached
-    const imgPrompt = getSbFirstImage(sbId)?.prompt?.trim()
-    if (imgPrompt) return imgPrompt
-    if (useFirstLast) return buildFirstFrameImagePrompt(sbId)
-    return ''
-  }
-
-  function resolveLastFramePrompt(sbId) {
-    const cached = framePromptBySbId[sbId]?.last
-    if (cached) return cached
-    const imgPrompt = getSbLastImage(sbId)?.prompt?.trim()
-    if (imgPrompt) return imgPrompt
-    if (useFirstLast) return buildLastFrameImagePrompt(sbId)
-    return ''
-  }
-
-  const result = exportStoryboardSheet(
-    {
-      storyboards: boards,
-      getScene: (sbId) => getSbSelectedScene(sbId),
-      getCharacters: (sbId) => getSbSelectedCharacters(sbId),
-      getProps: (sbId) => getSbSelectedProps(sbId),
-      getMovementLabel,
-      getFirstFramePrompt: resolveFirstFramePrompt,
-      getLastFramePrompt: resolveLastFramePrompt,
-      getField(sb, key) {
-        const id = sb.id
-        const map = {
-          title: sbTitle.value[id],
-          location: sbLocation.value[id],
-          time: sbTime.value[id],
-          duration: sbDuration.value[id] ?? sb.duration,
-          dialogue: sbDialogue.value[id],
-          narration: sbNarration.value[id],
-          action: sbAction.value[id],
-          result: sbResult.value[id],
-          atmosphere: sbAtmosphere.value[id],
-          shot_type: sbShotType.value[id],
-          movement: sbMovement.value[id],
-          layout_description: sbLayoutDescription.value[id],
-          universal_segment_text: sbUniversalSegmentText.value[id],
-        }
-        if (Object.prototype.hasOwnProperty.call(map, key)) {
-          const v = map[key]
-          return v != null && v !== '' ? v : sb[key]
-        }
-        return sb[key]
-      },
-    },
-    filenameBase
-  )
-
-  if (!result.ok) {
-    ElMessage.warning(t('filmCreate.noExportableContentWarning'))
-    return
-  }
-  ElMessage.success(t('filmCreate.exportedStoryboardSheetCount', { count: result.count }))
-}
+// ── Composable: Project Settings ──────────────────────
+const {
+  exportingStoryboardSheet,
+  syncStoryboardStateFromEpisode,
+  onEpisodeSelect,
+  loadDrama,
+  onLastFrameLayoutLockChange,
+  onStoryboardUseFirstLastFrameChange,
+  onNovelImported,
+  updateStoryboardDialogue,
+  saveProjectSettings,
+  onExportStoryboardSheet,
+  applyRouteToStore,
+} = useProjectSettings({
+  store,
+  route,
+  router,
+  storyInput,
+  storyStyle,
+  storyType,
+  generationStyle,
+  customStylePrompt,
+  projectAspectRatio,
+  videoClipDuration,
+  storyboardIncludeNarration,
+  storyboardUniversalOmni,
+  storyboardUseFirstLastFrame,
+  lastFrameUseFirstLayoutLock,
+  gridMode,
+  selectedEpisodeId,
+  savedCurrentEpisodeNumber,
+  scriptTitle,
+  scriptLanguage,
+  scriptStoryboardStyle,
+  projectStylePromptMetadata,
+  syncAssociationsFromEpisode,
+  syncVideoParamsFromStoryboards,
+  loadStoryboardMedia: (...args) => loadStoryboardMedia(...args),
+  recoverAndSyncEpisodeTasks: (...args) => recoverAndSyncEpisodeTasks(...args),
+  getSbSelectedScene: (...args) => getSbSelectedScene(...args),
+  getSbSelectedCharacters: (...args) => getSbSelectedCharacters(...args),
+  getSbSelectedProps: (...args) => getSbSelectedProps(...args),
+  getMovementLabel,
+  getSbFirstImage,
+  getSbLastImage,
+  buildFirstFrameImagePrompt: (...args) => buildFirstFrameImagePrompt(...args),
+  buildLastFrameImagePrompt: (...args) => buildLastFrameImagePrompt(...args),
+  sbFields: {
+    sbTitle,
+    sbLocation,
+    sbTime,
+    sbDuration,
+    sbDialogue,
+    sbNarration,
+    sbAction,
+    sbResult,
+    sbAtmosphere,
+    sbShotType,
+    sbMovement,
+    sbLayoutDescription,
+    sbUniversalSegmentText,
+  },
+})
 
 // ── Composable: Storyboard Video ──────────────────────
 const {
@@ -1522,32 +1195,6 @@ const {
   buildSbGenMeta,
 })
 
-/** 无 task_id 时轮询刷新直到资源出现图片或超时（用于角色/道具/场景图生成） */
-async function pollUntilResourceHasImage(checker, maxAttempts = 20, intervalMs = 3000) {
-  for (let i = 0; i < maxAttempts; i++) {
-    await new Promise((r) => setTimeout(r, intervalMs))
-    await loadDrama()
-    if (checker()) return
-  }
-}
-
-function resolvePollMeta(meta = {}) {
-  return {
-    dramaId: meta.dramaId ?? dramaId.value,
-    episodeId: meta.episodeId ?? currentEpisodeId.value,
-    dramaTitle: meta.dramaTitle ?? store.drama?.title,
-    episodeNumber: meta.episodeNumber ?? store.currentEpisode?.episode_number,
-    resourceType: meta.resourceType || 'unknown',
-    resourceId: meta.resourceId,
-    label: meta.label,
-    ...meta,
-  }
-}
-
-function pollTask(taskId, onDone, meta = {}) {
-  return genStore.pollTask(taskId, resolvePollMeta(meta), onDone, { ElMessage })
-}
-
 const {
   pipelineRunning,
   pipelinePaused,
@@ -1638,28 +1285,58 @@ onBeforeUnmount(() => {
   agentContext.clear()
 })
 
-function applyRouteToStore() {
-  const id = route.params.id
-  if (id && id !== 'new') {
-    store.setDrama({ id: Number(id) })
-    if (route.query.episode) {
-      selectedEpisodeId.value = Number(route.query.episode)
-    }
-    loadDrama()
-  } else {
-    store.reset()
-    storyInput.value = ''
-    scriptTitle.value = ''
-    selectedEpisodeId.value = null
-    savedCurrentEpisodeNumber.value = 1
-    storyStyle.value = ''
-    storyType.value = ''
-    scriptLanguage.value = 'zh'
-    scriptStoryboardStyle.value = ''
-    generationStyle.value = ''
-    customStylePrompt.value = ''
-  }
-}
+// ── Composable: Active Tasks ──────────────────────────
+const {
+  isStoryGenRunning,
+  allActiveTaskItems,
+  allActiveTaskLabels,
+  cancelActiveTask,
+} = useActiveTasks({
+  dramaId,
+  genStore,
+  pipelineRunning,
+  pipelinePaused,
+  pipelineAbortRequested,
+  pipelineCurrentStep,
+  storyGenerating,
+  scriptGenerating,
+  universalOmniPolishRunning,
+  universalOmniPolishProgress,
+  universalOmniPolishAbort,
+  batchImageRunning,
+  batchImageStopping,
+  batchVideoRunning,
+  batchVideoStopping,
+  batchVideoProgress,
+})
+
+// ── Composable: Step Navigation ───────────────────────
+const { navSteps } = useStepNavigation({
+  genStore,
+  dramaId,
+  currentEpisodeId,
+  scriptContent,
+  isStoryGenRunning,
+  characters,
+  charactersGenerating,
+  generatingCharIds,
+  hasAssetImage,
+  props,
+  propsExtracting,
+  generatingPropIds,
+  scenes,
+  scenesExtracting,
+  generatingSceneIds,
+  storyboards,
+  storyboardGenerating,
+  universalOmniPolishRunning,
+  hasSbImage,
+  generatingSbImageIds,
+  batchImageRunning,
+  getSbAllVideos,
+  generatingSbVideoIds,
+  batchVideoRunning,
+})
 
 onMounted(async () => {
   loadPipelineConcurrency()
