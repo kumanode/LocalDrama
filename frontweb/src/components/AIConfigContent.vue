@@ -4,116 +4,54 @@
       <el-tab-pane :label="$t('aiConfig.tabConfigs')" name="configs">
         <div class="tab-content">
           <!-- Normal mode actions -->
-          <div v-if="!vendorLock.enabled" class="content-actions">
-            <div class="actions-left">
-              <el-button type="primary" @click="openAdd">
-                <el-icon><Plus /></el-icon>
-                {{ $t('aiConfig.addConfig') }}
-              </el-button>
-              <el-button plain @click="exportConfigs">
-                <el-icon><Download /></el-icon>
-                {{ $t('aiConfig.exportConfig') }}
-              </el-button>
-              <el-button plain @click="triggerImport">
-                <el-icon><Upload /></el-icon>
-                {{ $t('aiConfig.importConfig') }}
-              </el-button>
-              <input ref="importFileRef" type="file" accept=".json" style="display:none" @change="importConfigs" />
-              <el-button type="success" plain @click="openOneKeyVolc">
-                <el-icon><MagicStick /></el-icon>
-                {{ $t('aiConfig.oneKeyVolc') }}
-              </el-button>
-              <el-button type="success" plain @click="openOneKeyAgnes">
-                <el-icon><MagicStick /></el-icon>
-                {{ $t('aiConfig.oneKeyAgnes') }}
-              </el-button>
-              <el-button type="info" plain @click="openOneKeyTongyi">
-                <el-icon><MagicStick /></el-icon>
-                {{ $t('aiConfig.oneKeyTongyi') }}
-                <span class="one-key-not-recommended">{{ $t('aiConfig.notRecommended') }}</span>
-              </el-button>
-              <el-button type="warning" plain @click="openOneKeyCheapSeedance2">
-                <el-icon><MagicStick /></el-icon>
-                {{ $t('aiConfig.oneKeyCheapSeedance2') }}
-              </el-button>
-            </div>
-            <div class="actions-right">
-              <transition name="fade-slide">
-                <el-button
-                  v-if="selectedRows.length > 0"
-                  type="danger"
-                  :loading="batchDeleting"
-                  @click="onBatchDelete"
-                >
-                  <el-icon><Delete /></el-icon>
-                  {{ $t('aiConfig.deleteSelected', { count: selectedRows.length }) }}
-                </el-button>
-              </transition>
-            </div>
-          </div>
+          <ProviderPresets
+            :show-actions="!vendorLock.enabled"
+            :selected-count="selectedRows.length"
+            :batch-deleting="batchDeleting"
+            :cheap-seedance2-visible="oneKeyCheapSeedance2Visible"
+            :cheap-seedance2-key="oneKeyCheapSeedance2Key"
+            :cheap-seedance2-saving="oneKeyCheapSeedance2Saving"
+            :tongyi-visible="oneKeyTongyiVisible"
+            :tongyi-key="oneKeyTongyiKey"
+            :tongyi-saving="oneKeyTongyiSaving"
+            :volc-visible="oneKeyVolcVisible"
+            :volc-key="oneKeyVolcKey"
+            :volc-saving="oneKeyVolcSaving"
+            :agnes-visible="oneKeyAgnesVisible"
+            :agnes-key="oneKeyAgnesKey"
+            :agnes-saving="oneKeyAgnesSaving"
+            @add="openAdd"
+            @export="exportConfigs"
+            @import="triggerImport"
+            @preset="openProviderPreset"
+            @delete-selected="onBatchDelete"
+            @update:cheap-seedance2-visible="oneKeyCheapSeedance2Visible = $event"
+            @update:cheap-seedance2-key="oneKeyCheapSeedance2Key = $event"
+            @submit-cheap-seedance2="submitOneKeyCheapSeedance2"
+            @update:tongyi-visible="oneKeyTongyiVisible = $event"
+            @update:tongyi-key="oneKeyTongyiKey = $event"
+            @submit-tongyi="submitOneKeyTongyi"
+            @update:volc-visible="oneKeyVolcVisible = $event"
+            @update:volc-key="oneKeyVolcKey = $event"
+            @submit-volc="submitOneKeyVolc"
+            @update:agnes-visible="oneKeyAgnesVisible = $event"
+            @update:agnes-key="oneKeyAgnesKey = $event"
+            @submit-agnes="submitOneKeyAgnes"
+          />
+          <input ref="importFileRef" type="file" accept=".json" hidden @change="importConfigs" />
           <!-- Vendor lock mode tip bar -->
-          <div v-else class="vendor-lock-bar">
-            <el-alert
-              type="info"
-              :closable="false"
-              class="vendor-lock-tip"
-            >
-              <template #title>
-                <span v-html="$t('aiConfig.vendorLockTip')"></span>
-              </template>
-            </el-alert>
-            <el-button type="primary" size="small" class="vendor-bulk-key-btn" @click="openBulkKey">
-              <el-icon><Key /></el-icon>
-              {{ $t('aiConfig.bulkKeyBtn') }}
-            </el-button>
-          </div>
+          <VendorLockBanner v-if="vendorLock.enabled" @bulk-key="openBulkKey" />
           <p class="default-tip">{{ $t('aiConfig.defaultTip') }}</p>
-          <el-table
-            v-loading="loading"
-            :data="list"
-            stripe
-            style="width: 100%"
+          <ConfigTable
+            :loading="loading"
+            :rows="list"
+            :vendor-locked="vendorLock.enabled"
+            :service-type-label="serviceTypeLabel"
             @selection-change="onSelectionChange"
-          >
-            <el-table-column v-if="!vendorLock.enabled" type="selection" width="46" />
-            <el-table-column prop="name" :label="$t('common.name')" min-width="130" />
-            <el-table-column prop="provider" :label="$t('aiConfig.provider')" width="96" />
-            <el-table-column prop="base_url" label="Base URL" min-width="170" show-overflow-tooltip />
-            <el-table-column prop="default_model" :label="$t('aiConfig.defaultModel')" min-width="130" show-overflow-tooltip>
-              <template #default="{ row }">
-                {{ row.default_model || (Array.isArray(row.model) && row.model[0]) || '—' }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="service_type" :label="$t('aiConfig.serviceType')" width="148">
-              <template #default="{ row }">
-                <span :class="['type-badge', 'type-' + row.service_type]">
-                  <el-icon class="type-icon">
-                    <ChatDotRound v-if="row.service_type === 'text'" />
-                    <Picture v-else-if="row.service_type === 'image'" />
-                    <Film v-else-if="row.service_type === 'storyboard_image'" />
-                    <VideoCamera v-else-if="row.service_type === 'video'" />
-                    <Microphone v-else-if="row.service_type === 'tts'" />
-                    <Key v-else-if="row.service_type === 'jimeng2_character_auth'" />
-                    <Folder v-else-if="row.service_type === 'model_ark_asset'" />
-                  </el-icon>
-                  {{ serviceTypeLabel(row.service_type) }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="is_default" :label="$t('aiConfig.isDefault')" width="60">
-              <template #default="{ row }">
-                <el-tag v-if="row.is_default" type="success" size="small">✓</el-tag>
-                <span v-else class="no-default">—</span>
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('aiConfig.actions')" width="180" fixed="right">
-              <template #default="{ row }">
-                <el-button link type="primary" size="small" @click="openTest(row)">{{ $t('aiConfig.testConnection') }}</el-button>
-                <el-button link type="primary" size="small" @click="onRowEdit(row)">{{ vendorLock.enabled ? $t('aiConfig.modifyKey') : $t('common.edit') }}</el-button>
-                <el-button v-if="!vendorLock.enabled" link type="danger" size="small" @click="onDelete(row)">{{ $t('common.delete') }}</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+            @test="openTest"
+            @edit="onRowEdit"
+            @delete="onDelete"
+          />
         </div>
       </el-tab-pane>
       <el-tab-pane :label="$t('aiConfig.tabPrompts')" name="prompts">
@@ -127,76 +65,21 @@
         </div>
       </el-tab-pane>
       <el-tab-pane :label="$t('aiConfig.tabGeneration')" name="generation">
-        <div class="tab-content generation-settings">
-          <div class="gs-section-title">{{ $t('aiConfig.genConcurrencyTitle') }}</div>
-          <p class="gs-desc">{{ $t('aiConfig.genConcurrencyDesc') }}</p>
-
-          <div class="gs-row">
-            <span class="gs-label">{{ $t('aiConfig.imageConcurrency') }}</span>
-            <el-select
-              v-model="genConcurrencyInput"
-              filterable
-              allow-create
-              default-first-option
-              :placeholder="$t('aiConfig.concurrencyPlaceholder')"
-              style="width: 180px"
-              @change="onConcurrencyChange"
-            >
-              <el-option :label="$t('aiConfig.concurrencySerial')" :value="1" />
-              <el-option label="2" :value="2" />
-              <el-option :label="$t('aiConfig.concurrencyDefault')" :value="3" />
-              <el-option label="5" :value="5" />
-              <el-option label="8" :value="8" />
-              <el-option label="10" :value="10" />
-            </el-select>
-            <span class="gs-unit">{{ $t('aiConfig.tasksAtSameTime') }}</span>
-          </div>
-
-          <div class="gs-row" style="margin-top: 10px">
-            <span class="gs-label">{{ $t('aiConfig.videoConcurrency') }}</span>
-            <el-select
-              v-model="genVideoConcurrencyInput"
-              filterable
-              allow-create
-              default-first-option
-              :placeholder="$t('aiConfig.concurrencyPlaceholder')"
-              style="width: 180px"
-              @change="onVideoConcurrencyChange"
-            >
-              <el-option :label="$t('aiConfig.concurrencySerial')" :value="1" />
-              <el-option label="2" :value="2" />
-              <el-option :label="$t('aiConfig.concurrencyDefault')" :value="3" />
-              <el-option label="5" :value="5" />
-              <el-option label="8" :value="8" />
-              <el-option label="10" :value="10" />
-            </el-select>
-            <span class="gs-unit">{{ $t('aiConfig.tasksAtSameTime') }}</span>
-          </div>
-
-          <div style="margin-top: 14px">
-            <el-button
-              type="primary"
-              size="small"
-              :loading="genSettingSaving"
-              @click="saveGenerationSettings"
-            >{{ $t('common.save') }}</el-button>
-          </div>
-          <el-alert
-            v-if="genSettingSaved"
-            type="success"
-            :title="$t('aiConfig.saved')"
-            :closable="false"
-            show-icon
-            style="margin-top: 12px; width: fit-content"
-          />
-          <div class="gs-tip-box">
-            <div class="gs-tip-title">{{ $t('aiConfig.scopeTitle') }}</div>
-            <ul class="gs-tip-list">
-              <li>{{ $t('aiConfig.imageConcurrencyScope') }}</li>
-              <li>{{ $t('aiConfig.videoConcurrencyScope') }}</li>
-            </ul>
-          </div>
-        </div>
+        <GenerationSettings
+          :gen-concurrency-input="genConcurrencyInput"
+          :gen-video-concurrency-input="genVideoConcurrencyInput"
+          :content-language="contentLanguage"
+          :content-language-saved="contentLanguageSaved"
+          :gen-setting-saving="genSettingSaving"
+          :gen-setting-saved="genSettingSaved"
+          @update:gen-concurrency-input="genConcurrencyInput = $event"
+          @update:gen-video-concurrency-input="genVideoConcurrencyInput = $event"
+          @update:content-language="contentLanguage = $event"
+          @concurrency-change="onConcurrencyChange"
+          @video-concurrency-change="onVideoConcurrencyChange"
+          @save-content-language="saveContentLanguage"
+          @save-generation-settings="saveGenerationSettings"
+        />
       </el-tab-pane>
       <el-tab-pane :label="$t('aiConfig.tabSd2Assets')" name="sd2_assets">
         <div class="tab-content">
@@ -205,844 +88,31 @@
       </el-tab-pane>
     </el-tabs>
 
-    <!-- Add / Edit Dialog -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="vendorLock.enabled ? $t('aiConfig.editKeyModelTitle') : (editingId ? $t('aiConfig.editConfig') : $t('aiConfig.addConfig'))"
-      width="520px"
-      :close-on-click-modal="false"
+    <ConfigEditDialog
+      ref="editDialogRef"
+      :model-value="dialogVisible"
+      :title="vendorLock.enabled ? t('aiConfig.editKeyModelTitle') : (editingId ? t('aiConfig.editConfig') : t('aiConfig.addConfig'))"
+      :vendor-locked="vendorLock.enabled"
+      :form="form"
+      :form-model-list="formModelList"
+      :rules="rules"
+      :is-deep-seek-official-form="isDeepSeekOfficialForm"
+      :available-provider-options="availableProviderOptions"
+      :available-models="availableModels"
+      :endpoint-preview-info="endpointPreviewInfo"
+      :service-type-label="serviceTypeLabel"
+      :preset-model-pick="presetModelPick"
+      :saving="saving"
+      :jimeng2-assets-loading="jimeng2AssetsLoading"
+      @update:model-value="dialogVisible = $event"
+      @update:preset-model-pick="presetModelPick = $event"
       @closed="resetForm"
-    >
-      <!-- Lock mode: only show api_key and default_model -->
-      <template v-if="vendorLock.enabled">
-        <el-descriptions :column="1" border style="margin-bottom: 16px">
-          <el-descriptions-item :label="$t('common.name')">{{ form.name }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('aiConfig.serviceType')">{{ serviceTypeLabel(form.service_type) }}</el-descriptions-item>
-          <el-descriptions-item :label="$t('aiConfig.provider')">{{ form.provider }}</el-descriptions-item>
-        </el-descriptions>
-        <el-form ref="formRef" :model="form" label-width="100px">
-          <el-form-item prop="api_key" :rules="[{ required: true, message: $t('aiConfig.rules.apiKeyRequired'), trigger: 'blur' }]">
-            <template #label><span class="form-label-tip">API Key</span></template>
-            <el-input
-              v-model="form.api_key"
-              type="password"
-              :placeholder="form.provider === 'jimeng_ai_api' ? $t('aiConfig.jimengSessionPlaceholder') : $t('aiConfig.apiKeyPlaceholder')"
-              show-password
-            />
-          </el-form-item>
-          <el-form-item>
-            <template #label><span class="form-label-tip">{{ $t('aiConfig.defaultModel') }}</span></template>
-            <el-select v-model="form.default_model" clearable style="width: 100%">
-              <el-option v-for="m in formModelList" :key="m" :label="m" :value="m" />
-            </el-select>
-            <p class="field-tip">{{ $t('aiConfig.defaultModelTip') }}</p>
-          </el-form-item>
-          <el-form-item>
-            <template #label>
-              <span class="form-label-tip">{{ $t('aiConfig.setDefault') }}
-                <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                  <template #content>
-                    <div class="cfg-tip-content" v-html="$t('aiConfig.setDefaultTip')"></div>
-                  </template>
-                  <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-                </el-tooltip>
-              </span>
-            </template>
-            <el-switch v-model="form.is_default" />
-          </el-form-item>
-        </el-form>
-      </template>
-
-      <!-- Normal mode: full form -->
-      <el-form v-else ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item prop="service_type">
-          <template #label>
-            <span class="form-label-tip">{{ $t('aiConfig.serviceType') }}
-              <el-tooltip placement="top" :show-arrow="true" popper-class="cfg-tip-popper">
-                <template #content>
-                  <div class="cfg-tip-content" v-html="$t('aiConfig.serviceTypeTooltip')"></div>
-                </template>
-                <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <el-select v-model="form.service_type" :placeholder="$t('aiConfig.selectTypePlaceholder')" style="width: 100%" @change="onServiceTypeChange">
-            <el-option :label="$t('aiConfig.types.text')" value="text" />
-            <el-option :label="$t('aiConfig.types.image')" value="image" />
-            <el-option :label="$t('aiConfig.types.storyboard_image')" value="storyboard_image" />
-            <el-option :label="$t('aiConfig.types.video')" value="video" />
-            <el-option :label="$t('aiConfig.types.tts')" value="tts" />
-            <el-option :label="$t('aiConfig.types.jimeng2_character_auth')" value="jimeng2_character_auth" />
-          </el-select>
-        </el-form-item>
-        <el-form-item prop="provider">
-          <template #label>
-            <span class="form-label-tip">{{ $t('aiConfig.provider') }}
-              <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                <template #content>
-                  <div class="cfg-tip-content" v-html="$t('aiConfig.providerTooltip')"></div>
-                </template>
-                <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <el-select
-            v-model="form.provider"
-            :placeholder="$t('aiConfig.presetProviderPlaceholder')"
-            clearable
-            filterable
-            allow-create
-            default-first-option
-            style="width: 100%"
-            @change="onProviderChange"
-          >
-            <el-option
-              v-for="p in availableProviderOptions"
-              :key="p.id"
-              :label="p.name"
-              :value="p.id"
-              :class="p.id === '__custom__' ? 'provider-custom-option' : ''"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item v-if="form.service_type === 'video'">
-          <template #label>
-            <span class="form-label-tip">{{ $t('aiConfig.omniMultiRef') }}
-              <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                <template #content>
-                  <div class="cfg-tip-content" v-html="$t('aiConfig.omniMultiRefTooltip')"></div>
-                </template>
-                <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <el-switch
-            v-model="form.supports_universal_omni"
-            :active-text="$t('aiConfig.omniSupportActive')"
-            :inactive-text="$t('aiConfig.omniSupportInactive')"
-          />
-        </el-form-item>
-        <el-alert
-          v-if="form.provider === 'cheap_seedance2'"
-          type="success"
-          :closable="false"
-          show-icon
-          class="cheap-seedance2-tip"
-        >
-          <template #title>
-            <span>
-              {{ $t('aiConfig.cheapSeedance2Tip') }}
-              <a href="https://workbench.ohmybb.xyz/" target="_blank" rel="noopener noreferrer" class="cheap-seedance2-link">workbench.ohmybb.xyz</a>
-            </span>
-          </template>
-        </el-alert>
-        <!-- Protocol: only shown for image/storyboard/video -->
-        <el-form-item v-if="form.service_type !== 'text' && form.service_type !== 'tts' && form.service_type !== 'jimeng2_character_auth'">
-          <template #label>
-            <span class="form-label-tip">{{ $t('aiConfig.apiProtocol') }}
-              <el-icon class="tip-icon" style="cursor:pointer;color:#409eff" @click="showProtocolHelp = true"><QuestionFilled /></el-icon>
-            </span>
-          </template>
-          <el-select v-model="form.api_protocol" style="width: 100%" :placeholder="$t('aiConfig.apiProtocolPlaceholder')" clearable>
-            <el-option :label="$t('aiConfig.protocols.openai')" value="openai" />
-            <el-option :label="$t('aiConfig.protocols.volcengine')" value="volcengine" />
-            <el-option :label="$t('aiConfig.protocols.volcengine_omni')" value="volcengine_omni" />
-            <el-option :label="$t('aiConfig.protocols.dashscope')" value="dashscope" />
-            <el-option :label="$t('aiConfig.protocols.gemini')" value="gemini" />
-            <el-option :label="$t('aiConfig.protocols.sora')" value="sora" />
-            <el-option :label="$t('aiConfig.protocols.veo3')" value="veo3" />
-            <el-option :label="$t('aiConfig.protocols.vidu')" value="vidu" />
-            <el-option :label="$t('aiConfig.protocols.kling_omni')" value="kling_omni" />
-            <el-option :label="$t('aiConfig.protocols.xai')" value="xai" />
-            <el-option :label="$t('aiConfig.protocols.minimax_h3')" value="minimax_h3" />
-            <el-option label="NanoBanana" value="nano_banana" />
-          </el-select>
-        </el-form-item>
-
-        <!-- Protocol help dialog -->
-        <el-dialog v-model="showProtocolHelp" :title="$t('aiConfig.protoHelp.title')" width="700px" top="5vh">
-          <div class="protocol-help">
-            <div class="ph-section-title">{{ $t('aiConfig.protoHelp.imgSection') }}</div>
-            <el-collapse accordion>
-              <el-collapse-item name="openai-img">
-                <template #title><span class="ph-tag ph-tag-img">{{ $t('aiConfig.protoHelp.tagImg') }}</span> {{ $t('aiConfig.protoHelp.openaiImgTitle') }}</template>
-                <div class="ph-body">
-                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.openaiImgScenario') }}<br>
-                  <b>Endpoint：</b><code>POST /v1/images/generations</code><br>
-                  <pre>{ "model": "dall-e-3", "prompt": "...", "n": 1, "size": "1024x1024" }</pre>
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="volcengine-img">
-                <template #title><span class="ph-tag ph-tag-img">{{ $t('aiConfig.protoHelp.tagImg') }}</span> {{ $t('aiConfig.protoHelp.volcengineImgTitle') }}</template>
-                <div class="ph-body">
-                  <b>Endpoint：</b><code>POST /api/v3/images/generations</code><br>
-                  <b>Base URL：</b><code>https://ark.cn-beijing.volces.com/api/v3</code><br>
-                  <pre>{ "model": "doubao-seedream-5-0-flash-260915", "prompt": "...", "size": "1024x1024" }</pre>
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="dashscope-img">
-                <template #title><span class="ph-tag ph-tag-img">{{ $t('aiConfig.protoHelp.tagImg') }}</span> {{ $t('aiConfig.protoHelp.dashscopeImgTitle') }}</template>
-                <div class="ph-body">
-                  <b>Base URL：</b><code>https://dashscope.aliyuncs.com</code><br>
-                  <b>Endpoint：</b><code>POST /api/v1/services/aigc/text2image/image-synthesis</code>
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="gemini-img">
-                <template #title><span class="ph-tag ph-tag-img">{{ $t('aiConfig.protoHelp.tagImg') }}</span> {{ $t('aiConfig.protoHelp.geminiImgTitle') }}</template>
-                <div class="ph-body">
-                  <b>{{ $t('aiConfig.protoHelp.auth') }}：</b>{{ $t('aiConfig.protoHelp.geminiAuth') }}<br>
-                  <b>Endpoint：</b><code>POST /v1beta/models/{model}:generateContent</code>
-                </div>
-              </el-collapse-item>
-            </el-collapse>
-
-            <div class="ph-section-title" style="margin-top:16px">{{ $t('aiConfig.protoHelp.videoSection') }}</div>
-            <el-collapse accordion>
-              <el-collapse-item name="cheap-seedance2-vid">
-                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.cheapSeedance2VidTitle') }}</template>
-                <div class="ph-body">
-                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidScenario') }}<br>
-                  <b>{{ $t('aiConfig.provider') }}：</b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidProvider') }}<br>
-                  <b>Base URL：</b><code>https://workbench.ohmybb.xyz/api/openai</code><br>
-                  <b>{{ $t('aiConfig.apiProtocol') }}：</b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidProto') }}<br>
-                  <b>Endpoint：</b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidEndpoint') }}<br>
-                  <b>{{ $t('aiConfig.defaultModel') }}：</b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidModels') }}<br>
-                  <b>{{ $t('aiConfig.protoHelp.cheapSeedance2VidWebsite') }}</b><a href="https://workbench.ohmybb.xyz/" target="_blank" rel="noopener noreferrer">https://workbench.ohmybb.xyz/</a>
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="openai-vid">
-                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.openaiVidTitle') }}</template>
-                <div class="ph-body">
-                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.openaiVidScenario') }}<br>
-                  <b>Endpoint：</b>Custom, e.g. <code>POST /v1/video/create</code><br>
-                  <pre>{ "model": "sora-2-pro",
-  "content": [
-    { "type": "text", "text": "..." },
-    { "type": "image_url", "image_url": { "url": "https://..." }, "role": "reference_image" }
-  ],
-  "ratio": "9:16", "duration": 5, "watermark": false, "resolution": "720p" }</pre>
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="sora-vid">
-                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.soraVidTitle') }}</template>
-                <div class="ph-body">
-                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.soraVidScenario') }}<br>
-                  <b>{{ $t('aiConfig.protoHelp.soraVidDefaultEndpoint') }}</b><br>
-                  <b>{{ $t('aiConfig.protoHelp.soraVidReqFormat') }}</b><br>
-                  <pre>model       = "sora-2"
-prompt      = "..."
-seconds     = "4" | "8" | "12"
-size        = "720x1280" | "1280x720" | "1024x1792" | "1792x1024"
-watermark   = "false"
-private     = "false"
-input_reference = (image file, optional)</pre>
-                  <b>{{ $t('aiConfig.protoHelp.notice') }}：</b>{{ $t('aiConfig.protoHelp.soraVidNotice') }}
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="veo3-vid">
-                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.veo3VidTitle') }}</template>
-                <div class="ph-body">
-                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.veo3VidScenario') }}<br>
-                  <b>{{ $t('aiConfig.protoHelp.veo3VidDefaultEndpoint') }}</b><br>
-                  <pre>{ "model": "veo3.1",
-  "prompt": "...",
-  "enhance_prompt": true,
-  "images": ["data:image/jpeg;base64,..."]
-}</pre>
-                  <b>{{ $t('aiConfig.protoHelp.notice') }}：</b>{{ $t('aiConfig.protoHelp.veo3VidNotice') }}
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="volcengine-vid">
-                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.volcengineVidTitle') }}</template>
-                <div class="ph-body">
-                  <b>Endpoint：</b><code>POST …/contents/generations/tasks</code><br>
-                  <b>Base URL：</b><code>https://ark.cn-beijing.volces.com/api/v3</code><br>
-                  <pre>{ "model": "doubao-seedance-2-0-fast-260128",
-  "content": [{ "type": "text", "text": "..." }],
-  "ratio": "9:16", "duration": 5,
-  "watermark": false, "resolution": "720p" }</pre>
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="volcengine-omni-vid">
-                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.volcengineOmniVidTitle') }}</template>
-                <div class="ph-body">
-                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.volcengineOmniVidScenario') }}<br>
-                  <b>Endpoint：</b><code>POST {base}/contents/generations/tasks</code>, <code>GET {base}/contents/generations/tasks/{taskId}</code><br>
-                  <b>{{ $t('aiConfig.provider') }}：</b>{{ $t('aiConfig.protoHelp.volcengineOmniVidProvider') }}<br>
-                  <pre>{ "model": "doubao-seedance-2-0-260128",
-  "task_type": "i2v",
-  "content": [
-    { "type": "text", "text": "… @图片1 … @图片2 …" }, // i18n-scan-ignore: omni prompt token protocol
-    { "type": "image_url", "image_url": { "url": "https://..." } },
-    { "type": "image_url", "image_url": { "url": "https://..." }, "role": "reference_image" }
-  ],
-  "ratio": "9:16", "duration": 8, "watermark": false }</pre>
-                  <b>{{ $t('aiConfig.protoHelp.desc') }}：</b>{{ $t('aiConfig.protoHelp.volcengineOmniVidDesc') }}
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="dashscope-vid">
-                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.dashscopeVidTitle') }}</template>
-                <div class="ph-body">
-                  <b>Base URL：</b><code>https://dashscope.aliyuncs.com</code><br>
-                  <b>Endpoint：</b><code>POST /api/v1/services/aigc/video-generation/video-synthesis</code><br>
-                  <pre>{ "model": "wan2.2-kf2v-flash",
-  "input": { "prompt": "...", "img_url": "https://..." },
-  "parameters": { "size": "1280*720", "duration": 5 } }</pre>
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="gemini-vid">
-                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.geminiVidTitle') }}</template>
-                <div class="ph-body">
-                  <b>{{ $t('aiConfig.protoHelp.auth') }}：</b>{{ $t('aiConfig.protoHelp.geminiAuth') }}<br>
-                  <b>Endpoint：</b><code>POST /v1beta/models/{model}:generateVideo</code>
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="vidu-vid">
-                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.viduVidTitle') }}</template>
-                <div class="ph-body">
-                  <b>{{ $t('aiConfig.protoHelp.scenario') }}：</b>{{ $t('aiConfig.protoHelp.viduVidScenario') }}<br>
-                  <b>{{ $t('aiConfig.protoHelp.auth') }}：</b><code>Authorization: Token {api_key}</code><br>
-                  <b>Endpoint：</b>{{ $t('aiConfig.protoHelp.viduVidDefaultEndpoint') }}<br>
-                  <pre>{ "model": "viduq3-pro",
-  "images": ["https://..."],
-  "prompt": "...",
-  "duration": 5,
-  "resolution": "720p",
-  "movement_amplitude": "auto",
-  "audio": false,
-  "watermark": false
-}</pre>
-                  <b>{{ $t('aiConfig.protoHelp.notice') }}：</b>{{ $t('aiConfig.protoHelp.viduVidNotice') }}
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="jimeng-ai-api-vid">
-                <template #title><span class="ph-tag ph-tag-vid">{{ $t('aiConfig.protoHelp.tagVid') }}</span> {{ $t('aiConfig.protoHelp.jimengAiApiVidTitle') }}</template>
-                <div class="ph-body">
-                  <b>{{ $t('aiConfig.protoHelp.desc') }}：</b>{{ $t('aiConfig.protoHelp.jimengAiApiVidDesc') }}<br>
-                  <b>Base URL：</b>{{ $t('aiConfig.protoHelp.jimengAiApiVidBaseUrl') }}<br>
-                  <b>API Key：</b>{{ $t('aiConfig.protoHelp.jimengAiApiVidApiKey') }}<br>
-                  <b>Endpoint：</b>{{ $t('aiConfig.protoHelp.jimengAiApiVidDefaultPath') }}
-                </div>
-              </el-collapse-item>
-            </el-collapse>
-          </div>
-          <template #footer>
-            <el-button @click="showProtocolHelp = false">{{ $t('common.close') }}</el-button>
-          </template>
-        </el-dialog>
-        <el-form-item prop="name">
-          <template #label>
-            <span class="form-label-tip">{{ $t('common.name') }}
-              <el-tooltip :content="$t('aiConfig.nameTooltip')" placement="top" popper-class="cfg-tip-popper">
-                <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <el-input v-model="form.name" :placeholder="$t('aiConfig.namePlaceholder')" />
-        </el-form-item>
-        <el-form-item prop="base_url">
-          <template #label>
-            <span class="form-label-tip">{{ form.service_type === 'jimeng2_character_auth' ? $t('aiConfig.gatewayUrl') : 'Base URL' }}
-              <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                <template #content>
-                  <div class="cfg-tip-content">
-                    <template v-if="form.service_type === 'jimeng2_character_auth'">
-                      <span v-html="$t('aiConfig.gatewayRootTip')"></span>
-                    </template>
-                    <template v-else>
-                      <span v-html="$t('aiConfig.baseUrlTip')"></span>
-                    </template>
-                  </div>
-                </template>
-                <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <el-input
-            v-model="form.base_url"
-            :placeholder="form.service_type === 'jimeng2_character_auth' ? $t('aiConfig.gatewayUrlPlaceholder') : $t('aiConfig.baseUrlPlaceholderModifiable')"
-          />
-        </el-form-item>
-        <el-form-item prop="api_key">
-          <template #label>
-            <span class="form-label-tip">{{ form.service_type === 'jimeng2_character_auth' ? 'Token' : 'API Key' }}
-              <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                <template #content>
-                  <div class="cfg-tip-content">
-                    <template v-if="form.service_type === 'jimeng2_character_auth'">
-                      <span v-html="$t('aiConfig.tokenTip')"></span>
-                    </template>
-                    <template v-else>
-                      <span v-html="$t('aiConfig.apiKeyTip')"></span>
-                    </template>
-                  </div>
-                </template>
-                <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <el-input
-            v-model="form.api_key"
-            type="password"
-            :placeholder="form.service_type === 'jimeng2_character_auth' ? $t('aiConfig.bearerTokenPlaceholder') : (form.provider === 'jimeng_ai_api' ? $t('aiConfig.jimengSessionPlaceholder') : $t('aiConfig.apiKeyShortPlaceholder'))"
-            show-password
-          />
-        </el-form-item>
-        <el-form-item v-if="form.service_type === 'jimeng2_character_auth'">
-          <template #label><span class="form-label-tip">{{ $t('aiConfig.materialList') }}</span></template>
-          <div class="jimeng2-assets-actions">
-            <el-button type="primary" plain :loading="jimeng2AssetsLoading" @click="openJimeng2MaterialAssetsDialog">
-              {{ $t('aiConfig.listMaterialsBtn') }}
-            </el-button>
-            <span class="field-tip jimeng2-assets-tip">
-              {{ $t('aiConfig.callGateway') }}
-              <code>GET /api/business/v1/assets</code>
-              {{ $t('aiConfig.sameAs') }}
-              <a href="https://83zi.com/sd2realperson.html" target="_blank" rel="noopener noreferrer">{{ $t('aiConfig.materialApiDoc') }}</a>
-              {{ $t('aiConfig.consistentWith') }}
-            </span>
-          </div>
-        </el-form-item>
-        <el-alert
-          v-if="form.service_type === 'jimeng2_character_auth'"
-          type="info"
-          :closable="false"
-          show-icon
-          style="margin-bottom: 12px"
-          :title="$t('aiConfig.sd2AuthCardTitle')"
-          :description="$t('aiConfig.sd2AuthCardDesc')"
-        />
-        <template v-if="form.service_type === 'video' && form.api_protocol === 'kling_omni'">
-          <el-form-item>
-            <template #label><span class="form-label-tip">AccessKey</span></template>
-            <el-input
-              v-model="form.kling_access_key"
-              type="password"
-              show-password
-              :placeholder="$t('aiConfig.klingAkPlaceholder')"
-              autocomplete="off"
-            />
-            <p class="field-tip">
-              {{ $t('aiConfig.officialJwtRules') }}
-              <a href="https://klingai.com/document-api/apiReference/commonInfo" target="_blank" rel="noopener noreferrer">commonInfo</a>
-              （<a href="https://app.klingai.com/cn/dev/document-api/apiReference/commonInfo" target="_blank" rel="noopener noreferrer">{{ $t('aiConfig.chineseVersion') }}</a>）。
-              <span v-html="$t('aiConfig.klingTokenGenDesc')"></span>
-            </p>
-          </el-form-item>
-          <el-form-item>
-            <template #label><span class="form-label-tip">SecretKey</span></template>
-            <el-input
-              v-model="form.kling_secret_key"
-              type="password"
-              show-password
-              :placeholder="$t('aiConfig.klingSkPlaceholder')"
-              autocomplete="off"
-            />
-            <el-checkbox v-model="form.kling_secret_key_base64" style="margin-top: 8px; display: block">
-              {{ $t('aiConfig.klingSkBase64Label') }}
-            </el-checkbox>
-            <p class="field-tip">
-              <span v-html="$t('aiConfig.klingDomainTip')"></span>
-              <a href="https://klingai.com/document-api/apiReference/model/OmniVideo" target="_blank" rel="noopener noreferrer">OmniVideo</a>。
-            </p>
-          </el-form-item>
-        </template>
-        <!-- TTS specific fields -->
-        <template v-if="form.service_type === 'tts'">
-          <el-form-item>
-            <template #label>
-              <span class="form-label-tip">{{ $t('aiConfig.voiceId') }}
-                <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                  <template #content>
-                    <div class="cfg-tip-content" v-html="$t('aiConfig.voiceIdTooltip')"></div>
-                  </template>
-                  <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-                </el-tooltip>
-              </span>
-            </template>
-            <el-select
-              v-model="form.voice_id"
-              filterable
-              allow-create
-              default-first-option
-              :placeholder="$t('aiConfig.voiceIdPlaceholder')"
-              style="width: 100%"
-            >
-              <el-option-group :label="$t('aiConfig.voiceOptions.minimaxFemale')">
-                <el-option :label="$t('aiConfig.voiceOptions.femaleShaonv')" value="female-shaonv" />
-                <el-option :label="$t('aiConfig.voiceOptions.femaleChengshu')" value="female-chengshu" />
-                <el-option :label="$t('aiConfig.voiceOptions.femaleTianmei')" value="female-tianmei" />
-                <el-option :label="$t('aiConfig.voiceOptions.audiobookFemale2')" value="audiobook_female_2" />
-              </el-option-group>
-              <el-option-group :label="$t('aiConfig.voiceOptions.minimaxMale')">
-                <el-option :label="$t('aiConfig.voiceOptions.maleQingxin')" value="male-qingxin" />
-                <el-option :label="$t('aiConfig.voiceOptions.maleZhicheng')" value="male-zhicheng" />
-                <el-option :label="$t('aiConfig.voiceOptions.audiobookMale1')" value="audiobook_male_1" />
-              </el-option-group>
-            </el-select>
-            <p class="field-tip">{{ $t('aiConfig.minimaxVoiceTip') }}</p>
-          </el-form-item>
-          <el-form-item>
-            <template #label>
-              <span class="form-label-tip">Group ID
-                <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                  <template #content>
-                    <div class="cfg-tip-content" v-html="$t('aiConfig.groupIdTooltip')"></div>
-                  </template>
-                  <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-                </el-tooltip>
-              </span>
-            </template>
-            <el-input v-model="form.group_id" :placeholder="$t('aiConfig.groupIdPlaceholder')" />
-            <p class="field-tip">{{ $t('aiConfig.minimaxGroupIdTip') }}</p>
-          </el-form-item>
-        </template>
-
-        <!-- Custom video endpoint config -->
-        <template v-if="form.service_type !== 'text' && form.service_type !== 'tts' && form.service_type !== 'jimeng2_character_auth'">
-          <el-form-item>
-            <template #label>
-              <span class="form-label-tip">{{ $t('aiConfig.submitEndpoint') }}
-                <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                  <template #content>
-                    <div class="cfg-tip-content" v-html="$t('aiConfig.submitEndpointTooltip')"></div>
-                  </template>
-                  <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-                </el-tooltip>
-              </span>
-            </template>
-            <el-input v-model="form.endpoint" :placeholder="form.service_type === 'video' ? $t('aiConfig.submitEndpointPlaceholderVideo') : $t('aiConfig.submitEndpointPlaceholderOther')" />
-          </el-form-item>
-          <el-form-item>
-            <template #label>
-              <span class="form-label-tip">{{ $t('aiConfig.queryEndpoint') }}
-                <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                  <template #content>
-                    <div class="cfg-tip-content" v-html="$t('aiConfig.queryEndpointTooltip')"></div>
-                  </template>
-                  <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-                </el-tooltip>
-              </span>
-            </template>
-            <el-input v-model="form.query_endpoint" :placeholder="$t('aiConfig.queryEndpointPlaceholder')" />
-          </el-form-item>
-        </template>
-
-        <!-- Endpoint preview -->
-        <div v-if="endpointPreviewInfo" class="endpoint-preview-box" :class="{ 'ep-box-gemini': endpointPreviewInfo.isGemini }">
-          <div class="ep-preview-header">
-            <span>{{ $t('aiConfig.previewEndpointTitle') }}</span>
-            <span v-if="endpointPreviewInfo.isGemini" class="ep-auto-badge ep-badge-gemini">{{ $t('aiConfig.previewGeminiBadge') }}</span>
-            <span v-else-if="endpointPreviewInfo.isJimeng2Auth" class="ep-auto-badge">{{ $t('aiConfig.previewJimeng2AuthBadge') }}</span>
-            <span v-else-if="endpointPreviewInfo.isAuto && form.service_type !== 'text'" class="ep-auto-badge">{{ $t('aiConfig.previewAutoBadge') }}</span>
-          </div>
-          <div class="ep-row">
-            <span class="ep-label">{{ $t('aiConfig.submitUrlLabel') }}</span>
-            <code class="ep-url">{{ endpointPreviewInfo.submit }}</code>
-          </div>
-          <div v-if="endpointPreviewInfo.query" class="ep-row">
-            <span class="ep-label">{{ $t('aiConfig.queryUrlLabel') }}</span>
-            <code class="ep-url">{{ endpointPreviewInfo.query }}</code>
-          </div>
-          <p v-if="endpointPreviewInfo.isGemini" class="ep-tip ep-tip-warn">
-            {{ $t('aiConfig.geminiEndpointWarn') }}
-          </p>
-          <p v-else-if="endpointPreviewInfo.isJimeng2Auth" class="ep-tip">{{ $t('aiConfig.jimeng2EndpointTip') }}</p>
-          <p v-else class="ep-tip">{{ $t('aiConfig.autoEndpointTip') }}</p>
-        </div>
-
-        <template v-if="form.service_type !== 'jimeng2_character_auth'">
-        <el-form-item>
-          <template #label>
-            <span class="form-label-tip">{{ $t('aiConfig.modelList') }}
-              <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                <template #content>
-                  <div class="cfg-tip-content" v-html="$t('aiConfig.modelListTooltip')"></div>
-                </template>
-                <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <div class="model-row">
-            <el-select
-              v-model="presetModelPick"
-              :placeholder="$t('aiConfig.appendPresetModel')"
-              clearable
-              filterable
-              style="width: 220px; margin-bottom: 8px"
-              @change="onPresetModelSelect"
-            >
-              <el-option v-for="m in availableModels" :key="m" :label="m" :value="m" />
-            </el-select>
-          </div>
-          <el-input v-model="form.modelText" type="textarea" :rows="2" :placeholder="$t('aiConfig.modelTextPlaceholder')" />
-        </el-form-item>
-        <el-form-item>
-          <template #label>
-            <span class="form-label-tip">{{ $t('aiConfig.defaultModel') }}
-              <el-tooltip :content="$t('aiConfig.defaultModelTooltip')" placement="top" popper-class="cfg-tip-popper">
-                <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <el-select
-            v-model="form.default_model"
-            :placeholder="formModelList.length ? $t('aiConfig.defaultModelPlaceholder') : $t('aiConfig.defaultModelEmptyPlaceholder')"
-            clearable
-            style="width: 100%"
-          >
-            <el-option v-for="m in formModelList" :key="m" :label="m" :value="m" />
-          </el-select>
-          <p class="field-tip">{{ $t('aiConfig.defaultModelFieldTip') }}</p>
-        </el-form-item>
-        <el-form-item v-if="isDeepSeekOfficialForm">
-          <template #label>
-            <span class="form-label-tip">{{ $t('aiConfig.thinkingMode') }}
-              <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                <template #content>
-                  <div class="cfg-tip-content" v-html="$t('aiConfig.thinkingModeTooltip')"></div>
-                </template>
-                <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <div class="deepseek-settings">
-            <el-radio-group v-model="form.deepseek_thinking">
-              <el-radio-button label="disabled">{{ $t('aiConfig.deepseekThinkingDisabled') }}</el-radio-button>
-              <el-radio-button label="enabled">{{ $t('aiConfig.deepseekThinkingEnabled') }}</el-radio-button>
-            </el-radio-group>
-            <el-select
-              v-if="form.deepseek_thinking === 'enabled'"
-              v-model="form.deepseek_reasoning_effort"
-              style="width: 140px"
-            >
-              <el-option label="high" value="high" />
-              <el-option label="max" value="max" />
-            </el-select>
-          </div>
-          <p class="field-tip">{{ $t('aiConfig.deepseekModelTip') }}</p>
-        </el-form-item>
-        </template>
-        <el-form-item>
-          <template #label>
-            <span class="form-label-tip">{{ $t('aiConfig.priority') }}
-              <el-tooltip :content="$t('aiConfig.priorityTooltip')" placement="top" popper-class="cfg-tip-popper">
-                <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <el-input-number v-model="form.priority" :min="0" :max="999" />
-        </el-form-item>
-        <el-form-item>
-          <template #label>
-            <span class="form-label-tip">{{ $t('aiConfig.setDefault') }}
-              <el-tooltip placement="top" popper-class="cfg-tip-popper">
-                <template #content>
-                  <div class="cfg-tip-content" v-html="$t('aiConfig.setDefaultTip')"></div>
-                </template>
-                <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-          <el-switch v-model="form.is_default" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="saving" @click="submit">{{ $t('common.confirm') }}</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- Quick setup Cheap Seedance2 -->
-    <el-dialog
-      v-model="oneKeyCheapSeedance2Visible"
-      :title="$t('aiConfig.oneKeySeedanceTitle')"
-      width="520px"
-      :close-on-click-modal="false"
-      @closed="oneKeyCheapSeedance2Key = ''"
-    >
-      <div class="one-key-help">
-        <div class="one-key-section">
-          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyAutoCreateList') }}</div>
-          <ul class="one-key-list">
-            <li>{{ $t('aiConfig.oneKeySeedanceDesc') }}</li>
-          </ul>
-          <p class="one-key-note">{{ $t('aiConfig.oneKeySeedanceNote') }}</p>
-        </div>
-        <div class="one-key-section">
-          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyHowToApply') }}</div>
-          <ol class="one-key-list">
-            <li>{{ $t('aiConfig.oneKeySeedanceStep1') }}<a href="https://workbench.ohmybb.xyz/" target="_blank" rel="noopener noreferrer" class="one-key-link">workbench.ohmybb.xyz</a></li>
-            <li><span v-html="$t('aiConfig.oneKeySeedanceStep2')"></span></li>
-            <li>{{ $t('aiConfig.oneKeySeedanceStep3') }}</li>
-          </ol>
-          <p class="one-key-note">{{ $t('aiConfig.oneKeySeedanceDoc') }}<a href="https://workbench.ohmybb.xyz/docs/api" target="_blank" rel="noopener noreferrer" class="one-key-link">workbench.ohmybb.xyz/docs/api</a></p>
-        </div>
-      </div>
-      <el-form label-width="0" style="margin-top: 8px">
-        <el-form-item>
-          <el-input
-            v-model="oneKeyCheapSeedance2Key"
-            type="password"
-            :placeholder="$t('aiConfig.oneKeySeedancePlaceholder')"
-            show-password-on="click"
-            clearable
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="oneKeyCheapSeedance2Visible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="success" :loading="oneKeyCheapSeedance2Saving" :disabled="!oneKeyCheapSeedance2Key.trim()" @click="submitOneKeyCheapSeedance2">
-          {{ $t('aiConfig.oneKeyConfirmBtn') }}
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- Quick setup Tongyi -->
-    <el-dialog
-      v-model="oneKeyTongyiVisible"
-      :title="$t('aiConfig.oneKeyTongyiTitle')"
-      width="520px"
-      :close-on-click-modal="false"
-      @closed="oneKeyTongyiKey = ''"
-    >
-      <div class="one-key-help">
-        <div class="one-key-section">
-          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyAutoCreateList') }}</div>
-          <ul class="one-key-list">
-            <li v-html="$t('aiConfig.oneKeyTongyiItem1')"></li>
-            <li v-html="$t('aiConfig.oneKeyTongyiItem2')"></li>
-            <li v-html="$t('aiConfig.oneKeyTongyiItem3')"></li>
-            <li v-html="$t('aiConfig.oneKeyTongyiItem4')"></li>
-            <li v-html="$t('aiConfig.oneKeyTongyiItem5')"></li>
-          </ul>
-        </div>
-        <div class="one-key-section">
-          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyHowToApply') }}</div>
-          <ol class="one-key-list">
-            <li>{{ $t('aiConfig.oneKeyTongyiStep1') }}<a href="https://bailian.console.aliyun.com/" target="_blank" class="one-key-link">bailian.console.aliyun.com</a></li>
-            <li>{{ $t('aiConfig.oneKeyTongyiStep2') }}</li>
-            <li>{{ $t('aiConfig.oneKeyTongyiStep3') }}</li>
-            <li><span v-html="$t('aiConfig.oneKeyTongyiStep4')"></span></li>
-          </ol>
-          <p class="one-key-note">{{ $t('aiConfig.oneKeyTongyiNote') }}</p>
-        </div>
-      </div>
-      <el-form label-width="0" style="margin-top: 8px">
-        <el-form-item>
-          <el-input
-            v-model="oneKeyTongyiKey"
-            type="password"
-            :placeholder="$t('aiConfig.oneKeyTongyiPlaceholder')"
-            show-password-on="click"
-            clearable
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="oneKeyTongyiVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="success" :loading="oneKeyTongyiSaving" :disabled="!oneKeyTongyiKey.trim()" @click="submitOneKeyTongyi">
-          {{ $t('aiConfig.oneKeyConfirmBtn') }}
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- Quick setup Volcengine -->
-    <el-dialog
-      v-model="oneKeyVolcVisible"
-      :title="$t('aiConfig.oneKeyVolcTitle')"
-      width="520px"
-      :close-on-click-modal="false"
-      @closed="oneKeyVolcKey = ''"
-    >
-      <div class="one-key-help">
-        <div class="one-key-section">
-          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyAutoCreateList') }}</div>
-          <ul class="one-key-list">
-            <li v-html="$t('aiConfig.oneKeyVolcItem1')"></li>
-            <li v-html="$t('aiConfig.oneKeyVolcItem2')"></li>
-            <li v-html="$t('aiConfig.oneKeyVolcItem3')"></li>
-            <li v-html="$t('aiConfig.oneKeyVolcItem4')"></li>
-          </ul>
-        </div>
-        <div class="one-key-section">
-          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyHowToApply') }}</div>
-          <ol class="one-key-list">
-            <li>{{ $t('aiConfig.oneKeyVolcStep1') }}<a href="https://console.volcengine.com/ark" target="_blank" class="one-key-link">console.volcengine.com/ark</a></li>
-            <li>{{ $t('aiConfig.oneKeyVolcStep2') }}</li>
-            <li>{{ $t('aiConfig.oneKeyVolcStep3') }}</li>
-            <li>{{ $t('aiConfig.oneKeyVolcStep4') }}</li>
-          </ol>
-          <p class="one-key-note">{{ $t('aiConfig.oneKeyVolcNote') }}</p>
-          <p class="one-key-note">{{ $t('aiConfig.oneKeyVolcWarning') }}</p>
-        </div>
-      </div>
-      <el-form label-width="0" style="margin-top: 8px">
-        <el-form-item>
-          <el-input
-            v-model="oneKeyVolcKey"
-            type="password"
-            :placeholder="$t('aiConfig.oneKeyVolcPlaceholder')"
-            show-password-on="click"
-            clearable
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="oneKeyVolcVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="success" :loading="oneKeyVolcSaving" :disabled="!oneKeyVolcKey.trim()" @click="submitOneKeyVolc">
-          {{ $t('aiConfig.oneKeyConfirmBtn') }}
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- Quick setup Agnes -->
-    <el-dialog
-      v-model="oneKeyAgnesVisible"
-      :title="$t('aiConfig.oneKeyAgnesTitle')"
-      width="520px"
-      :close-on-click-modal="false"
-      @closed="oneKeyAgnesKey = ''"
-    >
-      <div class="one-key-help">
-        <div class="one-key-section">
-          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyAutoCreateList') }}</div>
-          <ul class="one-key-list">
-            <li v-html="$t('aiConfig.oneKeyAgnesItem1')"></li>
-            <li v-html="$t('aiConfig.oneKeyAgnesItem2')"></li>
-            <li v-html="$t('aiConfig.oneKeyAgnesItem3')"></li>
-            <li v-html="$t('aiConfig.oneKeyAgnesItem4')"></li>
-          </ul>
-        </div>
-        <div class="one-key-section">
-          <div class="one-key-section-title">{{ $t('aiConfig.oneKeyHowToApply') }}</div>
-          <ol class="one-key-list">
-            <li>{{ $t('aiConfig.oneKeyAgnesStep1') }}<a href="https://platform.agnes-ai.com/settings/apiKeys" target="_blank" class="one-key-link">platform.agnes-ai.com/settings/apiKeys</a></li>
-            <li>{{ $t('aiConfig.oneKeyAgnesStep2') }}</li>
-            <li>{{ $t('aiConfig.oneKeyAgnesStep3') }}</li>
-            <li>{{ $t('aiConfig.oneKeyAgnesStep4') }}</li>
-          </ol>
-          <p class="one-key-note"><span v-html="$t('aiConfig.oneKeyAgnesNote')"></span></p>
-        </div>
-      </div>
-      <el-form label-width="0" style="margin-top: 8px">
-        <el-form-item>
-          <el-input
-            v-model="oneKeyAgnesKey"
-            type="password"
-            :placeholder="$t('aiConfig.oneKeyAgnesPlaceholder')"
-            show-password-on="click"
-            clearable
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="oneKeyAgnesVisible = false">{{ $t('common.cancel') }}</el-button>
-        <el-button type="success" :loading="oneKeyAgnesSaving" :disabled="!oneKeyAgnesKey.trim()" @click="submitOneKeyAgnes">
-          {{ $t('aiConfig.oneKeyConfirmBtn') }}
-        </el-button>
-      </template>
-    </el-dialog>
+      @submit="submit"
+      @service-type-change="onServiceTypeChange"
+      @provider-change="onProviderChange"
+      @preset-model-select="onPresetModelSelect"
+      @open-jimeng-assets="openJimeng2MaterialAssetsDialog"
+    />
 
     <!-- Jimeng 2 Auth: asset list -->
     <el-dialog
@@ -1140,14 +210,29 @@ input_reference = (image file, optional)</pre>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from '@/i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, MagicStick, QuestionFilled, Download, Upload, Delete, ChatDotRound, Picture, Film, VideoCamera, Key, Microphone, Folder } from '@element-plus/icons-vue'
+import { QuestionFilled } from '@element-plus/icons-vue'
 import { aiAPI } from '@/api/ai'
-import { generationSettingsAPI } from '@/api/prompts'
+import { contentLanguageAPI, generationSettingsAPI } from '@/api/prompts'
 import PromptEditor from '@/components/PromptEditor.vue'
 import SceneModelMap from '@/components/SceneModelMap.vue'
 import Sd2AssetManagement from '@/components/Sd2AssetManagement.vue'
+import ConfigTable from '@/components/aiConfig/ConfigTable.vue'
+import GenerationSettings from '@/components/aiConfig/GenerationSettings.vue'
+import VendorLockBanner from '@/components/aiConfig/VendorLockBanner.vue'
+import ProviderPresets from '@/components/aiConfig/ProviderPresets.vue'
+import ConfigEditDialog from '@/components/aiConfig/ConfigEditDialog.vue'
 
 const { t, te } = useI18n()
+
+function openProviderPreset(kind) {
+  const actions = {
+    volc: openOneKeyVolc,
+    agnes: openOneKeyAgnes,
+    tongyi: openOneKeyTongyi,
+    cheapSeedance2: openOneKeyCheapSeedance2,
+  }
+  actions[kind]?.()
+}
 
 const activeTab = ref('configs')
 const importFileRef = ref(null)
@@ -1157,6 +242,8 @@ const genConcurrencyInput = ref(3)
 const genVideoConcurrencyInput = ref(3)
 const genSettingSaving = ref(false)
 const genSettingSaved = ref(false)
+const contentLanguage = ref('zh')
+const contentLanguageSaved = ref(false)
 
 async function loadGenerationSettings() {
   try {
@@ -1164,6 +251,21 @@ async function loadGenerationSettings() {
     genConcurrencyInput.value = res?.concurrency ?? 3
     genVideoConcurrencyInput.value = res?.video_concurrency ?? 3
   } catch (_) {}
+  try {
+    const res = await contentLanguageAPI.get()
+    contentLanguage.value = res?.language || 'zh'
+  } catch (_) {}
+}
+
+async function saveContentLanguage(language) {
+  try {
+    await contentLanguageAPI.update(language)
+    contentLanguageSaved.value = true
+    setTimeout(() => { contentLanguageSaved.value = false }, 2200)
+  } catch (e) {
+    ElMessage.error(e?.message || t('common.requestFailed'))
+    await loadGenerationSettings()
+  }
 }
 
 function onConcurrencyChange(val) {
@@ -1216,7 +318,7 @@ const jimeng2AssetsLoading = ref(false)
 const jimeng2AssetsRows = ref([])
 const jimeng2AssetsHasMore = ref(false)
 const jimeng2AssetsNextCursor = ref(null)
-const formRef = ref(null)
+const editDialogRef = ref(null)
 const form = ref({
   service_type: 'text',
   name: '',
@@ -1360,6 +462,7 @@ const providerConfigs = {
     { id: 'nano_banana', name: 'NanoBanana', models: ['nano-banana-2', 'nano-banana-pro', 'nano-banana'] },
     // { id: 'chatfire', name: 'Chatfire', models: ['nano-banana-pro', 'doubao-seedream-4-5-251128', 'qwen-image'] },
     { id: 'gemini', name: 'Google Gemini', models: ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview', 'gemini-3.1-flash-image-preview', 'gemini-3-pro-image-preview'] },
+    { id: 'flow2api', name: 'flow2api (Local Gemini Proxy)', models: ['gemini-3.1-flash-image', 'gemini-3.0-pro-image', 'imagen-4.0-generate-preview'] },
     { id: 'openai', name: 'OpenAI', models: ['dall-e-3', 'dall-e-2'] },
     { id: 'dashscope', name: 'DashScope', models: ['wan2.6-image', 'qwen-image-edit-plus-2026-01-09', 'qwen-image-edit-plus', 'qwen-image-edit-max'] },
     { id: 'qwen_image', name: 'Qwen', models: ['qwen-image-3.0', 'qwen-image-3.0-pro'] },
@@ -1372,6 +475,7 @@ const providerConfigs = {
     { id: 'nano_banana', name: 'NanoBanana', models: ['nano-banana-2', 'nano-banana-pro', 'nano-banana'] },
     // { id: 'chatfire', name: 'Chatfire', models: ['nano-banana-pro', 'doubao-seedream-4-5-251128', 'qwen-image'] },
     { id: 'gemini', name: 'Google Gemini', models: ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview', 'gemini-3.1-flash-image-preview', 'gemini-3-pro-image-preview'] },
+    { id: 'flow2api', name: 'flow2api (Local Gemini Proxy)', models: ['gemini-3.1-flash-image', 'gemini-3.0-pro-image', 'imagen-4.0-generate-preview'] },
     { id: 'openai', name: 'OpenAI', models: ['dall-e-3', 'dall-e-2'] },
     { id: 'agnes', name: 'Agnes AI', models: ['agnes-image-2.5-flash', 'agnes-image-2.1-flash', 'agnes-image-2.0-flash'] }
   ],
@@ -1390,6 +494,7 @@ const providerConfigs = {
     { id: 'minimax_h3', name: 'MiniMax H3', models: ['MiniMax-H3'] },
     { id: 'minimax', name: 'MiniMax Hailuo', models: ['MiniMax-Hailuo-2.3', 'MiniMax-Hailuo-2.3-Fast', 'MiniMax-Hailuo-02'] },
     { id: 'gemini', name: 'Google Gemini (Veo)', models: ['veo-3.1-generate-preview', 'veo-3.0-generate-preview', 'veo-3.0-fast-generate-preview'] },
+    { id: 'flow2api', name: 'flow2api (Local Gemini Proxy)', models: ['Veo 3.1 - Lite', 'Veo 3.1 - Fast', 'Veo 3.1 - Quality', 'Omni 1.1 Flash', 'Omni 1.2 Flash'] },
     { id: 'dashscope', name: 'DashScope', models: ['wan2.6-r2v-flash', 'wan2.6-t2v', 'wan2.2-kf2v-flash', 'wan2.6-i2v-flash', 'wanx2.1-vace-plus'] },
     {
       id: 'jimeng_ai_api',
@@ -1426,6 +531,7 @@ const providerProtocolMap = {
   qwen_image: 'dashscope',
   gemini: 'gemini',
   google: 'gemini',
+  flow2api: 'gemini',
   kling: 'kling',
   ffir: 'kling_omni',
   klingai: 'kling_omni',
@@ -1450,6 +556,7 @@ function getBaseUrlForProvider(provider) {
   if (!provider) return ''
   const p = String(provider).toLowerCase()
   if (p === 'gemini' || p === 'google') return 'https://generativelanguage.googleapis.com'
+  if (p === 'flow2api') return 'http://127.0.0.1:8000'
   if (p === 'minimax_h3') return 'https://api.minimaxi.com'
   if (p === 'minimax') return 'https://api.minimaxi.com/v1'
   if (p === 'volces' || p === 'volcengine') return 'https://ark.cn-beijing.volces.com/api/v3'
@@ -1841,6 +948,7 @@ function resetForm() {
     query_endpoint: '',
     modelText: '',
     default_model: '',
+    cost_per_call: 0,
     deepseek_thinking: 'disabled',
     deepseek_reasoning_effort: 'high',
     priority: 0,
@@ -1852,7 +960,7 @@ function resetForm() {
     kling_secret_key: '',
     kling_secret_key_base64: false,
   }
-  formRef.value?.resetFields?.()
+  editDialogRef.value?.resetFields?.()
 }
 
 function openAdd() {
@@ -1873,9 +981,11 @@ function openEdit(row) {
   let kling_secret_key_base64 = false
   let supports_universal_omni = false
   const deepseekSettings = resolveDeepSeekFormSettings(row)
+  const parsedSettings = parseSettings(row.settings)
+  let cost_per_call = Number(parsedSettings.cost_per_call) || 0
   if (row.settings) {
     try {
-      const s = JSON.parse(row.settings)
+      const s = parsedSettings
       if (row.service_type === 'tts') {
         voice_id = s.voice_id || voice_id
         group_id = s.group_id || group_id
@@ -1906,6 +1016,7 @@ function openEdit(row) {
     query_endpoint: row.query_endpoint || '',
     modelText: modelList.join('\n'),
     default_model: defaultInList ? row.default_model : (modelList[0] || ''),
+    cost_per_call,
     deepseek_thinking: deepseekSettings.thinking,
     deepseek_reasoning_effort: deepseekSettings.effort,
     priority: row.priority ?? 0,
@@ -1921,7 +1032,7 @@ function openEdit(row) {
 }
 
 async function submit() {
-  await formRef.value?.validate?.().catch(() => {})
+  await editDialogRef.value?.validate?.().catch(() => {})
   saving.value = true
   try {
     let modelList = parseModelText(form.value.modelText)
@@ -1931,23 +1042,20 @@ async function submit() {
     const defaultModel = form.value.default_model && modelList.includes(form.value.default_model)
       ? form.value.default_model
       : modelList[0] || null
-    // Settings mapping for TTS / Kling Omni / DeepSeek V4 / Video Omni multi-ref
-    let settings = undefined
+    // Settings mapping for cost / TTS / Kling Omni / DeepSeek V4 / Video Omni multi-ref
+    const prev = editingId.value ? list.value.find((r) => r.id === editingId.value) : null
+    const baseS = parseSettings(prev?.settings)
+    if (form.value.cost_per_call != null && Number(form.value.cost_per_call) > 0) {
+      baseS.cost_per_call = Number(form.value.cost_per_call)
+    } else {
+      delete baseS.cost_per_call
+    }
     if (form.value.service_type === 'tts') {
-      const s = {}
-      if (form.value.voice_id) s.voice_id = form.value.voice_id
-      if (form.value.group_id) s.group_id = form.value.group_id
-      settings = Object.keys(s).length ? JSON.stringify(s) : null
+      if (form.value.voice_id) baseS.voice_id = form.value.voice_id
+      else delete baseS.voice_id
+      if (form.value.group_id) baseS.group_id = form.value.group_id
+      else delete baseS.group_id
     } else if (form.value.service_type === 'video') {
-      let baseS = {}
-      if (editingId.value) {
-        const prev = list.value.find((r) => r.id === editingId.value)
-        if (prev?.settings) {
-          try {
-            baseS = JSON.parse(prev.settings)
-          } catch (_) {}
-        }
-      }
       if (form.value.api_protocol === 'kling_omni') {
         if ((form.value.kling_access_key || '').trim()) baseS.kling_access_key = form.value.kling_access_key.trim()
         else delete baseS.kling_access_key
@@ -1958,18 +1066,15 @@ async function submit() {
       }
       if (form.value.supports_universal_omni) baseS.supports_universal_omni = true
       else delete baseS.supports_universal_omni
-      settings = Object.keys(baseS).length ? JSON.stringify(baseS) : null
     } else if (isDeepSeekOfficialForm.value) {
-      const prev = editingId.value ? list.value.find((r) => r.id === editingId.value) : null
-      const baseS = parseSettings(prev?.settings)
       baseS.deepseek_thinking = form.value.deepseek_thinking === 'enabled' ? 'enabled' : 'disabled'
       if (baseS.deepseek_thinking === 'enabled') {
         baseS.deepseek_reasoning_effort = form.value.deepseek_reasoning_effort === 'max' ? 'max' : 'high'
       } else {
         delete baseS.deepseek_reasoning_effort
       }
-      settings = Object.keys(baseS).length ? JSON.stringify(baseS) : null
     }
+    const settings = Object.keys(baseS).length ? JSON.stringify(baseS) : null
     const payload = {
       service_type: form.value.service_type,
       name: form.value.name,
@@ -2366,7 +1471,7 @@ onMounted(() => {
   border-top: 1px solid var(--el-border-color-light, #e4e7ed);
   margin-top: 4px;
   padding-top: 4px;
-  color: var(--el-color-primary, #409eff) !important;
+  color: var(--el-color-primary) !important;
   font-style: italic;
 }
 </style>
@@ -2487,7 +1592,7 @@ onMounted(() => {
 }
 .one-key-tip {
   margin: 0 0 12px;
-  color: #606266;
+  color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -2522,14 +1627,14 @@ onMounted(() => {
   margin: 0;
   padding-left: 20px;
   font-size: 13px;
-  color: var(--el-text-color-regular, #606266);
+  color: var(--text-secondary);
   line-height: 1.8;
 }
 .one-key-list li {
   margin-bottom: 2px;
 }
 .one-key-link {
-  color: var(--el-color-primary, #409eff);
+  color: var(--el-color-primary);
   text-decoration: none;
 }
 .one-key-link:hover {
@@ -2538,7 +1643,7 @@ onMounted(() => {
 .one-key-note {
   margin: 6px 0 0;
   font-size: 12px;
-  color: var(--el-text-color-secondary, #909399);
+  color: var(--text-subtle);
   line-height: 1.5;
 }
 .one-key-note + .one-key-note {
@@ -2595,7 +1700,7 @@ code {
 .field-tip {
   margin: 6px 0 0;
   font-size: 12px;
-  color: #909399;
+  color: var(--text-subtle);
   line-height: 1.4;
 }
 .form-label-tip {
@@ -2607,7 +1712,7 @@ code {
 .ph-section-title {
   font-size: 13px;
   font-weight: 600;
-  color: #606266;
+  color: var(--text-secondary);
   padding: 4px 0 6px;
   border-bottom: 1px solid #ebeef5;
   margin-bottom: 4px;
@@ -2623,7 +1728,7 @@ code {
 }
 .ph-tag-img {
   background: #ecf5ff;
-  color: #409eff;
+  color: var(--el-color-primary);
   border: 1px solid #b3d8ff;
 }
 .ph-tag-vid {
@@ -2635,7 +1740,7 @@ code {
   margin: 0 0 16px;
 }
 .cheap-seedance2-link {
-  color: #409eff;
+  color: var(--el-color-primary);
   text-decoration: underline;
   font-weight: 600;
 }
@@ -2666,13 +1771,13 @@ code {
 }
 .tip-icon {
   font-size: 13px;
-  color: #909399;
+  color: var(--text-subtle);
   cursor: pointer;
   flex-shrink: 0;
   transition: color 0.15s;
 }
 .tip-icon:hover {
-  color: #409eff;
+  color: var(--el-color-primary);
 }
 .endpoint-preview-box {
   background: #f0f7ff;
@@ -2687,13 +1792,13 @@ code {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  color: #409eff;
+  color: var(--el-color-primary);
   margin-bottom: 8px;
   font-size: 12px;
 }
 .ep-auto-badge {
   background: #e6f1ff;
-  color: #409eff;
+  color: var(--el-color-primary);
   border: 1px solid #b3d8ff;
   border-radius: 3px;
   padding: 0 5px;
@@ -2712,7 +1817,7 @@ code {
 }
 .ep-label {
   flex-shrink: 0;
-  color: #606266;
+  color: var(--text-secondary);
   min-width: 68px;
 }
 .ep-url {
@@ -2729,7 +1834,7 @@ code {
 .ep-tip {
   margin: 8px 0 0;
   font-size: 11px;
-  color: #909399;
+  color: var(--text-subtle);
   line-height: 1.4;
 }
 .ep-tip-warn {
@@ -2750,6 +1855,8 @@ code {
 .generation-settings {
   max-width: 600px;
 }
+.content-language-title { margin-top: 28px; }
+.content-language-select { width: min(240px, 48vw); min-width: 150px; }
 .gs-section-title {
   font-size: 14px;
   font-weight: 600;
@@ -2758,7 +1865,7 @@ code {
 }
 .gs-desc {
   font-size: 13px;
-  color: #606266;
+  color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 20px;
 }
@@ -2776,7 +1883,7 @@ code {
 }
 .gs-unit {
   font-size: 13px;
-  color: #606266;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 .gs-tip-box {
@@ -2794,11 +1901,11 @@ code {
 .gs-tip-list {
   margin: 0 0 8px 16px;
   padding: 0;
-  color: #606266;
+  color: var(--text-secondary);
   line-height: 1.8;
 }
 .gs-tip-note {
-  color: #909399;
+  color: var(--text-subtle);
   font-size: 12px;
 }
 </style>
