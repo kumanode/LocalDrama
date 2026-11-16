@@ -276,11 +276,9 @@ import { useProjectScript } from '@/composables/filmCreate/useProjectScript'
 import { useResourceAssets } from '@/composables/filmCreate/useResourceAssets'
 import { useNarration } from '@/composables/filmCreate/useNarration'
 import { usePipeline } from '@/composables/filmCreate/usePipeline'
-import { useStoryboards } from '@/composables/filmCreate/useStoryboards'
-import { useStoryboardAssociations } from '@/composables/filmCreate/useStoryboardAssociations'
+import { useStoryboardData } from '@/composables/filmCreate/useStoryboardData'
 import { useMergeExport } from '@/composables/filmCreate/useMergeExport'
 import { useStoryboardPrompts } from '@/composables/filmCreate/useStoryboardPrompts'
-import { useTaskPolling } from '@/composables/filmCreate/useTaskPolling'
 import { useGenerationStyle } from '@/composables/filmCreate/useGenerationStyle'
 import { useStoryboardStudio } from '@/composables/filmCreate/useStoryboardStudio'
 
@@ -578,7 +576,7 @@ const storyboardUseFirstLastFrame = ref(false)
 const lastFrameUseFirstLayoutLock = ref(true)
 const gridMode = ref('single') // 序列图模式：single / quad_grid / nine_grid
 
-// ── Composable: Storyboards ───────────────────────────
+// ── Composable: Storyboard Data (Base, Polling, Associations) ──
 const {
   sbImages,
   sbVideos,
@@ -643,42 +641,12 @@ const {
   onSbImageFileChange,
   recordHasPlayableVideoUrl,
   resolveSbImageById,
-} = useStoryboards({
-  store,
-  dramaId,
-  currentEpisodeId,
-  storyboardUseFirstLastFrame,
-  isSbUniversalMode,
-  genStore,
-})
-
-// ── Composable: Task Polling ──────────────────────────
-const {
   getGeneratingSetsBag,
   buildSbGenMeta,
   resolvePollMeta,
   pollTask,
   pollUntilResourceHasImage,
   recoverAndSyncEpisodeTasks,
-} = useTaskPolling({
-  store,
-  dramaId,
-  currentEpisodeId,
-  genStore,
-  loadDrama: (...args) => loadDrama(...args),
-  loadSingleStoryboardMedia: (...args) => loadSingleStoryboardMedia(...args),
-  generatingCharIds,
-  generatingPropIds,
-  generatingSceneIds,
-  generatingSbImageIds,
-  generatingSbFirstImageIds,
-  generatingSbLastImageIds,
-  generatingSbVideoIds,
-  videoErrorMsg,
-})
-
-// ── Composable: Storyboard Associations ───────────────
-const {
   sbCharacterIds,
   sbPropIds,
   sbSceneId,
@@ -703,20 +671,25 @@ const {
   scrollToStoryboard,
   onRegenAffectedSbImages,
   syncAssociationsFromEpisode,
-} = useStoryboardAssociations({
+} = useStoryboardData({
+  store,
+  dramaId,
+  currentEpisodeId,
+  storyboardUseFirstLastFrame,
+  isSbUniversalMode,
+  genStore,
+  loadDrama: (...args) => loadDrama(...args),
+  generatingCharIds,
+  generatingPropIds,
+  generatingSceneIds,
+  videoErrorMsg,
   storyboards,
   characters,
   props,
   scenes,
-  dramaId,
-  storyboardUseFirstLastFrame,
-  isSbUniversalMode,
   ensureProfessionalFramePrompt: (...args) => ensureProfessionalFramePrompt(...args),
   getSelectedStyle,
   projectAspectRatio,
-  pollTask,
-  loadSingleStoryboardMedia,
-  sbSelectedImgId,
 })
 
 // ── Composable: Project Script & Settings ─────────────
