@@ -25,6 +25,61 @@ function getTasksByResource(db, resourceId) {
   return rows.map(rowToTask);
 }
 
+/**
+ * resource_id means different things per task type (drama, episode, storyboard, prop, "character_12", ...).
+ * Resolve the owning drama so clients can filter tasks per project. Best effort: null when unknown.
+ */
+function resolveDramaId(db, task) {
+  const rid = String(task.resource_id || '');
+  const num = (v) => {
+    const n = Number(v);
+    return Number.isInteger(n) && n > 0 ? n : null;
+  };
+  const one = (sql, param) => {
+    if (param == null) return null;
+    try {
+      const row = db.prepare(sql).get(param);
+      return row && row.drama_id ? Number(row.drama_id) : null;
+    } catch (_) {
+      return null;
+    }
+  };
+  switch (task.type) {
+    case 'video_generation':
+      return one('SELECT drama_id FROM video_generations WHERE task_id = ?', task.id) ?? num(rid);
+    case 'background_extraction':
+    case 'prop_extraction':
+    case 'storyboard_generation':
+    case 'video_merge':
+      return one('SELECT drama_id FROM episodes WHERE id = ?', num(rid));
+    case 'frame_prompt_generation':
+      return one(
+        'SELECT e.drama_id AS drama_id FROM storyboards s JOIN episodes e ON e.id = s.episode_id WHERE s.id = ?',
+        num(rid)
+      );
+    case 'prop_image_generation':
+      return one('SELECT drama_id FROM props WHERE id = ?', num(rid));
+    case 'image_generation': {
+      const m = /^(character|scene)_(\d+)$/.exec(rid);
+      if (m) return one(`SELECT drama_id FROM ${m[1]}s WHERE id = ?`, Number(m[2]));
+      return num(rid);
+    }
+    default:
+      return num(rid);
+  }
+}
+
+function getRecentTasks(db, limit = 200) {
+  const safeLimit = Math.max(1, Math.min(500, Math.floor(Number(limit) || 200)));
+  const rows = db.prepare(
+    'SELECT * FROM async_tasks WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT ?'
+  ).all(safeLimit);
+  return rows.map((row) => {
+    const task = rowToTask(row);
+    return { ...task, drama_id: resolveDramaId(db, task) };
+  });
+}
+
 function updateTaskStatus(db, taskId, status, progress, message) {
   const now = new Date().toISOString();
   let completedAt = null;
@@ -118,11 +173,13 @@ module.exports = {
   createTask,
   getTask,
   getTasksByResource,
+  getRecentTasks,
   updateTaskStatus,
   updateTaskError,
   updateTaskResult,
   failOrphanedAsyncTasksOnStartup,
   cancelTask,
+  resolveDramaId,
   ORPHAN_ASYNC_TASK_MSG,
   USER_CANCEL_TASK_MSG,
 };

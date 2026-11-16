@@ -18,16 +18,42 @@ function mockRes() {
   return {
     statusCode: 200,
     body: null,
+    chunks: '',
     writableEnded: false,
     status(code) { this.statusCode = code; return this; },
     json(body) { this.body = body; return this; },
     setHeader() {},
-    write() { return true; },
+    write(chunk) { this.chunks += chunk; return true; },
     end() { this.writableEnded = true; },
   };
 }
 
 describe('agent routes', () => {
+  it('sends localized error codes over SSE instead of provider error text', async () => {
+    const db = createAgentTestDb();
+    seedTwoDramas(db);
+    db.prepare(`INSERT INTO ai_service_configs
+      (id, service_type, base_url, api_key, model, default_model, is_default, is_active)
+      VALUES (1, 'text', 'http://localhost/v1', 'test-key', '["test-model"]', 'test-model', 1, 1)`).run();
+    const runtime = {
+      isAgentReady: () => true,
+      streamChat: async () => { throw new Error('模型服务失败'); },
+      resumeApproval: async () => { throw new Error('确认执行失败'); },
+      getHistory: async () => ({ messages: [], pendingApprovals: [{ runId: 'run-1', toolCallId: 'call-1' }] }),
+    };
+    const handlers = createAgentHandlers(db, console, runtime);
+    const chatRes = mockRes();
+    await handlers.chat({ body: { dramaId: 1, episodeId: 11, message: 'hello' } }, chatRes);
+    assert.match(chatRes.chunks, /"code":"DIALOGUE_FAILED"/);
+    assert.doesNotMatch(chatRes.chunks, /模型服务失败/);
+
+    const approveRes = mockRes();
+    await handlers.approve({ body: { dramaId: 1, runId: 'run-1', toolCallId: 'call-1' } }, approveRes);
+    assert.match(approveRes.chunks, /"code":"CONFIRMATION_FAILED"/);
+    assert.doesNotMatch(approveRes.chunks, /确认执行失败/);
+    db.close();
+  });
+
   it('answers before the assistant is ready and keeps drama checks', async () => {
     const db = createAgentTestDb();
     seedTwoDramas(db);

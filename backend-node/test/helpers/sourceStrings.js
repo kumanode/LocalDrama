@@ -81,7 +81,7 @@ function walkSourceFiles(dir, acc = []) {
 }
 
 // Only strings that actually reach the user: response helpers and thrown errors.
-const USER_FACING_CALL = /(?:response\.(?:badRequest|notFound|error|forbidden|internalError|serviceUnavailable)|throw\s+new\s+Error)\s*\(/g
+const USER_FACING_CALL = /(?:response\.(?:badRequest|notFound|error|forbidden|internalError|serviceUnavailable)|writeSse|writeNd|throw\s+new\s+Error)\s*\(/g
 
 function extractCall(source, openParenIndex) {
   let depth = 0

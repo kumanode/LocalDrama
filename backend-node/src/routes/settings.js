@@ -75,6 +75,16 @@ function updateGenerationSettings(db) {
   };
 }
 
+function getSystemStatus() {
+  return (req, res) => {
+    const { hasLocalFfmpeg, getFfmpegPath } = require('../utils/ffmpegPath');
+    response.success(res, {
+      ffmpeg: hasLocalFfmpeg(),
+      ffmpeg_path: getFfmpegPath(),
+    });
+  };
+}
+
 module.exports = function settingsRoutes(db, cfg, log) {
   return {
     getLanguage: getLanguage(cfg),
@@ -83,5 +93,6 @@ module.exports = function settingsRoutes(db, cfg, log) {
     updateContentLanguage: updateContentLanguage(cfg, log),
     getGenerationSettings: getGenerationSettings(db),
     updateGenerationSettings: updateGenerationSettings(db),
+    getSystemStatus: getSystemStatus(),
   };
 };

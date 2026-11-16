@@ -8,63 +8,89 @@ const PROMPT_META = [
     key: 'story_expansion_system',
     label: '故事生成提示词',
     description: '控制 AI 如何将故事梗概扩写成完整剧本',
+    label_en: 'Story generation prompt',
+    description_en: 'Controls how the AI expands a story premise into a full script',
   },
   {
     key: 'storyboard_system',
     label: '分镜拆解提示词',
     description: '控制 AI 如何将剧本拆分成分镜头方案（输出格式要求已锁定）',
+    label_en: 'Storyboard breakdown prompt',
+    description_en: 'Controls how the AI splits a script into storyboard shots (output format is locked)',
   },
   {
     key: 'character_extraction',
     label: '角色提取提示词',
     description: '控制 AI 如何从剧本中提取角色信息（输出格式要求已锁定）',
+    label_en: 'Character extraction prompt',
+    description_en: 'Controls how the AI extracts character details from the script (output format is locked)',
   },
   {
     key: 'scene_extraction',
     label: '场景提取提示词',
     description: '控制 AI 如何从剧本中提取场景背景（风格/比例和输出格式已锁定）',
+    label_en: 'Scene extraction prompt',
+    description_en: 'Controls how the AI extracts scene backgrounds from the script (style, ratio and output format are locked)',
   },
   {
     key: 'prop_extraction',
     label: '道具提取提示词',
     description: '控制 AI 如何从剧本中提取关键道具（风格/比例和输出格式已锁定）',
+    label_en: 'Prop extraction prompt',
+    description_en: 'Controls how the AI extracts key props from the script (style, ratio and output format are locked)',
   },
   {
     key: 'storyboard_user_suffix',
     label: '分镜输出格式要求',
     description: '追加在分镜拆解用户提示词末尾的详细要素说明（JSON 输出格式已锁定）',
+    label_en: 'Storyboard output requirements',
+    description_en: 'Detailed requirements appended to the storyboard breakdown user prompt (JSON output format is locked)',
   },
   {
     key: 'first_frame_prompt',
     label: '首帧图像提示词',
     description: '控制 AI 如何生成分镜首帧（动作前静态画面）的图像提示词（风格/比例和 JSON 格式已锁定）',
+    label_en: 'First-frame image prompt',
+    description_en: 'Controls how the AI writes the image prompt for a shot\'s first frame, the static image before the action (style, ratio and JSON format are locked)',
   },
   {
     key: 'key_frame_prompt',
     label: '关键帧图像提示词',
     description: '控制 AI 如何生成分镜关键帧（动作高潮瞬间）的图像提示词（风格/比例和 JSON 格式已锁定）',
+    label_en: 'Key-frame image prompt',
+    description_en: 'Controls how the AI writes the image prompt for a shot\'s key frame, the peak moment of the action (style, ratio and JSON format are locked)',
   },
   {
     key: 'last_frame_prompt',
     label: '尾帧图像提示词',
     description: '控制 AI 如何生成分镜尾帧（动作后静态画面）的图像提示词（风格/比例和 JSON 格式已锁定）',
+    label_en: 'Last-frame image prompt',
+    description_en: 'Controls how the AI writes the image prompt for a shot\'s last frame, the static image after the action (style, ratio and JSON format are locked)',
   },
 ];
 
 // default_body 和 locked_suffix 从 promptI18n 动态读取，确保与运行时提示词始终一致
-function getPromptDefinitions() {
+function getPromptDefinitions(lang = 'zh') {
+  const en = lang === 'en';
   return PROMPT_META.map((m) => ({
-    ...m,
-    default_body: promptI18n.getDefaultPromptBody(m.key),
-    locked_suffix: promptI18n.getLockedSuffix(m.key),
+    key: m.key,
+    label: en ? m.label_en : m.label,
+    description: en ? m.description_en : m.description,
+    default_body: promptI18n.getDefaultPromptBody(m.key, lang),
+    locked_suffix: promptI18n.getLockedSuffix(m.key, lang),
   }));
+}
+
+function reqLang(req) {
+  const h = req && req.headers && req.headers['accept-language'];
+  return typeof h === 'string' && h.toLowerCase().startsWith('en') ? 'en' : 'zh';
 }
 
 function routes(db, log) {
   return {
     list: (req, res) => {
       try {
-        const defs = getPromptDefinitions();
+        const defs = getPromptDefinitions(reqLang(req));
         const overrides = promptOverridesService.listOverrides(db);
         const overrideMap = {};
         for (const o of overrides) overrideMap[o.key] = o.content;

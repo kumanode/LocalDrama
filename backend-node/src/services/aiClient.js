@@ -1,6 +1,7 @@
 // 与 Go pkg/ai + application/services/ai_service 对齐：读取 ai_service_configs，调用 OpenAI 兼容的 chat completions
 const aiConfigService = require('./aiConfigService');
 const { applyDeepSeekChatOptions } = require('./deepseekConfig');
+const promptI18n = require('./promptI18n');
 const { flattenModelIds, pickModelId, remapArkModelId } = require('./modelId');
 const https = require('https');
 const http = require('http');
@@ -373,6 +374,12 @@ async function retryTextAfterMaxTokensError({ log, tag, model, error, body, send
   return send(stripMaxTokensFromBody(body));
 }
 
+// Live config object (shared with the settings routes, which mutate content_language in memory).
+let _runtimeCfg = null;
+function setRuntimeConfig(cfg) {
+  _runtimeCfg = cfg;
+}
+
 async function generateText(db, log, serviceType, userPrompt, systemPrompt, options = {}) {
   const { model: preferredModel, temperature = 0.7, json_mode = false, min_max_tokens = null, streamCallback = null, scene_key = null } = options;
 
@@ -392,6 +399,10 @@ async function generateText(db, log, serviceType, userPrompt, systemPrompt, opti
     config = preferredModel
       ? getConfigForModel(db, serviceType, preferredModel)
       : getDefaultConfig(db, serviceType);
+  }
+  const contentLanguage = (require('../config').loadConfig()?.app?.content_language || '').toLowerCase();
+  if (contentLanguage === 'id') {
+    systemPrompt = `${systemPrompt || ''}\n\nCONTENT LANGUAGE: Write all user-facing narrative and generated prompt text in Bahasa Indonesia. Preserve required JSON keys, code, names, and any explicitly requested source-language quotations.`;
   }
   if (!config && preferredModel === undefined) {
     // 兜底：如果前端传了 undefined，且没找到默认，尝试重新找一下（可能 serviceType 传值问题，或者数据库问题）
@@ -831,6 +842,7 @@ function isRefusalResponse(text) {
 }
 
 module.exports = {
+  setRuntimeConfig,
   getDefaultConfig,
   getConfigForModel,
   getConfigFromModelMap,

@@ -49,7 +49,15 @@ function routes(db, log) {
           } catch (_) {}
         }
         const resolution = body.resolution ?? null;
-        const seed = body.seed != null ? Number(body.seed) : null;
+        // A fixed seed saved on the storyboard applies to every generation of that shot, unless the request overrides it.
+        let seed = body.seed != null && body.seed !== '' ? Number(body.seed) : null;
+        if (seed == null && storyboardId) {
+          try {
+            const sbRow = db.prepare('SELECT seed FROM storyboards WHERE id = ? AND deleted_at IS NULL').get(storyboardId);
+            if (sbRow && sbRow.seed != null) seed = Number(sbRow.seed);
+          } catch (_) {}
+        }
+        if (seed != null && (!Number.isInteger(seed) || seed < 0)) seed = null;
         const cameraFixed = body.camera_fixed != null ? (body.camera_fixed ? 1 : 0) : null;
         const watermark = body.watermark != null ? (body.watermark ? 1 : 0) : 0;
         const imageUrl = body.image_url ?? null;

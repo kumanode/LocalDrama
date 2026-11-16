@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const response = require('../response');
+const { getErrorMessage } = require('../i18n/errors');
 const storyboardService = require('../services/storyboardService');
 const episodeStoryboardService = require('../services/episodeStoryboardService');
 const framePromptService = require('../services/framePromptService');
@@ -605,6 +606,10 @@ function routes(db, log) {
       if (typeof res.flushHeaders === 'function') res.flushHeaders();
 
       const writeNd = (obj) => {
+        if (obj.type === 'error' && obj.code) {
+          const language = req.headers?.['accept-language']?.toLowerCase().startsWith('en') ? 'en' : 'zh';
+          obj.message = getErrorMessage(obj.code, language);
+        }
         res.write(`${JSON.stringify(obj)}\n`);
       };
 
@@ -626,12 +631,12 @@ function routes(db, log) {
         );
       } catch (err) {
         log.error('storyboards generateUniversalSegmentStream', { error: err.message, id: sbId });
-        writeNd({ type: 'error', message: err.message || 'stream failed' });
+        writeNd({ type: 'error', code: 'GENERATION_FAILED' });
         return res.end();
       }
 
       if (!finalRaw || String(finalRaw).trim().length < 20) {
-        writeNd({ type: 'error', message: 'AI 返回内容过短，请检查文本模型配置' });
+        writeNd({ type: 'error', code: 'AI_OUTPUT_TOO_SHORT' });
         return res.end();
       }
       let text = String(finalRaw).trim();
@@ -727,6 +732,10 @@ function routes(db, log) {
       if (typeof res.flushHeaders === 'function') res.flushHeaders();
 
       const writeNd = (obj) => {
+        if (obj.type === 'error' && obj.code) {
+          const language = req.headers?.['accept-language']?.toLowerCase().startsWith('en') ? 'en' : 'zh';
+          obj.message = getErrorMessage(obj.code, language);
+        }
         res.write(`${JSON.stringify(obj)}\n`);
       };
 
@@ -748,12 +757,12 @@ function routes(db, log) {
         );
       } catch (err) {
         log.error('storyboards polishUniversalSegmentStream', { error: err.message, id: sbId });
-        writeNd({ type: 'error', message: err.message || 'stream failed' });
+        writeNd({ type: 'error', code: 'GENERATION_FAILED' });
         return res.end();
       }
 
       if (!finalRaw || String(finalRaw).trim().length < 20) {
-        writeNd({ type: 'error', message: 'AI 返回内容过短，请检查文本模型配置' });
+        writeNd({ type: 'error', code: 'AI_OUTPUT_TOO_SHORT' });
         return res.end();
       }
       let text = String(finalRaw).trim();
@@ -984,6 +993,10 @@ function routes(db, log) {
       if (typeof res.flushHeaders === 'function') res.flushHeaders();
 
       const writeNd = (obj) => {
+        if (obj.type === 'error' && obj.code) {
+          const language = req.headers?.['accept-language']?.toLowerCase().startsWith('en') ? 'en' : 'zh';
+          obj.message = getErrorMessage(obj.code, language);
+        }
         res.write(`${JSON.stringify(obj)}\n`);
       };
 
@@ -1005,12 +1018,12 @@ function routes(db, log) {
         );
       } catch (err) {
         log.error('storyboards polishClassicVideoPromptStream', { error: err.message, id: sbId });
-        writeNd({ type: 'error', message: err.message || 'stream failed' });
+        writeNd({ type: 'error', code: 'GENERATION_FAILED' });
         return res.end();
       }
 
       if (!finalRaw || String(finalRaw).trim().length < 12) {
-        writeNd({ type: 'error', message: 'AI 返回内容过短，请检查文本模型配置' });
+        writeNd({ type: 'error', code: 'AI_OUTPUT_TOO_SHORT' });
         return res.end();
       }
       const text = String(finalRaw).trim();

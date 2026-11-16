@@ -1457,9 +1457,13 @@ async function callGeminiImageApi(db, config, log, opts) {
   }
 
   if (fallbackFileUri) {
-    // ponytail: fileUri 返回 URL 而非 data URL，imageService 需确保下载到本地存储
+    // fileUri 返回 URL 而非 data URL；调用方 createAndGenerateImage 会用 uploadService.downloadImageToLocal
+    // 把它下载到本地存储（带重试）。相对路径（如 /tmp/xxx.png）需补上 flow2api 的 Base URL 才能下载。
+    const fileUri = /^https?:///i.test(fallbackFileUri) || fallbackFileUri.startsWith('data:')
+      ? fallbackFileUri
+      : base + (fallbackFileUri.startsWith('/') ? '' : '/') + fallbackFileUri;
     log.info('[Gemini图生] ✓ 成功（fileUri 兜底）', { image_gen_id, model: modelName, total_elapsed: elapsed() });
-    return { image_url: fallbackFileUri };
+    return { image_url: fileUri };
   }
 
   log.warn('[Gemini图生] ✗ 响应中无图片内容', { image_gen_id, candidates_count: candidates.length, raw_preview: raw.slice(0, 500), total_elapsed: elapsed() });

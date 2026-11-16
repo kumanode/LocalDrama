@@ -4,6 +4,14 @@ function writeSse(res, event) {
   res.write(`data: ${JSON.stringify(event)}\n\n`);
 }
 
+function writeAgentEvent(res, event, errorCode) {
+  if (event?.type === 'error') {
+    writeSse(res, { type: 'error', code: event.code || errorCode });
+    return;
+  }
+  writeSse(res, event);
+}
+
 function beginSse(res) {
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache');
@@ -56,10 +64,11 @@ function createAgentHandlers(db, log, runtime) {
         dramaId: parsed.dramaId,
         episodeId: parsed.episodeId,
         message: req.body.message,
-        writeEvent(event) { writeSse(res, event); },
+        writeEvent(event) { writeAgentEvent(res, event, 'DIALOGUE_FAILED'); },
       });
     } catch (err) {
-      writeSse(res, { type: 'error', message: err.message || '对话失败' });
+      log.error?.('Agent chat failed', { message: err?.message });
+      writeAgentEvent(res, { type: 'error' }, 'DIALOGUE_FAILED');
     }
     if (!res.writableEnded) res.end();
   }
@@ -79,10 +88,11 @@ function createAgentHandlers(db, log, runtime) {
         runId: body.runId,
         toolCallId: body.toolCallId,
         approved,
-        writeEvent(event) { writeSse(res, event); },
+        writeEvent(event) { writeAgentEvent(res, event, 'CONFIRMATION_FAILED'); },
       });
     } catch (err) {
-      writeSse(res, { type: 'error', message: err.message || '确认失败' });
+      log.error?.('Agent approval failed', { message: err?.message });
+      writeAgentEvent(res, { type: 'error' }, 'CONFIRMATION_FAILED');
     }
     if (!res.writableEnded) res.end();
   }

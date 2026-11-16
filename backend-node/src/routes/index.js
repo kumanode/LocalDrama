@@ -234,6 +234,7 @@ function setupRouter(cfg, db, log) {
   // ---------- tasks ----------
   r.get('/tasks/:task_id', task.getTaskStatus);
   r.post('/tasks/:task_id/cancel', task.cancelTaskStatus);
+  r.post('/tasks/:task_id/retry', task.retryTaskStatus);
   r.get('/tasks', task.getResourceTasks);
 
   // ---------- scenes ----------
@@ -312,6 +313,7 @@ function setupRouter(cfg, db, log) {
   r.post('/audio/extract/batch', audio.extractBatch);
 
   // ---------- settings ----------
+  r.get('/settings/system', settings.getSystemStatus);
   r.get('/settings/language', settings.getLanguage);
   r.put('/settings/language', settings.updateLanguage);
   r.get('/settings/content-language', settings.getContentLanguage);

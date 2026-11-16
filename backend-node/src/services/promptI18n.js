@@ -15,13 +15,56 @@ function clearOverrideInMemory(key) {
   delete _overrideCache[key];
 }
 
+// English prompt bodies are one template; the part from the marker onwards is the locked
+// output contract. A user override replaces only the editable part, like the zh branch does.
+let _bypassOverrides = false;
+
+const EN_LOCK_MARKERS = {
+  character_extraction: '\n- **Style Requirement**',
+  storyboard_system: '\n**CRITICAL: Return ONLY a valid JSON array',
+  storyboard_user_suffix: '\n\n**Output**: JSON with',
+  first_frame_prompt: '\n- **Style Requirement**',
+  key_frame_prompt: '\n- **Style Requirement**',
+  last_frame_prompt: '\n- **Style Requirement**',
+  prop_extraction: '\n- **Style Requirement**',
+  scene_extraction: '\n   - **Style Requirement**',
+};
+
+function splitEnLocked(key, full) {
+  const marker = EN_LOCK_MARKERS[key];
+  const i = marker ? full.indexOf(marker) : -1;
+  if (i < 0) return { body: full, locked: '' };
+  return { body: full.slice(0, i), locked: full.slice(i) };
+}
+
+function applyEnOverride(key, full) {
+  const { body, locked } = splitEnLocked(key, full);
+  const override = _bypassOverrides ? undefined : _overrideCache[key];
+  return (override || body) + locked;
+}
+
 // 与 Go application/services/prompt_i18n.go 对齐：提示词与语言
 function getLanguage(cfg) {
   return (cfg?.app?.content_language || cfg?.app?.language || 'zh').toLowerCase();
 }
 
+// Bahasa Indonesia reuses the English prompt templates (they are instruction text) and gets an
+// explicit output-language directive on top; see getContentLanguageDirective.
 function isEnglish(cfg) {
-  return getLanguage(cfg) === 'en';
+  const lang = getLanguage(cfg);
+  return lang === 'en' || lang === 'id';
+}
+
+function isIndonesian(cfg) {
+  return getLanguage(cfg) === 'id';
+}
+
+/** Extra system-prompt text telling the model which language to write generated content in. */
+function getContentLanguageDirective(cfg) {
+  if (isIndonesian(cfg)) {
+    return 'CONTENT LANGUAGE: Write all user-facing narrative, dialogue and descriptive text in Bahasa Indonesia. Keep required JSON keys, enum values, code and proper names unchanged. Image-generation prompts that these instructions require in English must stay in English.';
+  }
+  return '';
 }
 
 /** 画风由前端写入 dramas.metadata.style_prompt_zh / style_prompt_en，mergeCfgStyleWithDrama 注入 cfg.style */
@@ -46,7 +89,7 @@ function getCharacterExtractionPrompt(cfg) {
   const style = styleTextForCfgLang(cfg);
   const imageRatio = cfg?.style?.default_image_ratio || '16:9';
   if (isEnglish(cfg)) {
-    return `You are a professional character analyst, skilled at extracting and analyzing character information from scripts.
+    const _en = `You are a professional character analyst, skilled at extracting and analyzing character information from scripts.
 
 Your task is to extract and organize character settings for all named characters in the script.
 
@@ -63,6 +106,7 @@ Requirements:
 Output Format:
 **CRITICAL: Return ONLY a valid JSON array. Do NOT include any markdown code blocks, explanations, or other text. Start directly with [ and end with ].**
 Each element is a character object containing the above fields.`;
+    return applyEnOverride('character_extraction', _en);
   }
   const _charOverride = _overrideCache['character_extraction'];
   if (_charOverride) {
@@ -91,7 +135,7 @@ Each element is a character object containing the above fields.`;
 
 function getStoryboardSystemPrompt(cfg) {
   if (isEnglish(cfg)) {
-    return `[Role] You are a senior film storyboard artist, proficient in Robert McKee's shot breakdown theory, skilled at building emotional rhythm.
+    const _en = `[Role] You are a senior film storyboard artist, proficient in Robert McKee's shot breakdown theory, skilled at building emotional rhythm.
 
 [Task] Break down the novel script into storyboard shots based on **independent action units**.
 
@@ -118,7 +162,7 @@ function getStoryboardSystemPrompt(cfg) {
      * Tracking/Follow: Camera follows subject, keeps subject framed
      * Crane Up: Ascending boom, grandeur or liberation
      * Crane Down: Descending boom, oppression or weight
-     * Orbit: 360° circling around subject,立体 spatial depth
+     * Orbit: 360° circling around subject, 3D spatial depth
      * Handheld: Slight shake, realism/tension
    - Advanced movements:
      * Zoom: Optical zoom in/out without moving camera position
@@ -177,6 +221,7 @@ function getStoryboardSystemPrompt(cfg) {
 - Shot types must match storytelling rhythm (don't use same shot type continuously)
 - Emotion intensity must accurately reflect script atmosphere changes
 - segment_index must be sequential integers starting from 0; all shots in the same segment share the same index and title`;
+    return applyEnOverride('storyboard_system', _en);
   }
   const _sbOverride = _overrideCache['storyboard_system'];
   if (_sbOverride) {
@@ -451,7 +496,7 @@ function getStoryboardUserPromptSuffix(cfg, shotDuration) {
     const durationInstruction = durationHint
       ? `approximately ${durationHint}s per shot (project setting), adjust ±1s based on dialogue length and action complexity`
       : 'estimate per shot from dialogue length, action complexity, and emotion';
-    return `
+    const _en = `
 
 **dialogue field**: "Character: \"line\"". Multiple: "A: \"...\" B: \"...\"". Monologue: "(Monologue) content". No dialogue: "".
 
@@ -462,6 +507,7 @@ function getStoryboardUserPromptSuffix(cfg, shotDuration) {
 **Audio rule**: bgm_prompt MUST be an empty string or "No BGM". Do not design background music per shot. Put only diegetic ambience, foley, and voice/timbre details in sound_effect, so audio remains consistent across clips.
 
 **Output**: JSON with "storyboards" array. Each item: shot_number, segment_index, segment_title, title, shot_type, angle, time, location, scene_id, movement, action, dialogue, result, atmosphere, emotion, duration, bgm_prompt, sound_effect, characters (array of IDs), props (array of prop IDs), is_primary. Return ONLY valid JSON, no markdown.`;
+    return applyEnOverride('storyboard_user_suffix', _en);
   }
   const _sbUserLocked = `\n\n【输出格式】请以JSON格式输出，包含 "storyboards" 数组。每个镜头包含：shot_number, segment_index, segment_title, title, shot_type, angle, time, location, scene_id, movement, action, dialogue, result, atmosphere, emotion, duration, bgm_prompt, sound_effect, characters（角色ID数组）, props（道具ID数组）, is_primary, **layout_description（画面布局与人物站位描述，必填，最高优先级空间合同）**。**必须只返回纯JSON，不要markdown。**`;
   const _sbUserOverride = _overrideCache['storyboard_user_suffix'];
@@ -534,7 +580,7 @@ function getFirstFramePrompt(cfg) {
   const style = isEnglish(cfg) ? styleTextEnForImage(cfg) : styleTextZhForPolish(cfg);
   const imageRatio = cfg?.style?.default_image_ratio || '16:9';
   if (isEnglish(cfg)) {
-    return `You are a professional cinematic storyboard image prompt expert. Generate AI image generation prompts based on the shot information provided.
+    const _en = `You are a professional cinematic storyboard image prompt expert. Generate AI image generation prompts based on the shot information provided.
 
 Important: This is the FIRST FRAME - a completely static image showing the initial state BEFORE the action begins.
 
@@ -557,6 +603,7 @@ Output Format:
 Return a JSON object containing:
 - prompt: Complete image generation prompt (detailed cinematic description)
 - description: Simplified Chinese description (for reference)`;
+    return applyEnOverride('first_frame_prompt', _en);
   }
   const _ffLocked = `\n- **风格要求**：${style}\n- **图片比例**：${imageRatio}\n输出格式：\n返回一个JSON对象，包含：\n- prompt：完整的中文图片生成提示词（详细的电影语言描述）\n- description：简化的中文描述（供参考）`;
   const _ffOverride = _overrideCache['first_frame_prompt'];
@@ -615,7 +662,7 @@ function getKeyFramePrompt(cfg) {
   const style = isEnglish(cfg) ? styleTextEnForImage(cfg) : styleTextZhForPolish(cfg);
   const imageRatio = cfg?.style?.default_image_ratio || '16:9';
   if (isEnglish(cfg)) {
-    return `You are a professional cinematic storyboard image prompt expert. Generate AI image generation prompts based on the shot information provided.
+    const _en = `You are a professional cinematic storyboard image prompt expert. Generate AI image generation prompts based on the shot information provided.
 
 Important: This is the KEY FRAME - capturing the most intense and climactic moment of the action.
 
@@ -637,6 +684,7 @@ Output Format:
 Return a JSON object containing:
 - prompt: Complete image generation prompt (detailed cinematic description)
 - description: Simplified Chinese description (for reference)`;
+    return applyEnOverride('key_frame_prompt', _en);
   }
   const _kfLocked = `\n- **风格要求**：${style}\n- **图片比例**：${imageRatio}\n输出格式：\n返回一个JSON对象，包含：\n- prompt：完整的中文图片生成提示词（详细的电影语言描述）\n- description：简化的中文描述（供参考）`;
   const _kfOverride = _overrideCache['key_frame_prompt'];
@@ -692,7 +740,7 @@ function getLastFramePrompt(cfg) {
   const style = isEnglish(cfg) ? styleTextEnForImage(cfg) : styleTextZhForPolish(cfg);
   const imageRatio = cfg?.style?.default_image_ratio || '16:9';
   if (isEnglish(cfg)) {
-    return `You are a professional cinematic storyboard image prompt expert. Generate AI image generation prompts based on the shot information provided.
+    const _en = `You are a professional cinematic storyboard image prompt expert. Generate AI image generation prompts based on the shot information provided.
 
 Important: This is the LAST FRAME - a static image showing the final state AFTER the action ends.
 
@@ -723,6 +771,7 @@ Output Format:
 Return a JSON object containing:
 - prompt: Complete image generation prompt (detailed cinematic description). For 5-15s videos, the prompt must describe visible framing evolution caused by the declared camera_movement (e.g. tighter framing after push-in, natural drift on handheld) while keeping core positions and realistic prop scales.
 - description: Simplified Chinese description (for reference)`;
+    return applyEnOverride('last_frame_prompt', _en);
   }
   const _lfLocked = `\n- **风格要求**：${style}\n- **图片比例**：${imageRatio}\n输出格式：\n返回一个JSON对象，包含：\n- prompt：完整的中文图片生成提示词（详细的电影语言描述）\n- description：简化的中文描述（供参考）`;
   const _lfOverride = _overrideCache['last_frame_prompt'];
@@ -794,7 +843,7 @@ function getPropExtractionPrompt(cfg) {
   const style = [base, propExtra].filter(Boolean).join(', ');
   const imageRatio = cfg?.style?.default_prop_ratio || cfg?.style?.default_image_ratio || '16:9';
   if (isEnglish(cfg)) {
-    return `You are a professional script prop analyst, skilled at extracting key props with visual characteristics from scripts.
+    const _en = `You are a professional script prop analyst, skilled at extracting key props with visual characteristics from scripts.
 
 Your task is to extract and organize all key props that are important to the plot or have special visual characteristics from the provided script content.
 
@@ -816,6 +865,7 @@ Each object containing:
 - type: Type (e.g., Weapon/Key Item/Daily Item/Special Device)
 - description: Role in the drama and visual description
 - image_prompt: English hero product shot prompt (single prop, solid seamless backdrop, no clutter, no environment, soft studio light, tight wording, no names/places from script, ultra-detailed only where visually grounded)`;
+    return applyEnOverride('prop_extraction', _en);
   }
   const _propLocked = `\n- **风格要求**：${style}\n- **图片比例**：${imageRatio}\n\n【输出格式】\n**重要：必须只返回纯JSON数组，不要包含任何markdown代码块、说明文字或其他内容。直接以 [ 开头，以 ] 结尾。**\n每个对象包含：\n- name: 道具名称\n- type: 类型 (如：武器/关键证物/日常用品/特殊装置)\n- description: 在剧中的作用和中文外观描述（人名、归属可写在此字段，勿写入 image_prompt）\n- image_prompt: 单道具主图提示词（纯色无缝背景、仅主体、无杂物无场景、柔和棚拍光；**禁止**剧本人名/地名/组织名/台词/剧情标签；只写有依据的外观词，**不脑补、不扩写**；中文项目输出中文提示词并匹配项目「语音」与尺度铁律）`;
   const _propOverride = _overrideCache['prop_extraction'];
@@ -852,7 +902,7 @@ function getSceneExtractionPrompt(cfg, style) {
   const s = styleText || styleTextForCfgLang(cfg);
   const imageRatio = cfg?.style?.default_image_ratio || '16:9';
   if (isEnglish(cfg)) {
-    return `[Task] Extract all unique scene backgrounds from the script
+    const _en = `[Task] Extract all unique scene backgrounds from the script
 
 [Requirements]
 1. Identify all different scenes (location + time combinations) in the script
@@ -868,6 +918,7 @@ function getSceneExtractionPrompt(cfg, style) {
 [Output Format]
 **CRITICAL: Return ONLY a valid JSON array. Do NOT include any markdown code blocks. Start directly with [ and end with ].**
 Each element: location, time, prompt (English image generation prompt for pure background).`;
+    return applyEnOverride('scene_extraction', _en);
   }
   const _sceneLocked = `\n5. **风格要求**：${s}\n   - **图片比例**：${imageRatio}\n\n【输出格式】\n**重要：必须只返回纯JSON数组，不要包含任何markdown代码块。直接以 [ 开头，以 ] 结尾。**\n每个元素包含：location（地点）, time（时间）, prompt（完整的中文图片生成提示词，纯背景，明确说明无人物）。`;
   const _sceneOverride = _overrideCache['scene_extraction'];
@@ -897,13 +948,14 @@ function getStoryExpansionSystemPrompt(cfg, episodeCount) {
   const jsonNote = `\n\n**输出格式（必须严格遵守）**：\n返回一个 JSON 数组，包含 ${n} 个对象，每个对象格式如下：\n[\n  {\n    "episode": 1,\n    "title": "第一集标题（5-10字，概括本集核心内容）",\n    "content": "本集剧本正文（约800字）"\n  }\n]\n**必须只返回纯 JSON 数组，不要任何 markdown 代码块、说明文字。直接以 [ 开头，以 ] 结尾。**`;
   if (isEnglish(cfg)) {
     const enNote = `\n\n**Output format (STRICTLY required)**:\nReturn a JSON array with ${n} object(s), each in this format:\n[\n  {\n    "episode": 1,\n    "title": "Episode title (5-15 words)",\n    "content": "Episode script body (~800 words)"\n  }\n]\n**Return ONLY the JSON array. No markdown, no explanation. Start directly with [ and end with ].**`;
-    return `You are a professional screenwriter. Your task is to expand the user's story premise into ${n} episode(s) of a short-film script.
+    const _enStoryOverride = _bypassOverrides ? undefined : _overrideCache['story_expansion_system'];
+    return (_enStoryOverride || `You are a professional screenwriter. Your task is to expand the user's story premise into ${n} episode(s) of a short-film script.
 
 Requirements:
 1. Write in clear, fluent English suitable for later storyboard breakdown.
 2. Include scene descriptions, character actions and dialogue. Do NOT use shot numbers, "INT./EXT." headings, or screenplay formatting marks.
 3. Each episode: approximately 800 words. Episodes must be connected in story continuity — each episode picks up from where the previous one ended.
-4. Each episode should have a clear beginning, development, and a hook or turning point at the end.${enNote}`;
+4. Each episode should have a clear beginning, development, and a hook or turning point at the end.`) + enNote;
   }
   const _storyOverride = _overrideCache['story_expansion_system'];
   const base = _storyOverride || `你是一位专业的编剧。你的任务是根据用户提供的故事梗概，创作 ${n} 集完整的短片剧本。
@@ -963,7 +1015,48 @@ function buildStoryExpansionUserPrompt(cfg, premise, style, type, episodeCount) 
  * 返回指定提示词 key 的可编辑默认正文（中文，不含动态锁定部分）。
  * promptOverrides.js 调用此函数，确保 UI 展示的内容与 promptI18n.js 始终一致。
  */
-function getDefaultPromptBody(key) {
+/** English default prompt split into editable body + locked tail, with placeholders for style/ratio. */
+function buildEnglishPromptParts(key) {
+  const cfg = {
+    app: { language: 'en' },
+    style: {
+      default_style_en: '[current style]',
+      default_style: '[current style]',
+      default_image_ratio: '[current ratio]',
+      default_prop_ratio: '[current ratio]',
+    },
+  };
+  const builders = {
+    story_expansion_system: () => getStoryExpansionSystemPrompt(cfg, 1),
+    storyboard_system: () => getStoryboardSystemPrompt(cfg),
+    character_extraction: () => getCharacterExtractionPrompt(cfg),
+    scene_extraction: () => getSceneExtractionPrompt(cfg, '[current style]'),
+    prop_extraction: () => getPropExtractionPrompt(cfg),
+    storyboard_user_suffix: () => getStoryboardUserPromptSuffix(cfg, null),
+    first_frame_prompt: () => getFirstFramePrompt(cfg),
+    key_frame_prompt: () => getKeyFramePrompt(cfg),
+    last_frame_prompt: () => getLastFramePrompt(cfg),
+  };
+  const build = builders[key];
+  if (!build) return null;
+  const prev = _bypassOverrides;
+  _bypassOverrides = true;
+  try {
+    return splitEnLocked(key, build());
+  } finally {
+    _bypassOverrides = prev;
+  }
+}
+
+function getDefaultPromptBody(key, lang = 'zh') {
+  if (lang === 'en') {
+    const parts = buildEnglishPromptParts(key);
+    if (parts) {
+      // The story prompt carries its JSON contract as an unmarked tail; keep it out of the editable body.
+      if (key === 'story_expansion_system') return parts.body.split('**Output format (STRICTLY required)**')[0].trimEnd();
+      return parts.body;
+    }
+  }
   switch (key) {
     case 'story_expansion_system':
       return '你是一位专业的编剧。你的任务是根据用户提供的故事梗概，创作 ${n} 集完整的短片剧本。\n\n要求：\n1. 用中文写作，叙事清晰流畅，适合后续拆分为分镜。\n2. 可以包含场景描述、角色动作与对话，但不要输出分镜格式、镜头编号或「内景/外景」等场次标记。\n3. 每集约 800 字。如有多集，剧情必须前后衔接——每集从上一集结尾处推进，确保整体故事连贯。\n4. 每集有清晰的起承转合，结尾留有悬念或转折，吸引观众看下一集。';
@@ -1000,7 +1093,12 @@ function getDefaultPromptBody(key) {
 /**
  * 返回指定提示词 key 的锁定后缀（供 UI 展示，动态字段用占位符替代）。
  */
-function getLockedSuffix(key) {
+function getLockedSuffix(key, lang = 'zh') {
+  if (lang === 'en') {
+    const parts = buildEnglishPromptParts(key);
+    if (parts && key !== 'story_expansion_system') return parts.locked || null;
+    if (key === 'story_expansion_system') return null;
+  }
   switch (key) {
     case 'story_expansion_system':
       return null;
@@ -1612,6 +1710,8 @@ function getPromptLabel(cfg, key) {
 }
 
 module.exports = {
+  isIndonesian,
+  getContentLanguageDirective,
   getLanguage,
   isEnglish,
   getPromptLabel,

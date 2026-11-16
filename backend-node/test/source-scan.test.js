@@ -35,7 +35,7 @@ describe('backend source-scan', () => {
 
   it('finds only user-facing calls with Chinese text', () => {
     const hits = scanUserFacingStrings(path.resolve(__dirname, 'fixtures/source-strings-sample.js'))
-    assert.deepEqual(hits.map((h) => h.line), [2, 4, 6])
+    assert.deepEqual(hits.map((h) => h.line), [2, 4, 6, 8, 9])
   })
 
   it('does not add new Chinese user-facing strings in backend sources (zero leak target)', () => {
