@@ -56,7 +56,7 @@ function close() {
   border-radius: 8px;
   border: 1px solid #3f3f46;
   background: #18181b;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: none; border: 1px solid var(--border-muted);
 }
 .ctx-title {
   padding: 4px 12px 6px;

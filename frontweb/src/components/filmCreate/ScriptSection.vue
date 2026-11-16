@@ -330,7 +330,7 @@ defineEmits([
 }
 .select-script-item:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(99, 102, 241, 0.35);
+  border-color: var(--text-bright);
 }
 .select-script-item.disabled,
 .select-script-item.disabled:hover {
@@ -340,10 +340,10 @@ defineEmits([
   background: transparent;
 }
 :global(html.light) .select-script-item {
-  border-color: rgba(99, 102, 241, 0.15);
+  border-color: var(--border-muted);
 }
 :global(html.light) .select-script-item:hover {
-  background: rgba(99, 102, 241, 0.06);
+  background: var(--bg-inner);
 }
 .select-script-title {
   font-weight: 600;

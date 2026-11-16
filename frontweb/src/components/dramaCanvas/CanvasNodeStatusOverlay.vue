@@ -40,7 +40,7 @@ const status = computed(() => {
   width: 22px;
   height: 22px;
   border: 2px solid rgba(255, 255, 255, 0.15);
-  border-top-color: #818cf8;
+  border-top-color: var(--text-bright);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
 }

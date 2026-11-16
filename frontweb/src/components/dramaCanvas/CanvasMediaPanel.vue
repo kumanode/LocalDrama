@@ -147,7 +147,7 @@ async function runStep(step) {
   border-radius: 10px;
   border: 1px solid rgba(129, 140, 248, 0.4);
   background: rgba(15, 15, 18, 0.96);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  box-shadow: none; border: 1px solid var(--border-muted);
 }
 .panel-head {
   display: flex;
@@ -223,7 +223,7 @@ async function runStep(step) {
   width: 18px;
   height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.12);
-  border-top-color: #818cf8;
+  border-top-color: var(--text-bright);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
 }
@@ -241,7 +241,7 @@ async function runStep(step) {
   gap: 8px;
 }
 .kind-video { border-color: rgba(244, 114, 182, 0.45); }
-.kind-universal { border-color: rgba(167, 139, 250, 0.45); }
+.kind-universal { border-color: var(--border-muted); }
 .kind-audio { border-color: rgba(251, 191, 36, 0.45); }
 @keyframes spin {
   to { transform: rotate(360deg); }

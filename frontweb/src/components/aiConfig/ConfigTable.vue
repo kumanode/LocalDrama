@@ -75,10 +75,10 @@ defineEmits(['selection-change', 'test', 'edit', 'delete'])
 .type-icon { font-size: 13px; flex-shrink: 0; }
 .type-text { background: rgba(59, 130, 246, .12); color: #3b82f6; border-color: rgba(59, 130, 246, .25); }
 .type-image { background: rgba(16, 185, 129, .12); color: #10b981; border-color: rgba(16, 185, 129, .25); }
-.type-storyboard_image { background: rgba(139, 92, 246, .12); color: #8b5cf6; border-color: rgba(139, 92, 246, .25); }
+.type-storyboard_image { background: var(--bg-inner); color: var(--text-primary); border-color: var(--border-muted); }
 .type-video { background: rgba(249, 115, 22, .12); color: #f97316; border-color: rgba(249, 115, 22, .25); }
 .type-tts { background: rgba(236, 72, 153, .12); color: #db2777; border-color: rgba(236, 72, 153, .25); }
 .type-jimeng2_character_auth { background: rgba(20, 184, 166, .14); color: #0d9488; border-color: rgba(20, 184, 166, .28); }
-.type-model_ark_asset { background: rgba(99, 102, 241, .12); color: #6366f1; border-color: rgba(99, 102, 241, .25); }
+.type-model_ark_asset { background: var(--bg-inner); color: var(--text-primary); border-color: var(--border-muted); }
 .no-default { color: #9ca3af; font-size: 13px; }
 </style>

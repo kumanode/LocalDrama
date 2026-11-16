@@ -1549,11 +1549,7 @@ onMounted(() => {
   border-color: rgba(16, 185, 129, 0.25);
 }
 /* Storyboard image - purple */
-.type-storyboard_image {
-  background: rgba(139, 92, 246, 0.12);
-  color: #8b5cf6;
-  border-color: rgba(139, 92, 246, 0.25);
-}
+.type-storyboard_image { background: var(--bg-inner); color: var(--text-primary); border-color: var(--border-muted); }
 /* Video - orange */
 .type-video {
   background: rgba(249, 115, 22, 0.12);
@@ -1580,11 +1576,7 @@ onMounted(() => {
   border-color: rgba(20, 184, 166, 0.28);
 }
 
-.type-model_ark_asset {
-  background: rgba(99, 102, 241, 0.12);
-  color: #6366f1;
-  border-color: rgba(99, 102, 241, 0.25);
-}
+.type-model_ark_asset { background: var(--bg-inner); color: var(--text-primary); border-color: var(--border-muted); }
 
 .no-default {
   color: #9ca3af;

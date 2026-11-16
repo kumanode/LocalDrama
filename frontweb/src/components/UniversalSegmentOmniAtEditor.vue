@@ -493,13 +493,13 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 .omni-at-copy-btn {
-  color: #a78bfa !important;
+  color: var(--text-muted) !important;
 }
 .omni-at-copy-btn:hover {
-  color: #c4b5fd !important;
+  color: var(--text-bright) !important;
 }
 html.light .omni-at-copy-btn {
-  color: #6d28d9 !important;
+  color: var(--text-primary) !important;
 }
 .omni-at-editor {
   flex: 1;
@@ -518,8 +518,8 @@ html.light .omni-at-copy-btn {
   word-break: break-word;
 }
 .omni-at-editor:focus {
-  border-color: #a78bfa;
-  box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.25) inset;
+  border-color: var(--text-bright);
+  box-shadow: none;
 }
 .omni-at-editor:empty::before {
   content: attr(data-placeholder);
@@ -534,16 +534,16 @@ html.light .omni-at-copy-btn {
   padding: 0 5px;
   border-radius: 4px;
   font-weight: 600;
-  color: #c4b5fd;
-  background: rgba(139, 92, 246, 0.22);
-  border: 1px solid rgba(167, 139, 250, 0.45);
+  color: var(--text-bright);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-muted);
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
 }
 :deep(.omni-at-chip:hover) {
-  background: rgba(139, 92, 246, 0.38);
-  border-color: #a78bfa;
+  background: var(--border-muted);
+  border-color: var(--text-bright);
 }
 html.light .omni-at-editor {
   color: #1f2937;
@@ -552,15 +552,15 @@ html.light .omni-at-editor {
 }
 html.light .omni-at-editor:focus {
   border-color: var(--text-bright);
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.2) inset;
+  box-shadow: none;
 }
 html.light :deep(.omni-at-chip) {
-  color: #5b21b6;
-  background: rgba(124, 58, 237, 0.12);
-  border-color: rgba(124, 58, 237, 0.35);
+  color: var(--text-primary);
+  background: var(--bg-inner);
+  border-color: var(--border-muted);
 }
 html.light :deep(.omni-at-chip:hover) {
-  background: rgba(124, 58, 237, 0.2);
+  background: var(--bg-hover);
 }
 </style>
 
@@ -573,12 +573,12 @@ html.light :deep(.omni-at-chip:hover) {
   border-radius: 8px;
   background: #1e293b;
   border: 1px solid rgba(248, 250, 252, 0.18);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: none; border: 1px solid var(--border-muted);
 }
 html.light .omni-at-menu {
   background: #fff;
   border-color: #e2e8f0;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+  box-shadow: none; border: 1px solid var(--border-muted);
 }
 .omni-at-menu-empty {
   font-size: 12px;
@@ -704,7 +704,7 @@ html.light .omni-at-menu-name {
 .omni-at-menu-at {
   font-size: 11px;
   font-family: ui-monospace, monospace;
-  color: #a78bfa;
+  color: var(--text-bright);
 }
 .omni-at-menu-at-sub {
   font-size: 10px;
@@ -712,7 +712,7 @@ html.light .omni-at-menu-name {
   color: #94a3b8;
 }
 html.light .omni-at-menu-at {
-  color: #6d28d9;
+  color: var(--text-primary);
 }
 html.light .omni-at-menu-at-sub {
   color: #64748b;

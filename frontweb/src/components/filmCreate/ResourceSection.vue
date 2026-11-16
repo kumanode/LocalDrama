@@ -284,7 +284,7 @@ const resourcePanelCollapsed = ref(false)
   border-top: 1px solid rgba(255,255,255,0.06);
 }
 :deep(.asset-cover-actions .el-button) { flex: 1; justify-content: center; }
-:deep(html.light .asset-cover-actions) { border-top-color: rgba(139,92,246,0.1); }
+:deep(html.light .asset-cover-actions) { border-top-color: var(--border-color); }
 :deep(.extra-images-strip) {
   display: flex;
   flex-wrap: wrap;
@@ -302,7 +302,7 @@ const resourcePanelCollapsed = ref(false)
   border: 1.5px solid transparent;
   transition: border-color 0.15s;
 }
-:deep(.extra-thumb:hover) { border-color: #a78bfa; }
+:deep(.extra-thumb:hover) { border-color: var(--text-muted); }
 :deep(.extra-thumb img) { width: 100%; height: 100%; object-fit: cover; display: block; }
 :deep(.extra-thumb-remove) {
   position: absolute;
@@ -350,7 +350,7 @@ const resourcePanelCollapsed = ref(false)
 }
 :deep(.extra-thumb:hover .extra-thumb-remove),
 :deep(.extra-thumb:hover .thumb-preview-btn) { opacity: 1; }
-:deep(html.light .extra-images-strip) { background: rgba(139,92,246,0.05); }
+:deep(html.light .extra-images-strip) { background: var(--bg-inner); }
 :deep(.empty-tip) {
   color: #5a5a66;
   font-size: 0.9rem;
@@ -381,8 +381,8 @@ const resourcePanelCollapsed = ref(false)
   gap: 4px;
   margin-top: 8px;
   padding: 6px 8px;
-  background: rgba(99, 102, 241, 0.07);
-  border: 1px solid rgba(99, 102, 241, 0.18);
+  background: var(--bg-inner);
+  border: 1px solid var(--border-muted);
   border-radius: 6px;
   min-height: 28px;
 }
@@ -399,16 +399,16 @@ const resourcePanelCollapsed = ref(false)
   border-radius: 12px;
   font-size: 11px;
   font-weight: 500;
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.35);
-  color: #a5b4fc;
+  background: var(--bg-inner);
+  border: 1px solid var(--border-muted);
+  color: var(--text-primary);
   cursor: pointer;
   transition: background 0.15s, box-shadow 0.15s;
   white-space: nowrap;
 }
 :deep(.asl-chip:hover) {
-  background: rgba(99, 102, 241, 0.28);
-  box-shadow: 0 0 6px rgba(99, 102, 241, 0.4);
+  background: var(--bg-hover);
+  box-shadow: none;
   color: #c7d2fe;
 }
 :deep(.asl-regen-btn) {
@@ -426,7 +426,7 @@ const resourcePanelCollapsed = ref(false)
 }
 :deep(.asl-regen-btn:not(.is-loading):hover) {
   background: rgba(251, 146, 60, 0.28) !important;
-  box-shadow: 0 0 6px rgba(251, 146, 60, 0.35) !important;
+  box-shadow: none !important;
   color: #fdba74 !important;
 }
 :deep(.asl-progress) {

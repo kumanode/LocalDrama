@@ -86,13 +86,13 @@ const kindLabel = computed(() => {
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .canvas-media-node.focused {
-  border-color: #818cf8;
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35);
+  border-color: var(--border-muted);
+  box-shadow: none;
 }
 .tag {
   font-size: 10px;
   font-weight: 600;
-  color: #818cf8;
+  color: var(--text-bright);
   margin-bottom: 6px;
 }
 .text-body {
@@ -136,12 +136,12 @@ const kindLabel = computed(() => {
 .universal-body {
   -webkit-line-clamp: 8;
 }
-.kind-universal { border-color: rgba(167, 139, 250, 0.5); }
-.kind-universal .tag { color: #c4b5fd; }
+.kind-universal { border-color: var(--border-muted); }
+.kind-universal .tag { color: var(--text-primary); }
 .kind-image { border-color: rgba(129, 140, 248, 0.4); }
 .kind-video { border-color: rgba(244, 114, 182, 0.4); }
 .kind-audio { border-color: rgba(251, 191, 36, 0.4); }
 .canvas-media-node.processing { border-color: #60a5fa; }
-.highlighted { box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.55); }
+.highlighted { border-color: var(--text-bright); }
 .dimmed { opacity: 0.28; }
 </style>

@@ -155,7 +155,7 @@ async function onExtractAll() {
   border-radius: 12px;
   border: 1px solid rgba(251, 191, 36, 0.45);
   background: rgba(15, 15, 18, 0.97);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: none; border: 1px solid var(--border-muted);
 }
 .panel-head {
   display: flex;

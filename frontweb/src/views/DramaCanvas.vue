@@ -1031,7 +1031,7 @@ onBeforeUnmount(() => {
 
 .logo-sub {
   font-size: 11px;
-  color: #818cf8;
+  color: var(--text-muted);
 }
 
 .breadcrumb-sep { color: var(--text-faint, #52525b); }

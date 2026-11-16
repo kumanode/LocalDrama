@@ -68,9 +68,7 @@ function goList() {
 .logo-main {
   font-size: 18px;
   font-weight: 700;
-  background: linear-gradient(135deg, #a78bfa, #818cf8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-bright);
 }
 .logo-sub {
   font-size: 11px;

@@ -1250,8 +1250,7 @@ onBeforeUnmount(() => {
 .logo-main {
   font-size: 1.1rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #c4b5fd 0%, #818cf8 50%, #a78bfa 100%);
-  -webkit-background-clip: text;
+  color: var(--text-bright);
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -1263,8 +1262,7 @@ onBeforeUnmount(() => {
   -webkit-text-fill-color: #6d6d7a;
 }
 html.light .drama-detail .logo-main {
-  background: linear-gradient(135deg, var(--text-bright), #6366f1);
-  -webkit-background-clip: text;
+  color: var(--text-bright);
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -1296,8 +1294,8 @@ html.light .breadcrumb-sep { color: #d1d5db; }
 }
 html.light .page-title {
   color: #6b7280;
-  background: rgba(99, 102, 241, 0.06);
-  border-color: rgba(99, 102, 241, 0.15);
+  background: var(--bg-inner);
+  border-color: var(--border-muted);
 }
 .btn-back-list {
   flex-shrink: 0;
@@ -1316,8 +1314,8 @@ html.light .page-title {
   border-color: var(--text-muted);
 }
 html.light .section.card:hover {
-  border-color: rgba(139, 92, 246, 0.3);
-  box-shadow: 0 6px 28px rgba(139, 92, 246, 0.1);
+  border-color: var(--border-muted);
+  box-shadow: none;
 }
 .section-title { font-size: 1rem; font-weight: 600; color: #fafafa; margin-bottom: 16px; }
 html.light .section-title { color: #18181b; }
@@ -1345,7 +1343,7 @@ html.light .section-title { color: #18181b; }
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), transparent 60%);
+  background: none;
   opacity: 0;
   transition: opacity 0.25s;
 }
@@ -1429,7 +1427,7 @@ html.light .section-title { color: #18181b; }
   letter-spacing: 0.03em;
   align-self: center;
 }
-.res-tab-group-label--prod { color: #a78bfa; }
+.res-tab-group-label--prod { color: var(--text-bright); }
 .res-tab-spacer {
   flex: 1;
   min-width: 40px;
@@ -1465,15 +1463,15 @@ html.light .section-title { color: #18181b; }
 .res-tab--lib.active { color: #60a5fa; font-size: 14px; font-weight: 600; }
 .res-tab--lib.active::after { background: #60a5fa; }
 /* 制作资源激活 */
-.res-tab--drama.active { color: #a78bfa; font-size: 14px; font-weight: 600; }
-.res-tab--drama.active::after { background: #a78bfa; }
+.res-tab--drama.active { color: var(--text-bright); font-size: 14px; font-weight: 600; }
+.res-tab--drama.active::after { background: var(--text-bright); }
 
-html.light .episode-card { background: rgba(255, 255, 255, 0.85); border-color: rgba(139, 92, 246, 0.12); }
+html.light .episode-card { background: var(--bg-inner); border-color: var(--border-color); }
 html.light .episode-card:hover {
   border-color: var(--text-muted);
   background: var(--bg-hover);
 }
-html.light .episode-card::before { background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), transparent 60%); }
+html.light .episode-card::before { background: none; }
 html.light .episode-enter { border-top-color: #e4e4e7; color: #a1a1aa; }
 html.light .episode-card:hover .episode-enter { color: var(--el-color-primary); }
 html.light .episode-title { color: #18181b; }
@@ -1516,11 +1514,11 @@ html.light .res-tab--drama.active::after { background: var(--text-bright); }
   transition: all 0.2s;
 }
 html.light .btn-theme {
-  --el-button-bg-color: rgba(99, 102, 241, 0.08);
-  --el-button-border-color: rgba(99, 102, 241, 0.3);
-  --el-button-text-color: #6366f1;
-  --el-button-hover-bg-color: rgba(99, 102, 241, 0.15);
-  --el-button-hover-border-color: rgba(99, 102, 241, 0.5);
-  --el-button-hover-text-color: #4f46e5;
+  --el-button-bg-color: var(--bg-inner);
+  --el-button-border-color: var(--border-muted);
+  --el-button-text-color: var(--text-primary);
+  --el-button-hover-bg-color: var(--bg-hover);
+  --el-button-hover-border-color: var(--text-bright);
+  --el-button-hover-text-color: var(--text-bright);
 }
 </style>

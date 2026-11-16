@@ -20,16 +20,30 @@ function getAllFiles(dir, exts = ['.vue', '.css']) {
   return files
 }
 
-test('linter: no purple #7c3aed in any frontend vue or css file', () => {
+test('linter: zero purple hex codes in any frontend vue or css file', () => {
   const files = getAllFiles(srcDir)
   const violations = []
+  const purpleHexRegex = /#(?:7c3aed|8b5cf6|6366f1|a855f7|c084fc|4f46e5|818cf8|a78bfa|c4b5fd|9333ea|6d28d9|5b21b6)/i
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf8')
-    if (/#7c3aed/i.test(content)) {
+    if (purpleHexRegex.test(content)) {
       violations.push(path.relative(srcDir, file))
     }
   }
-  assert.deepEqual(violations, [], `Forbidden purple #7c3aed found in: ${violations.join(', ')}`)
+  assert.deepEqual(violations, [], `Forbidden purple hex found in: ${violations.join(', ')}`)
+})
+
+test('linter: zero purple rgba values in any frontend vue or css file', () => {
+  const files = getAllFiles(srcDir)
+  const violations = []
+  const purpleRgbaRegex = /rgba\(\s*(?:120|124|139|167|168|99|79|60),\s*(?:58|60|70|85|92|102|139|140|220)/i
+  for (const file of files) {
+    const content = fs.readFileSync(file, 'utf8')
+    if (purpleRgbaRegex.test(content)) {
+      violations.push(path.relative(srcDir, file))
+    }
+  }
+  assert.deepEqual(violations, [], `Forbidden purple rgba found in: ${violations.join(', ')}`)
 })
 
 test('linter: no hover translateY in any frontend vue or css file', () => {
@@ -37,7 +51,6 @@ test('linter: no hover translateY in any frontend vue or css file', () => {
   const violations = []
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf8')
-    // Look for :hover selectors that apply translateY
     if (/:hover[^{]*\{[^}]*translateY/i.test(content)) {
       violations.push(path.relative(srcDir, file))
     }

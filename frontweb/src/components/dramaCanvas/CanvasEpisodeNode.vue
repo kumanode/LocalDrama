@@ -25,7 +25,7 @@ defineProps({
   gap: 10px;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(167, 139, 250, 0.5);
+  border: 1px solid var(--border-muted);
   background: rgba(76, 29, 149, 0.35);
   color: #e9d5ff;
   font-size: 13px;

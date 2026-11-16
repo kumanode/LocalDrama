@@ -336,8 +336,8 @@ function goCanvasMode() {
 }
 :global(html.light) .page-title {
   color: #6b7280;
-  background: rgba(99, 102, 241, 0.04);
-  border-color: rgba(99, 102, 241, 0.1);
+  background: var(--bg-inner);
+  border-color: var(--border-muted);
 }
 .header-episode-select {
   flex-shrink: 0;
@@ -364,12 +364,12 @@ function goCanvasMode() {
   transition: all 0.2s ease;
 }
 :global(html.light) .btn-theme {
-  --el-button-bg-color: rgba(99, 102, 241, 0.04);
-  --el-button-border-color: rgba(99, 102, 241, 0.12);
+  --el-button-bg-color: var(--bg-inner);
+  --el-button-border-color: var(--border-muted);
   --el-button-text-color: #6b7280;
-  --el-button-hover-bg-color: rgba(99, 102, 241, 0.08);
-  --el-button-hover-border-color: rgba(99, 102, 241, 0.3);
-  --el-button-hover-text-color: #4f46e5;
+  --el-button-hover-bg-color: var(--bg-hover);
+  --el-button-hover-border-color: var(--border-muted);
+  --el-button-hover-text-color: var(--text-bright);
 }
 
 /* ===== 左侧固定侧边栏 ===== */
@@ -434,8 +434,8 @@ function goCanvasMode() {
 }
 .atp-count-badge {
   font-size: 0.68rem;
-  background: rgba(139, 92, 246, 0.25);
-  color: #c4b5fd;
+  background: var(--bg-inner); border: 1px solid var(--border-muted);
+  color: var(--text-bright);
   border-radius: 8px;
   padding: 1px 5px;
   min-width: 16px;
@@ -540,12 +540,12 @@ function goCanvasMode() {
 :global(html.light) .atp-title { color: var(--text-bright); }
 :global(html.light) .atp-count-badge { background: var(--bg-inner); color: var(--text-primary); }
 :global(html.light) .atp-spin-dot { background: var(--el-color-danger); }
-:global(html.light) .atp-item-dot { background: #8b5cf6; }
+:global(html.light) .atp-item-dot { background: var(--text-bright); }
 :global(html.light) .atp-item-label { color: #374151; }
 :global(html.light) .atp-item:hover { background: rgba(0,0,0,0.04); }
 :global(html.light) .atp-item-close { color: #9ca3af; }
 :global(html.light) .atp-item-close:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
-:global(html.light) .atp-panel { border-top-color: rgba(139,92,246,0.15); }
+:global(html.light) .atp-panel { border-top-color: var(--border-muted); }
 .nav-sidebar-header {
   display: flex;
   align-items: center;
@@ -555,7 +555,7 @@ function goCanvasMode() {
   margin-bottom: 8px;
   flex-shrink: 0;
 }
-:global(html.light) .nav-sidebar-header { border-bottom-color: rgba(139, 92, 246, 0.12); }
+:global(html.light) .nav-sidebar-header { border-bottom-color: var(--border-muted); }
 .quick-nav.collapsed .nav-sidebar-header {
   justify-content: center;
   padding: 0 4px 8px;
@@ -613,10 +613,10 @@ function goCanvasMode() {
   background: transparent;
 }
 .nav-step:hover { background: rgba(255,255,255,0.04); }
-:global(html.light) .nav-step:hover { background: rgba(99,102,241,0.05); }
-.nav-step.is-active { background: rgba(139,92,246,0.08); }
-:global(html.light) .nav-step.is-active { background: rgba(139,92,246,0.07); }
-.nav-step.is-active .step-label { color: #c4b5fd !important; }
+:global(html.light) .nav-step:hover { background: var(--bg-hover); }
+.nav-step.is-active { background: var(--bg-hover); }
+:global(html.light) .nav-step.is-active { background: var(--bg-hover); }
+.nav-step.is-active .step-label { color: var(--text-bright) !important; }
 :global(html.light) .nav-step.is-active .step-label { color: var(--text-bright) !important; font-weight: 700; }
 
 /* connector column */
@@ -668,16 +668,16 @@ function goCanvasMode() {
   color: #f59e0b;
 }
 .dot-generating {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.5);
+  background: var(--bg-inner);
+  border-color: var(--border-muted);
   color: var(--text-bright);
-  box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
+  box-shadow: none;
 }
 .dot-done {
   background: rgba(34, 197, 94, 0.12);
   border-color: rgba(34, 197, 94, 0.5);
   color: #22c55e;
-  box-shadow: 0 0 6px rgba(34, 197, 94, 0.15);
+  box-shadow: none;
 }
 .dot-icon { font-size: 13px; }
 .dot-num { font-size: 11px; line-height: 1; }
@@ -706,7 +706,7 @@ function goCanvasMode() {
 :global(html.light) .nav-step:hover .step-label { color: #1e1b4b; }
 .status-done .step-label { color: #6ee7b7; }
 :global(html.light) .status-done .step-label { color: #059669; }
-.status-generating .step-label { color: #c4b5fd; }
+.status-generating .step-label { color: var(--text-bright); }
 :global(html.light) .status-generating .step-label { color: var(--text-bright); }
 .status-partial .step-label { color: #fbbf24; }
 :global(html.light) .status-partial .step-label { color: #d97706; }
@@ -764,7 +764,7 @@ function goCanvasMode() {
   padding: 4px 0;
   border-radius: 0 0 6px 6px;
 }
-:global(html.light) .nav-sub-list { background: rgba(99,102,241,0.03); }
+:global(html.light) .nav-sub-list { background: var(--bg-inner); }
 .nav-sub-item {
   padding: 4px 10px 4px 26px;
   font-size: 11.5px;
@@ -784,7 +784,7 @@ function goCanvasMode() {
 }
 :global(html.light) .nav-sub-item { color: #9ca3af; }
 .nav-sub-item:hover { color: #d4d4d8; background: rgba(255,255,255,0.04); }
-:global(html.light) .nav-sub-item:hover { color: #1e1b4b; background: rgba(99,102,241,0.06); }
+:global(html.light) .nav-sub-item:hover { color: var(--text-bright); background: var(--bg-hover); }
 .nav-segment-label {
   display: flex;
   align-items: center;

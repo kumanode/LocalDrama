@@ -769,21 +769,21 @@ html.light .sb-ctrl-title {
   font-size: 11px;
 }
 .sb-ctrl-config-btn.el-button {
-  border-color: rgba(139,92,246,0.45);
-  color: #a78bfa;
-  background: rgba(139,92,246,0.08);
+  border-color: var(--border-muted);
+  color: var(--text-primary);
+  background: transparent;
 }
 .sb-ctrl-config-btn.el-button:hover {
-  border-color: #8b5cf6;
-  color: #fff;
-  background: rgba(139,92,246,0.6);
+  border-color: var(--text-bright);
+  color: var(--text-bright);
+  background: var(--bg-hover);
 }
 html.light .sb-ctrl-config-btn.el-button {
   border-color: var(--border-muted);
   color: var(--text-primary);
   background: transparent;
 }
-html.light .sb-ctrl-config-btn.el-button:hover {
+.sb-ctrl-config-btn.el-button:hover {
   border-color: var(--text-bright);
   color: var(--text-bright);
   background: var(--bg-hover);
@@ -830,7 +830,7 @@ html.light .storyboard-row:hover {
   flex-direction: column;
 }
 html.light .sb-panel {
-  border-right-color: rgba(139,92,246,0.08);
+  border-right-color: var(--border-color);
 }
 .sb-panel:last-child { border-right: none; }
 .sb-script { padding-top: 10px; }
@@ -978,7 +978,7 @@ html.light .sb-thumb-add-char:hover {
   flex: 1;
   min-height: 200px;
   max-height: 320px;
-  background: linear-gradient(145deg, #1a1b24 0%, #1e1f28 60%, #1c1d26 100%);
+  background: var(--bg-inner);
   border: 1px dashed rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   display: flex;
@@ -994,11 +994,11 @@ html.light .sb-thumb-add-char:hover {
   border-color: rgba(255, 255, 255, 0.15);
 }
 html.light .sb-image-area {
-  background: linear-gradient(145deg, #f5f3ff 0%, #ede9fe 100%);
-  border-color: rgba(124,58,237,0.2);
+  background: var(--bg-inner);
+  border-color: var(--border-muted);
 }
 html.light .sb-image-area:hover {
-  border-color: rgba(124,58,237,0.45);
+  border-color: var(--text-bright);
 }
 .sb-image-area--dragover {
   outline: 2px dashed var(--el-color-primary);
@@ -1309,7 +1309,7 @@ html.light .sb-image-area:hover {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #a855f7;
+  background: var(--text-bright);
   flex-shrink: 0;
 }
 .sb-video-params-bar {

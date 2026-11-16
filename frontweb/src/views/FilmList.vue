@@ -850,24 +850,24 @@ onMounted(async () => {
 
 /* 资源库按钮 —— 靛紫调 */
 .btn-library {
-  --el-button-bg-color: rgba(99, 102, 241, 0.12);
-  --el-button-border-color: rgba(99, 102, 241, 0.35);
+  --el-button-bg-color: var(--bg-inner);
+  --el-button-border-color: var(--border-muted);
   --el-button-text-color: #a5b4fc;
-  --el-button-hover-bg-color: rgba(99, 102, 241, 0.22);
-  --el-button-hover-border-color: rgba(99, 102, 241, 0.55);
+  --el-button-hover-bg-color: var(--bg-hover);
+  --el-button-hover-border-color: var(--text-muted);
   --el-button-hover-text-color: #c7d2fe;
-  --el-button-active-bg-color: rgba(99, 102, 241, 0.3);
-  --el-button-active-border-color: rgba(99, 102, 241, 0.7);
+  --el-button-active-bg-color: var(--border-color);
+  --el-button-active-border-color: var(--text-bright);
 }
 html.light .btn-library {
-  --el-button-bg-color: rgba(79, 70, 229, 0.08);
-  --el-button-border-color: rgba(79, 70, 229, 0.3);
+  --el-button-bg-color: var(--bg-inner);
+  --el-button-border-color: var(--border-muted);
   --el-button-text-color: #3730a3;
-  --el-button-hover-bg-color: rgba(79, 70, 229, 0.14);
-  --el-button-hover-border-color: rgba(79, 70, 229, 0.5);
+  --el-button-hover-bg-color: var(--bg-hover);
+  --el-button-hover-border-color: var(--text-muted);
   --el-button-hover-text-color: #312e81;
-  --el-button-active-bg-color: rgba(79, 70, 229, 0.2);
-  --el-button-active-border-color: rgba(79, 70, 229, 0.65);
+  --el-button-active-bg-color: var(--border-color);
+  --el-button-active-border-color: var(--text-bright);
 }
 
 /* 主题切换按钮 */
@@ -881,12 +881,12 @@ html.light .btn-library {
   transition: all 0.2s;
 }
 html.light .btn-theme {
-  --el-button-bg-color: rgba(99, 102, 241, 0.08);
-  --el-button-border-color: rgba(99, 102, 241, 0.3);
-  --el-button-text-color: #6366f1;
-  --el-button-hover-bg-color: rgba(99, 102, 241, 0.15);
-  --el-button-hover-border-color: rgba(99, 102, 241, 0.5);
-  --el-button-hover-text-color: #4f46e5;
+  --el-button-bg-color: var(--bg-inner);
+  --el-button-border-color: var(--border-muted);
+  --el-button-text-color: var(--text-primary);
+  --el-button-hover-bg-color: var(--bg-hover);
+  --el-button-hover-border-color: var(--text-bright);
+  --el-button-hover-text-color: var(--text-bright);
 }
 
 
@@ -1010,17 +1010,17 @@ html.light .btn-import {
   --el-button-bg-color: var(--el-color-primary);
 }
 .action-btn-import {
-  --el-button-bg-color: rgba(99, 102, 241, 0.12);
-  --el-button-border-color: rgba(99, 102, 241, 0.35);
+  --el-button-bg-color: var(--bg-inner);
+  --el-button-border-color: var(--border-muted);
   --el-button-text-color: #a5b4fc;
-  --el-button-hover-bg-color: rgba(99, 102, 241, 0.22);
-  --el-button-hover-border-color: rgba(99, 102, 241, 0.55);
+  --el-button-hover-bg-color: var(--bg-hover);
+  --el-button-hover-border-color: var(--text-muted);
   --el-button-hover-text-color: #c7d2fe;
 }
 .action-card-example {
   width: 100%;
   padding-top: 8px;
-  border-top: 1px solid rgba(99, 102, 241, 0.15);
+  border-top: 1px solid var(--border-color);
 }
 .example-hint {
   display: flex;
@@ -1104,9 +1104,9 @@ html.light .btn-import {
   border: 1px solid rgba(234, 179, 8, 0.3);
 }
 .badge-status--archived {
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--bg-inner);
   color: #a5b4fc;
-  border: 1px solid rgba(99, 102, 241, 0.25);
+  border: 1px solid var(--border-muted);
 }
 .badge-episodes {
   background: rgba(14, 165, 233, 0.12);
@@ -1125,9 +1125,9 @@ html.light .btn-import {
   font-family: monospace;
 }
 .badge-style {
-  background: rgba(168, 85, 247, 0.1);
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  background: var(--bg-inner);
+  color: var(--text-muted);
+  border: 1px solid var(--border-muted);
 }
 .badge-genre {
   background: rgba(249, 115, 22, 0.1);

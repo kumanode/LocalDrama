@@ -86,8 +86,8 @@ const isNodeBusy = computed(() => {
 .canvas-sb-node:hover,
 .canvas-sb-node.selected,
 .canvas-sb-node.focused {
-  border-color: #818cf8;
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35), 0 8px 24px rgba(0, 0, 0, 0.35);
+  border-color: var(--border-muted);
+  box-shadow: none;
 }
 .head {
   display: flex;
@@ -122,8 +122,8 @@ const isNodeBusy = computed(() => {
   font-size: 10px;
   padding: 1px 6px;
   border-radius: 999px;
-  background: rgba(167, 139, 250, 0.2);
-  color: #c4b5fd;
+  background: var(--border-muted);
+  color: var(--text-primary);
 }
 .title {
   font-size: 13px;
@@ -153,7 +153,7 @@ const isNodeBusy = computed(() => {
   border-color: #60a5fa;
 }
 .highlighted {
-  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.75), 0 8px 28px rgba(99, 102, 241, 0.25);
+  border-color: var(--text-bright); box-shadow: none;
 }
 .dimmed {
   opacity: 0.28;

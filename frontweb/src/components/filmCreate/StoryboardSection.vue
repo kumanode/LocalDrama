@@ -504,18 +504,18 @@ async function runSelected(action) {
   align-items: center;
   gap: 10px;
   padding: 10px 18px;
-  background: linear-gradient(90deg, rgba(139,92,246,0.12) 0%, transparent 80%);
-  border-left: 3px solid rgba(139,92,246,0.6);
+  background: var(--bg-inner);
+  border-left: 3px solid var(--text-bright);
   border-radius: 0 10px 10px 0;
 }
 .segment-index-badge {
   font-size: 11px;
   font-weight: 600;
-  color: #a78bfa;
-  background: rgba(139,92,246,0.15);
+  color: var(--text-bright);
+  background: var(--bg-inner);
+  border: 1px solid var(--border-muted);
   padding: 2px 8px;
-  border-radius: 20px;
-  letter-spacing: 0.3px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 .segment-title-text {
