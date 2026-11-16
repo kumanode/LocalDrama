@@ -272,7 +272,7 @@ import { useAssetMedia } from '@/composables/filmCreate/useAssetMedia'
 import { useI18n } from '@/i18n'
 import { generationStyleOptions } from '@/constants/styleOptions'
 import { useNavigation } from '@/composables/filmCreate/useNavigation'
-import { useStoryScript } from '@/composables/filmCreate/useStoryScript'
+import { useProjectScript } from '@/composables/filmCreate/useProjectScript'
 import { useResourceAssets } from '@/composables/filmCreate/useResourceAssets'
 import { useNarration } from '@/composables/filmCreate/useNarration'
 import { usePipeline } from '@/composables/filmCreate/usePipeline'
@@ -281,7 +281,6 @@ import { useStoryboardAssociations } from '@/composables/filmCreate/useStoryboar
 import { useMergeExport } from '@/composables/filmCreate/useMergeExport'
 import { useStoryboardPrompts } from '@/composables/filmCreate/useStoryboardPrompts'
 import { useTaskPolling } from '@/composables/filmCreate/useTaskPolling'
-import { useProjectSettings } from '@/composables/filmCreate/useProjectSettings'
 import { useActiveTasks } from '@/composables/filmCreate/useActiveTasks'
 import { useStepNavigation } from '@/composables/filmCreate/useStepNavigation'
 import { useGenerationStyle } from '@/composables/filmCreate/useGenerationStyle'
@@ -726,7 +725,7 @@ const {
   sbSelectedImgId,
 })
 
-// ── Composable: Project Settings ──────────────────────
+// ── Composable: Project Script & Settings ─────────────
 const {
   exportingStoryboardSheet,
   syncStoryboardStateFromEpisode,
@@ -739,59 +738,6 @@ const {
   saveProjectSettings,
   onExportStoryboardSheet,
   applyRouteToStore,
-} = useProjectSettings({
-  store,
-  route,
-  router,
-  storyInput,
-  storyStyle,
-  storyType,
-  generationStyle,
-  customStylePrompt,
-  projectAspectRatio,
-  videoClipDuration,
-  storyboardIncludeNarration,
-  storyboardUniversalOmni,
-  storyboardUseFirstLastFrame,
-  lastFrameUseFirstLayoutLock,
-  gridMode,
-  selectedEpisodeId,
-  savedCurrentEpisodeNumber,
-  scriptTitle,
-  scriptLanguage,
-  scriptStoryboardStyle,
-  projectStylePromptMetadata,
-  syncAssociationsFromEpisode,
-  syncVideoParamsFromStoryboards,
-  loadStoryboardMedia: (...args) => loadStoryboardMedia(...args),
-  recoverAndSyncEpisodeTasks: (...args) => recoverAndSyncEpisodeTasks(...args),
-  getSbSelectedScene: (...args) => getSbSelectedScene(...args),
-  getSbSelectedCharacters: (...args) => getSbSelectedCharacters(...args),
-  getSbSelectedProps: (...args) => getSbSelectedProps(...args),
-  getMovementLabel,
-  getSbFirstImage,
-  getSbLastImage,
-  buildFirstFrameImagePrompt: (...args) => buildFirstFrameImagePrompt(...args),
-  buildLastFrameImagePrompt: (...args) => buildLastFrameImagePrompt(...args),
-  sbFields: {
-    sbTitle,
-    sbLocation,
-    sbTime,
-    sbDuration,
-    sbDialogue,
-    sbNarration,
-    sbAction,
-    sbResult,
-    sbAtmosphere,
-    sbShotType,
-    sbMovement,
-    sbLayoutDescription,
-    sbUniversalSegmentText,
-  },
-})
-
-// ── Composable: Story Script ─────────────────────────
-const {
   storyboardCount,
   videoDuration,
   storyboardIncludeNarration,
@@ -829,44 +775,68 @@ const {
   onAddSingleStoryboard,
   onDeleteSingleStoryboard,
   onInsertStoryboardBefore,
-} = useStoryScript({
+  selectableScriptDramas,
+} = useProjectScript({
   store,
   route,
   router,
   dramaId,
   currentEpisodeId,
-  scriptTitle,
-  scriptContent,
   storyInput,
   storyStyle,
   storyType,
   storyEpisodeCount,
-  scriptLanguage,
-  scriptStoryboardStyle,
   generationStyle,
   customStylePrompt,
   projectAspectRatio,
   videoClipDuration,
-  savedCurrentEpisodeNumber,
+  storyboardIncludeNarration,
+  storyboardUniversalOmni,
+  storyboardUseFirstLastFrame,
+  lastFrameUseFirstLayoutLock,
+  gridMode,
   selectedEpisodeId,
+  savedCurrentEpisodeNumber,
+  scriptTitle,
+  scriptContent,
+  scriptLanguage,
+  scriptStoryboardStyle,
   scriptWorkbenchMode,
-  loadDrama: (...args) => loadDrama(...args),
-  pollTask: (...args) => pollTask(...args),
+  projectStylePromptMetadata,
+  syncAssociationsFromEpisode,
+  syncVideoParamsFromStoryboards,
+  loadStoryboardMedia: (...args) => loadStoryboardMedia(...args),
+  recoverAndSyncEpisodeTasks: (...args) => recoverAndSyncEpisodeTasks(...args),
+  getSbSelectedScene: (...args) => getSbSelectedScene(...args),
+  getSbSelectedCharacters: (...args) => getSbSelectedCharacters(...args),
+  getSbSelectedProps: (...args) => getSbSelectedProps(...args),
+  getMovementLabel,
+  getSbFirstImage,
+  getSbLastImage,
+  buildFirstFrameImagePrompt: (...args) => buildFirstFrameImagePrompt(...args),
+  buildLastFrameImagePrompt: (...args) => buildLastFrameImagePrompt(...args),
+  sbFields: {
+    sbTitle,
+    sbLocation,
+    sbTime,
+    sbDuration,
+    sbDialogue,
+    sbNarration,
+    sbAction,
+    sbResult,
+    sbAtmosphere,
+    sbShotType,
+    sbMovement,
+    sbLayoutDescription,
+    sbUniversalSegmentText,
+  },
   genStore,
   getSelectedStyle,
-  projectStylePromptMetadata,
   polishUniversalSegmentsAfterGeneration: (...args) => polishUniversalSegmentsAfterGeneration(...args),
   sbTruncatedWarning,
   sbTruncatedDismissed,
   trackFilmCreateAction,
-  onEpisodeSelect: (...args) => onEpisodeSelect(...args),
-})
-
-const selectableScriptDramas = computed(() => {
-  const cur = store.dramaId
-  const list = selectScriptDramas.value || []
-  if (cur == null) return list
-  return list.filter((d) => Number(d.id) !== Number(cur))
+  pollTask: (...args) => pollTask(...args),
 })
 
 
@@ -1152,39 +1122,6 @@ onMounted(async () => {
 watch(() => route.params.id, () => {
   applyRouteToStore()
 })
-
-// 剧本分集切换时同步 URL query 参数（?episode=<episode_id>），使刷新/分享页面仍保持当前选中集
-// 同时监听 query 变化，支持浏览器前进/后退时自动切换对应集次
-watch(
-  () => selectedEpisodeId.value,
-  (newId) => {
-    if (!dramaId.value) return
-    const currentInQuery = route.query.episode != null ? Number(route.query.episode) : null
-    const desired = newId != null ? Number(newId) : null
-    if (currentInQuery !== desired) {
-      const newQuery = { ...route.query }
-      if (desired != null) {
-        newQuery.episode = String(desired)
-      } else {
-        delete newQuery.episode
-      }
-      router.replace({ query: newQuery }).catch(() => {})
-    }
-  },
-  { flush: 'post' }
-)
-
-watch(
-  () => route.query.episode,
-  (newEp) => {
-    if (!dramaId.value) return
-    const newVal = newEp != null ? Number(newEp) : null
-    const currentSel = selectedEpisodeId.value != null ? Number(selectedEpisodeId.value) : null
-    if (currentSel !== newVal) {
-      onEpisodeSelect(newVal)
-    }
-  }
-)
 </script>
 
 <style scoped src="./FilmCreate.css"></style>
