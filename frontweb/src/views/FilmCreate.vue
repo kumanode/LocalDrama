@@ -245,33 +245,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch, reactive, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useAgentContext } from '@/stores/agentContext'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Setting, Plus, Minus, Sunny, Moon, MagicStick, Upload, Delete, Check, Loading, WarningFilled, User, Box, Picture, Film, VideoCamera, Document, InfoFilled, Refresh, ZoomIn, QuestionFilled, DocumentAdd, Expand, Fold, VideoPlay, Grid, Close } from '@element-plus/icons-vue'
-import { useTheme } from '@/composables/useTheme'
+import { ElMessage } from 'element-plus'
 import { useFilmStore } from '@/stores/film'
 import { useGenerationTaskStore, GEN_RESOURCE } from '@/stores/generationTaskStore'
 import { isEpisodeExtractRunning } from '@/composables/useGenerationTaskSync'
 import { dramaAPI } from '@/api/drama'
-import { generationAPI } from '@/api/generation'
-import { aiAPI } from '@/api/ai'
-import { characterAPI } from '@/api/characters'
-import { propAPI } from '@/api/props'
-import { sceneAPI } from '@/api/scenes'
-import { imagesAPI } from '@/api/images'
-import { videosAPI } from '@/api/videos'
 import { storyboardsAPI } from '@/api/storyboards'
-import { uploadAPI } from '@/api/upload'
-import { characterLibraryAPI } from '@/api/characterLibrary'
-import { sceneLibraryAPI } from '@/api/sceneLibrary'
-import { propLibraryAPI } from '@/api/propLibrary'
-import { generationSettingsAPI } from '@/api/prompts'
-import StylePickerButton from '@/components/StylePickerButton.vue'
 import AIConfigContent from '@/components/AIConfigContent.vue'
-import LanguageToggle from '@/components/LanguageToggle.vue'
 import FilmHeader from '@/components/filmCreate/FilmHeader.vue'
 import ScriptSection from '@/components/filmCreate/ScriptSection.vue'
 import PipelinePanel from '@/components/filmCreate/PipelinePanel.vue'
@@ -294,13 +278,11 @@ import { useNarration } from '@/composables/filmCreate/useNarration'
 import { usePipeline } from '@/composables/filmCreate/usePipeline'
 import { useStoryboards } from '@/composables/filmCreate/useStoryboards'
 import { useStoryboardAssociations } from '@/composables/filmCreate/useStoryboardAssociations'
-import { useBatchGeneration } from '@/composables/filmCreate/useBatchGeneration'
 import { useMergeExport } from '@/composables/filmCreate/useMergeExport'
 import { useFramePrompts } from '@/composables/filmCreate/useFramePrompts'
 import { useUniversalSegments } from '@/composables/filmCreate/useUniversalSegments'
 import { useStoryboardPromptDialog } from '@/composables/filmCreate/useStoryboardPromptDialog'
-import { useStoryboardVideo } from '@/composables/filmCreate/useStoryboardVideo'
-import { useStoryboardImages } from '@/composables/filmCreate/useStoryboardImages'
+import { useStoryboardMediaGenerators } from '@/composables/filmCreate/useStoryboardMediaGenerators'
 import { useTaskPolling } from '@/composables/filmCreate/useTaskPolling'
 import { useProjectSettings } from '@/composables/filmCreate/useProjectSettings'
 import { useActiveTasks } from '@/composables/filmCreate/useActiveTasks'
@@ -310,24 +292,13 @@ import { useStoryboardCardBindings } from '@/composables/filmCreate/useStoryboar
 
 const route = useRoute()
 const router = useRouter()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const store = useFilmStore()
 const genStore = useGenerationTaskStore()
-const { isDark, toggle: toggleTheme } = useTheme()
 const { videoResolution: storeVideoResolution } = storeToRefs(store)
 
 // ── Composable: Navigation ─────────────────────────────
-const { navCollapsed, storyboardMenuExpanded, toggleNav, scrollToTop, scrollToAnchor } = useNavigation()
-
-function goList() {
-  router.push('/')
-}
-
-function goCanvasMode() {
-  if (!dramaId.value) return
-  const query = selectedEpisodeId.value ? { episode: String(selectedEpisodeId.value) } : {}
-  router.push({ path: `/film/${dramaId.value}/canvas`, query })
-}
+const { navCollapsed, storyboardMenuExpanded, toggleNav, scrollToAnchor } = useNavigation()
 
 
 const showAiConfigDialog = ref(false)
@@ -365,9 +336,6 @@ const scriptContent = computed({
   set: (v) => store.setScriptContent(v)
 })
 const videoResolution = storeVideoResolution
-const videoMusic = ref('')
-const videoSfx = ref('')
-const videoQuality = ref('high')
 
 const dramaId = computed(() => store.dramaId)
 const characters = computed(() => store.characters)
@@ -599,13 +567,7 @@ const {
 
 
 
-// 资源管理大面板及子区块折叠状态
-const resourcePanelCollapsed = ref(false)
-const charactersBlockCollapsed = ref(false)
-const propsBlockCollapsed = ref(false)
-const scenesBlockCollapsed = ref(false)
 const sceneUseQuadGrid = ref(false)
-const propUseQuadGrid = ref(false)  // 道具四视图（与场景四宫格同级选项）
 
 // 分镜行内编辑状态（按 storyboard id 存储）
 // navCollapsed/storyboardMenuExpanded/toggleNav → 已移至 useNavigation composable
@@ -784,6 +746,70 @@ const {
   sbSelectedImgId,
 })
 
+// ── Composable: Project Settings ──────────────────────
+const {
+  exportingStoryboardSheet,
+  syncStoryboardStateFromEpisode,
+  onEpisodeSelect,
+  loadDrama,
+  onLastFrameLayoutLockChange,
+  onStoryboardUseFirstLastFrameChange,
+  onNovelImported,
+  updateStoryboardDialogue,
+  saveProjectSettings,
+  onExportStoryboardSheet,
+  applyRouteToStore,
+} = useProjectSettings({
+  store,
+  route,
+  router,
+  storyInput,
+  storyStyle,
+  storyType,
+  generationStyle,
+  customStylePrompt,
+  projectAspectRatio,
+  videoClipDuration,
+  storyboardIncludeNarration,
+  storyboardUniversalOmni,
+  storyboardUseFirstLastFrame,
+  lastFrameUseFirstLayoutLock,
+  gridMode,
+  selectedEpisodeId,
+  savedCurrentEpisodeNumber,
+  scriptTitle,
+  scriptLanguage,
+  scriptStoryboardStyle,
+  projectStylePromptMetadata,
+  syncAssociationsFromEpisode,
+  syncVideoParamsFromStoryboards,
+  loadStoryboardMedia: (...args) => loadStoryboardMedia(...args),
+  recoverAndSyncEpisodeTasks: (...args) => recoverAndSyncEpisodeTasks(...args),
+  getSbSelectedScene: (...args) => getSbSelectedScene(...args),
+  getSbSelectedCharacters: (...args) => getSbSelectedCharacters(...args),
+  getSbSelectedProps: (...args) => getSbSelectedProps(...args),
+  getMovementLabel,
+  getSbFirstImage,
+  getSbLastImage,
+  buildFirstFrameImagePrompt: (...args) => buildFirstFrameImagePrompt(...args),
+  buildLastFrameImagePrompt: (...args) => buildLastFrameImagePrompt(...args),
+  sbFields: {
+    sbTitle,
+    sbLocation,
+    sbTime,
+    sbDuration,
+    sbDialogue,
+    sbNarration,
+    sbAction,
+    sbResult,
+    sbAtmosphere,
+    sbShotType,
+    sbMovement,
+    sbLayoutDescription,
+    sbUniversalSegmentText,
+  },
+})
+
 // ── Composable: Story Script ─────────────────────────
 const {
   storyboardCount,
@@ -865,208 +891,7 @@ const selectableScriptDramas = computed(() => {
 
 
 
-// ── Composable: Storyboard Images ─────────────────────
-const {
-  onGenerateSbFrameImage,
-  onGenerateSbFramePair,
-  onGenerateSbImage,
-  getSbLocalImage,
-  onUpscaleSbImage,
-  onLinkTailFrameToNext,
-  onUsePrevTailAsFirst,
-} = useStoryboardImages({
-  store,
-  dramaId,
-  storyboardUseFirstLastFrame,
-  lastFrameUseFirstLayoutLock,
-  gridMode,
-  generatingSbFirstImageIds,
-  generatingSbLastImageIds,
-  generatingSbImageIds,
-  upscalingSbIds,
-  linkingTailFrameIds,
-  usingPrevTailAsFirstIds,
-  sbCharacterIds,
-  sbSelectedImgId,
-  sbSelectedLastImgId,
-  ensureProfessionalFramePrompt: (...args) => ensureProfessionalFramePrompt(...args),
-  buildLastFrameImagePrompt: (...args) => buildLastFrameImagePrompt(...args),
-  getSbFirstImage,
-  getSbLastImage,
-  getSbImage,
-  getSbVideo,
-  getNextStoryboard,
-  getPrevStoryboard,
-  getSelectedStyle,
-  projectAspectRatio,
-  assetImageUrl,
-  frameTypeForSlot,
-  buildSbGenMeta,
-  pollTask: (...args) => pollTask(...args),
-  loadDrama: (...args) => loadDrama(...args),
-  loadSingleStoryboardMedia: (...args) => loadSingleStoryboardMedia(...args),
-  refreshStoryboardsOnly: (...args) => refreshStoryboardsOnly(...args),
-  restoreSelectionsFromBackend: (...args) => restoreSelectionsFromBackend(...args),
-  onSelectSbFrameImage,
-  genStore,
-})
-
-// ── Composable: Project Settings ──────────────────────
-const {
-  exportingStoryboardSheet,
-  syncStoryboardStateFromEpisode,
-  onEpisodeSelect,
-  loadDrama,
-  onLastFrameLayoutLockChange,
-  onStoryboardUseFirstLastFrameChange,
-  onNovelImported,
-  updateStoryboardDialogue,
-  saveProjectSettings,
-  onExportStoryboardSheet,
-  applyRouteToStore,
-} = useProjectSettings({
-  store,
-  route,
-  router,
-  storyInput,
-  storyStyle,
-  storyType,
-  generationStyle,
-  customStylePrompt,
-  projectAspectRatio,
-  videoClipDuration,
-  storyboardIncludeNarration,
-  storyboardUniversalOmni,
-  storyboardUseFirstLastFrame,
-  lastFrameUseFirstLayoutLock,
-  gridMode,
-  selectedEpisodeId,
-  savedCurrentEpisodeNumber,
-  scriptTitle,
-  scriptLanguage,
-  scriptStoryboardStyle,
-  projectStylePromptMetadata,
-  syncAssociationsFromEpisode,
-  syncVideoParamsFromStoryboards,
-  loadStoryboardMedia: (...args) => loadStoryboardMedia(...args),
-  recoverAndSyncEpisodeTasks: (...args) => recoverAndSyncEpisodeTasks(...args),
-  getSbSelectedScene: (...args) => getSbSelectedScene(...args),
-  getSbSelectedCharacters: (...args) => getSbSelectedCharacters(...args),
-  getSbSelectedProps: (...args) => getSbSelectedProps(...args),
-  getMovementLabel,
-  getSbFirstImage,
-  getSbLastImage,
-  buildFirstFrameImagePrompt: (...args) => buildFirstFrameImagePrompt(...args),
-  buildLastFrameImagePrompt: (...args) => buildLastFrameImagePrompt(...args),
-  sbFields: {
-    sbTitle,
-    sbLocation,
-    sbTime,
-    sbDuration,
-    sbDialogue,
-    sbNarration,
-    sbAction,
-    sbResult,
-    sbAtmosphere,
-    sbShotType,
-    sbMovement,
-    sbLayoutDescription,
-    sbUniversalSegmentText,
-  },
-})
-
-// ── Composable: Storyboard Video ──────────────────────
-const {
-  toAbsoluteImageUrl,
-  getMainImageUrlForVideo,
-  sbCanSubmitVideo,
-  buildSbVideoPromptForApi,
-  getSbUniversalOmniRefSlots,
-  collectSbOmniReferenceAbsoluteUrls,
-  collectSbSceneOnlyReferenceAbsoluteUrls,
-  invalidateActiveVideoAiConfigCache,
-  getActiveVideoAiConfig,
-  confirmUniversalNonSeedance2Video,
-  sbVideoFirstLastUrls,
-  onGenerateSbVideo,
-  onResumeSbVideoPoll,
-} = useStoryboardVideo({
-  store,
-  dramaId,
-  videoResolution,
-  projectAspectRatio,
-  getSelectedStyle,
-  getSbVideoDurationForApi,
-  isSbUniversalMode,
-  sbUniversalSegmentTrimmed,
-  storyboardUseFirstLastFrame,
-  getSbFirstFrameUrl,
-  getSbLastFrameUrl,
-  isSbVideoGenerating,
-  getSbResumableFailedVideo,
-  sbVideoErrors,
-  sbSelectedVideoId,
-  generatingSbVideoIds,
-  getSbSelectedScene,
-  getSbSelectedCharacters,
-  getSbSelectedProps,
-  hasAssetImage,
-  assetImageUrl,
-  buildSbGenMeta,
-  pollTask: (...args) => pollTask(...args),
-  loadSingleStoryboardMedia: (...args) => loadSingleStoryboardMedia(...args),
-  genStore,
-})
-
-// ── Composable: Batch Generation ──────────────────────
-const {
-  startBatchImageGeneration,
-  startBatchVideoGeneration,
-} = useBatchGeneration({
-  store,
-  dramaId,
-  currentEpisodeId,
-  pipelineRunning,
-  pipelineConcurrency,
-  pipelineVideoConcurrency,
-  batchImageRunning,
-  batchImageStopping,
-  batchImageProgress,
-  batchImageErrors,
-  batchVideoRunning,
-  batchVideoStopping,
-  batchVideoProgress,
-  batchVideoErrors,
-  videoFrameContiguity,
-  sbImages,
-  sbVideos,
-  hasSbImage,
-  storyboardUseFirstLastFrame,
-  isSbUniversalMode,
-  gridMode,
-  ensureProfessionalFramePrompt: (...args) => ensureProfessionalFramePrompt(...args),
-  getSelectedStyle,
-  projectAspectRatio,
-  videoResolution,
-  pollTask,
-  loadStoryboardMedia,
-  loadSingleStoryboardMedia,
-  sbSelectedImgId,
-  sbSelectedVideoId,
-  restoreSelectionsFromBackend,
-  recordHasPlayableVideoUrl,
-  sbCanSubmitVideo,
-  collectSbOmniReferenceAbsoluteUrls,
-  getSbFirstFrameUrl,
-  generatingSbVideoIds,
-  getMainImageUrlForVideo,
-  toAbsoluteImageUrl,
-  sbVideoFirstLastUrls,
-  buildSbVideoPromptForApi,
-  getSbVideoDurationForApi,
-  buildSbGenMeta,
-})
-
+// ── Composable: Pipeline ──────────────────────────────
 const {
   pipelineRunning,
   pipelinePaused,
@@ -1110,10 +935,10 @@ const {
   hasAssetImage,
   hasSbImage,
   getSbFirstFrameUrl,
-  getMainImageUrlForVideo,
-  toAbsoluteImageUrl,
-  sbVideoFirstLastUrls,
-  buildSbVideoPromptForApi,
+  getMainImageUrlForVideo: (...args) => getMainImageUrlForVideo(...args),
+  toAbsoluteImageUrl: (...args) => toAbsoluteImageUrl(...args),
+  sbVideoFirstLastUrls: (...args) => sbVideoFirstLastUrls(...args),
+  buildSbVideoPromptForApi: (...args) => buildSbVideoPromptForApi(...args),
   getSbVideoDurationForApi,
   recordHasPlayableVideoUrl,
   sbVideos,
@@ -1129,8 +954,8 @@ const {
   generatingSbVideoIds,
   ensureProfessionalFramePrompt,
   isSbUniversalMode,
-  sbCanSubmitVideo,
-  collectSbOmniReferenceAbsoluteUrls,
+  sbCanSubmitVideo: (...args) => sbCanSubmitVideo(...args),
+  collectSbOmniReferenceAbsoluteUrls: (...args) => collectSbOmniReferenceAbsoluteUrls(...args),
   polishUniversalSegmentsAfterGeneration,
   buildSbGenMeta,
   resolvePollMeta,
@@ -1139,6 +964,100 @@ const {
   sbTruncatedDismissed,
   getFinalizeMergeOptions,
   trackFilmCreateAction,
+})
+
+// ── Composable: Storyboard Media Generators (Images, Video, Batch) ──
+const {
+  onGenerateSbFrameImage,
+  onGenerateSbFramePair,
+  onGenerateSbImage,
+  getSbLocalImage,
+  onUpscaleSbImage,
+  onLinkTailFrameToNext,
+  onUsePrevTailAsFirst,
+  toAbsoluteImageUrl,
+  getMainImageUrlForVideo,
+  sbCanSubmitVideo,
+  buildSbVideoPromptForApi,
+  getSbUniversalOmniRefSlots,
+  collectSbOmniReferenceAbsoluteUrls,
+  collectSbSceneOnlyReferenceAbsoluteUrls,
+  invalidateActiveVideoAiConfigCache,
+  getActiveVideoAiConfig,
+  confirmUniversalNonSeedance2Video,
+  sbVideoFirstLastUrls,
+  onGenerateSbVideo,
+  onResumeSbVideoPoll,
+  startBatchImageGeneration,
+  startBatchVideoGeneration,
+} = useStoryboardMediaGenerators({
+  store,
+  dramaId,
+  currentEpisodeId,
+  storyboardUseFirstLastFrame,
+  lastFrameUseFirstLayoutLock,
+  gridMode,
+  generatingSbFirstImageIds,
+  generatingSbLastImageIds,
+  generatingSbImageIds,
+  upscalingSbIds,
+  linkingTailFrameIds,
+  usingPrevTailAsFirstIds,
+  sbCharacterIds,
+  sbSelectedImgId,
+  sbSelectedLastImgId,
+  ensureProfessionalFramePrompt: (...args) => ensureProfessionalFramePrompt(...args),
+  buildLastFrameImagePrompt: (...args) => buildLastFrameImagePrompt(...args),
+  getSbFirstImage,
+  getSbLastImage,
+  getSbImage,
+  getSbVideo,
+  getNextStoryboard,
+  getPrevStoryboard,
+  getSelectedStyle,
+  projectAspectRatio,
+  assetImageUrl,
+  frameTypeForSlot,
+  buildSbGenMeta,
+  pollTask: (...args) => pollTask(...args),
+  loadDrama: (...args) => loadDrama(...args),
+  loadSingleStoryboardMedia: (...args) => loadSingleStoryboardMedia(...args),
+  refreshStoryboardsOnly: (...args) => refreshStoryboardsOnly(...args),
+  restoreSelectionsFromBackend: (...args) => restoreSelectionsFromBackend(...args),
+  onSelectSbFrameImage,
+  genStore,
+  videoResolution,
+  getSbVideoDurationForApi,
+  isSbUniversalMode,
+  sbUniversalSegmentTrimmed,
+  getSbFirstFrameUrl,
+  getSbLastFrameUrl,
+  isSbVideoGenerating,
+  getSbResumableFailedVideo,
+  sbVideoErrors,
+  sbSelectedVideoId,
+  generatingSbVideoIds,
+  getSbSelectedScene: (...args) => getSbSelectedScene(...args),
+  getSbSelectedCharacters: (...args) => getSbSelectedCharacters(...args),
+  getSbSelectedProps: (...args) => getSbSelectedProps(...args),
+  hasAssetImage,
+  pipelineRunning,
+  pipelineConcurrency,
+  pipelineVideoConcurrency,
+  batchImageRunning,
+  batchImageStopping,
+  batchImageProgress,
+  batchImageErrors,
+  batchVideoRunning,
+  batchVideoStopping,
+  batchVideoProgress,
+  batchVideoErrors,
+  videoFrameContiguity,
+  sbImages,
+  sbVideos,
+  hasSbImage,
+  loadStoryboardMedia: (...args) => loadStoryboardMedia(...args),
+  recordHasPlayableVideoUrl,
 })
 
 const agentContext = useAgentContext()
