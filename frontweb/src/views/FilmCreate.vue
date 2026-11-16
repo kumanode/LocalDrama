@@ -280,13 +280,12 @@ import { useStoryboards } from '@/composables/filmCreate/useStoryboards'
 import { useStoryboardAssociations } from '@/composables/filmCreate/useStoryboardAssociations'
 import { useMergeExport } from '@/composables/filmCreate/useMergeExport'
 import { useStoryboardPrompts } from '@/composables/filmCreate/useStoryboardPrompts'
-import { useStoryboardMediaGenerators } from '@/composables/filmCreate/useStoryboardMediaGenerators'
 import { useTaskPolling } from '@/composables/filmCreate/useTaskPolling'
 import { useProjectSettings } from '@/composables/filmCreate/useProjectSettings'
 import { useActiveTasks } from '@/composables/filmCreate/useActiveTasks'
 import { useStepNavigation } from '@/composables/filmCreate/useStepNavigation'
 import { useGenerationStyle } from '@/composables/filmCreate/useGenerationStyle'
-import { useStoryboardCardBindings } from '@/composables/filmCreate/useStoryboardCardBindings'
+import { useStoryboardStudio } from '@/composables/filmCreate/useStoryboardStudio'
 
 const route = useRoute()
 const router = useRouter()
@@ -947,31 +946,20 @@ const {
   trackFilmCreateAction,
 })
 
-// ── Composable: Storyboard Media Generators (Images, Video, Batch) ──
+// ── Composable: Storyboard Studio (Generators & Card Bindings) ──
 const {
-  onGenerateSbFrameImage,
-  onGenerateSbFramePair,
-  onGenerateSbImage,
-  getSbLocalImage,
-  onUpscaleSbImage,
-  onLinkTailFrameToNext,
-  onUsePrevTailAsFirst,
+  sbCardState,
+  sbCardActions,
+  startBatchImageGeneration,
+  startBatchVideoGeneration,
   toAbsoluteImageUrl,
   getMainImageUrlForVideo,
   sbCanSubmitVideo,
   buildSbVideoPromptForApi,
-  getSbUniversalOmniRefSlots,
   collectSbOmniReferenceAbsoluteUrls,
-  collectSbSceneOnlyReferenceAbsoluteUrls,
   invalidateActiveVideoAiConfigCache,
-  getActiveVideoAiConfig,
-  confirmUniversalNonSeedance2Video,
   sbVideoFirstLastUrls,
-  onGenerateSbVideo,
-  onResumeSbVideoPoll,
-  startBatchImageGeneration,
-  startBatchVideoGeneration,
-} = useStoryboardMediaGenerators({
+} = useStoryboardStudio({
   store,
   dramaId,
   currentEpisodeId,
@@ -985,6 +973,8 @@ const {
   linkingTailFrameIds,
   usingPrevTailAsFirstIds,
   sbCharacterIds,
+  sbPropIds,
+  sbSceneId,
   sbSelectedImgId,
   sbSelectedLastImgId,
   ensureProfessionalFramePrompt: (...args) => ensureProfessionalFramePrompt(...args),
@@ -1039,6 +1029,50 @@ const {
   hasSbImage,
   loadStoryboardMedia: (...args) => loadStoryboardMedia(...args),
   recordHasPlayableVideoUrl,
+  sbNarration,
+  sbUniversalSegmentText,
+  ttsSbNarrationIds,
+  generatingUniversalSegmentIds,
+  sbImageUploadSlotById,
+  uploadingSbImageId,
+  ttsSbIds,
+  getMovementLabel,
+  onOpenVideoParamsDialog,
+  onToggleSbUniversalMode,
+  onInsertStoryboardBefore,
+  onDeleteSingleStoryboard,
+  setSbCharacterIds,
+  setSbPropIds,
+  onStoryboardSceneChange,
+  openImagePreview,
+  onSbAddCharacterCommand,
+  onOpenSbPromptDialog,
+  onSaveSbNarrationField,
+  onTtsSbNarration,
+  sbNarrationAudioRelPath,
+  playSbNarrationTts,
+  onUniversalSegmentPromptMenu,
+  onSaveUniversalSegmentField,
+  getStripItems,
+  getFirstImageFile,
+  doUploadSbImage,
+  canUsePrevTailAsFirst,
+  onUsePrevTailAsFirst,
+  onUploadSbImageClick,
+  showSbFramePromptPreview,
+  onLastFrameLayoutLockChange,
+  stripItemTitle,
+  onStripItemClick,
+  onRemoveSbHistoryImage,
+  onSelectStripItem,
+  hasSbFirstLastPair,
+  sbMainVideoPlayerKey,
+  getSbVideoError,
+  getVideoStripItems,
+  onSelectSbMainVideo,
+  onTtsSbDialogue,
+  sbDialogueAudioRelPath,
+  playSbDialogueTts,
 })
 
 const agentContext = useAgentContext()
@@ -1151,83 +1185,6 @@ watch(
     }
   }
 )
-
-// ── Composable: Storyboard Card Bindings ───────────────
-const { sbCardState, sbCardActions } = useStoryboardCardBindings({
-  sbCharacterIds,
-  sbPropIds,
-  sbSceneId,
-  sbNarration,
-  sbUniversalSegmentText,
-  ttsSbNarrationIds,
-  generatingUniversalSegmentIds,
-  generatingSbFirstImageIds,
-  usingPrevTailAsFirstIds,
-  sbImageUploadSlotById,
-  generatingSbLastImageIds,
-  generatingSbImageIds,
-  uploadingSbImageId,
-  upscalingSbIds,
-  linkingTailFrameIds,
-  ttsSbIds,
-  getMovementLabel,
-  onOpenVideoParamsDialog,
-  isSbUniversalMode,
-  onToggleSbUniversalMode,
-  onInsertStoryboardBefore,
-  onDeleteSingleStoryboard,
-  setSbCharacterIds,
-  setSbPropIds,
-  onStoryboardSceneChange,
-  openImagePreview,
-  onSbAddCharacterCommand,
-  onOpenSbPromptDialog,
-  onSaveSbNarrationField,
-  onTtsSbNarration,
-  sbNarrationAudioRelPath,
-  playSbNarrationTts,
-  onUniversalSegmentPromptMenu,
-  sbUniversalSegmentTrimmed,
-  getSbUniversalOmniRefSlots,
-  onSaveUniversalSegmentField,
-  getStripItems,
-  getFirstImageFile,
-  doUploadSbImage,
-  getSbFirstImage,
-  canUsePrevTailAsFirst,
-  onUsePrevTailAsFirst,
-  onUploadSbImageClick,
-  showSbFramePromptPreview,
-  onGenerateSbFrameImage,
-  getSbLastImage,
-  onLastFrameLayoutLockChange,
-  stripItemTitle,
-  onStripItemClick,
-  onRemoveSbHistoryImage,
-  getSbImage,
-  onGenerateSbImage,
-  onSelectStripItem,
-  hasSbImage,
-  onGenerateSbFramePair,
-  hasSbFirstLastPair,
-  getSbLocalImage,
-  onUpscaleSbImage,
-  getSbVideo,
-  sbMainVideoPlayerKey,
-  getSbVideoError,
-  getSbResumableFailedVideo,
-  onResumeSbVideoPoll,
-  isSbVideoGenerating,
-  sbCanSubmitVideo,
-  onGenerateSbVideo,
-  getVideoStripItems,
-  onSelectSbMainVideo,
-  getNextStoryboard,
-  onLinkTailFrameToNext,
-  onTtsSbDialogue,
-  sbDialogueAudioRelPath,
-  playSbDialogueTts,
-})
 </script>
 
 <style scoped src="./FilmCreate.css"></style>
