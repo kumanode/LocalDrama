@@ -14,10 +14,11 @@
 function isFlow2ApiConfig(config) {
   const provider = String(config?.provider || '').trim().toLowerCase();
   if (provider === 'flow2api') return true;
-  // 兜底：用户把 provider 留成 gemini / 自定义，但 base_url 指向本地 flow2api 代理
+  // 兜底：用户把 provider 留成 gemini / google，或显式填了 gemini 协议，且 base_url 指向本地 flow2api 代理
   const proto = String(config?.api_protocol || '').trim().toLowerCase();
   const base = String(config?.base_url || '').trim().toLowerCase().replace(/\/+$/, '');
-  if (proto !== 'gemini') return false;
+  const isGeminiProto = proto === 'gemini' || (!proto && (provider === 'gemini' || provider === 'google'));
+  if (!isGeminiProto) return false;
   return /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:\d+)?$/.test(base);
 }
 

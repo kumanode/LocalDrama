@@ -1,4 +1,4 @@
-const { describe, it } = require('node:test');
+const { describe, it, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 const {
   isFlow2ApiConfig,
@@ -7,6 +7,8 @@ const {
   normalizeFlow2ApiVideoDuration,
   planFlow2ApiVideoImages,
 } = require('../src/services/flow2apiCompat');
+const videoClient = require('../src/services/videoClient');
+const aiConfigService = require('../src/services/aiConfigService');
 
 describe('flow2api compat', () => {
   describe('isFlow2ApiConfig', () => {
@@ -31,6 +33,12 @@ describe('flow2api compat', () => {
 
     it('gemini + no base → false', () => {
       assert.equal(isFlow2ApiConfig({ api_protocol: 'gemini' }), false);
+    });
+
+    it('provider gemini/google + empty api_protocol + localhost base → true', () => {
+      assert.equal(isFlow2ApiConfig({ provider: 'gemini', base_url: 'http://127.0.0.1:8000' }), true);
+      assert.equal(isFlow2ApiConfig({ provider: 'google', base_url: 'http://localhost:8000' }), true);
+      assert.equal(isFlow2ApiConfig({ provider: 'gemini', base_url: 'https://generativelanguage.googleapis.com' }), false);
     });
   });
 
@@ -169,6 +177,161 @@ describe('flow2api compat', () => {
     it('识别 omni-1.2-flash (带连字符)', () => {
       assert.equal(normalizeFlow2ApiVideoDuration(20, 'omni-1.2-flash'), 15);
       assert.equal(normalizeFlow2ApiVideoDuration(12, 'omni-1.2-flash'), 12);
+    });
+  });
+
+  describe('callVideoApi flow2api request payload', () => {
+    const originalListConfigs = aiConfigService.listConfigs;
+    const originalFetch = global.fetch;
+    const dummyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const noopLog = { info() {}, warn() {}, error() {}, debug() {} };
+
+    function mockFlow2ApiConfig(modelName) {
+      return [{
+        id: 99,
+        service_type: 'video',
+        is_active: true,
+        is_default: true,
+        provider: 'flow2api',
+        base_url: 'http://127.0.0.1:8000',
+        api_key: 'flow-key',
+        model: [modelName],
+        default_model: modelName,
+      }];
+    }
+
+    afterEach(() => {
+      aiConfigService.listConfigs = originalListConfigs;
+      global.fetch = originalFetch;
+    });
+
+    it('Veo 3.1 - Lite: 过滤尾帧与参考图，不发 durationSeconds，竖屏比例归一为 9:16', async () => {
+      let calledUrl = '';
+      let calledBody = null;
+      global.fetch = async (url, options) => {
+        calledUrl = String(url);
+        calledBody = JSON.parse(options.body);
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({ name: 'operations/veo-lite-task-1' }),
+        };
+      };
+
+      aiConfigService.listConfigs = () => mockFlow2ApiConfig('Veo 3.1 - Lite');
+
+      const result = await videoClient.callVideoApi(null, noopLog, {
+        prompt: '测试 Lite',
+        model: 'Veo 3.1 - Lite',
+        duration: 5,
+        aspect_ratio: '3:4',
+        image_url: dummyPng,
+        last_frame_url: dummyPng,
+        reference_urls: [dummyPng, dummyPng],
+        video_gen_id: 101,
+      });
+
+      assert.equal(result.error, undefined);
+      assert.equal(result.task_id, 'operations/veo-lite-task-1');
+      assert.match(calledUrl, /\/v1beta\/models\/Veo%203\.1%20-%20Lite:predictLongRunning/);
+      assert.equal(calledBody.instances.length, 1);
+      const inst = calledBody.instances[0];
+      assert.ok(inst.image);
+      assert.equal(inst.lastFrame, undefined);
+      assert.equal(inst.referenceImages, undefined);
+      assert.equal(calledBody.parameters.aspectRatio, '9:16');
+      assert.equal(calledBody.parameters.durationSeconds, undefined);
+    });
+
+    it('Veo 3.1 - Fast: 首帧 + 3参考图 → 截断为 2 张参考图', async () => {
+      let calledBody = null;
+      global.fetch = async (url, options) => {
+        calledBody = JSON.parse(options.body);
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({ name: 'operations/veo-fast-task-1' }),
+        };
+      };
+
+      aiConfigService.listConfigs = () => mockFlow2ApiConfig('Veo 3.1 - Fast');
+
+      const result = await videoClient.callVideoApi(null, noopLog, {
+        prompt: '测试 Fast 参考图',
+        model: 'Veo 3.1 - Fast',
+        duration: 8,
+        aspect_ratio: '16:9',
+        image_url: dummyPng,
+        reference_urls: [dummyPng, dummyPng, dummyPng],
+        video_gen_id: 102,
+      });
+
+      assert.equal(result.error, undefined);
+      assert.equal(result.task_id, 'operations/veo-fast-task-1');
+      const inst = calledBody.instances[0];
+      assert.ok(inst.image);
+      assert.equal(inst.lastFrame, undefined);
+      assert.equal(inst.referenceImages?.length, 2);
+      assert.equal(calledBody.parameters.aspectRatio, '16:9');
+      assert.equal(calledBody.parameters.durationSeconds, undefined);
+    });
+
+    it('Veo 3.1 - Fast: 首帧 + 尾帧 + 参考图 → 优先尾帧，忽略参考图', async () => {
+      let calledBody = null;
+      global.fetch = async (url, options) => {
+        calledBody = JSON.parse(options.body);
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({ name: 'operations/veo-fast-task-2' }),
+        };
+      };
+
+      aiConfigService.listConfigs = () => mockFlow2ApiConfig('Veo 3.1 - Fast');
+
+      const result = await videoClient.callVideoApi(null, noopLog, {
+        prompt: '测试 Fast 首尾帧',
+        model: 'Veo 3.1 - Fast',
+        aspect_ratio: '16:9',
+        image_url: dummyPng,
+        last_frame_url: dummyPng,
+        reference_urls: [dummyPng],
+        video_gen_id: 103,
+      });
+
+      assert.equal(result.error, undefined);
+      assert.equal(result.task_id, 'operations/veo-fast-task-2');
+      const inst = calledBody.instances[0];
+      assert.ok(inst.image);
+      assert.ok(inst.lastFrame);
+      assert.equal(inst.referenceImages, undefined);
+    });
+
+    it('Omni 1.2 Flash: 发送规范化后的 durationSeconds', async () => {
+      let calledBody = null;
+      global.fetch = async (url, options) => {
+        calledBody = JSON.parse(options.body);
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({ name: 'operations/omni-task-1' }),
+        };
+      };
+
+      aiConfigService.listConfigs = () => mockFlow2ApiConfig('Omni 1.2 Flash');
+
+      const result = await videoClient.callVideoApi(null, noopLog, {
+        prompt: '测试 Omni 1.2',
+        model: 'Omni 1.2 Flash',
+        duration: 20, // 超出 15 秒上限，应 clamp 到 15
+        aspect_ratio: '16:9',
+        image_url: dummyPng,
+        video_gen_id: 104,
+      });
+
+      assert.equal(result.error, undefined);
+      assert.equal(result.task_id, 'operations/omni-task-1');
+      assert.equal(calledBody.parameters.durationSeconds, 15);
     });
   });
 });
