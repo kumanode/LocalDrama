@@ -269,7 +269,6 @@ import { characterLibraryAPI } from '@/api/characterLibrary'
 import { sceneLibraryAPI } from '@/api/sceneLibrary'
 import { propLibraryAPI } from '@/api/propLibrary'
 import { generationSettingsAPI } from '@/api/prompts'
-import { canUseUniversalOmniVideoApi } from '@/utils/videoOmniSupport'
 import { exportStoryboardSheet } from '@/utils/exportStoryboardSheet'
 import StylePickerButton from '@/components/StylePickerButton.vue'
 import AIConfigContent from '@/components/AIConfigContent.vue'
@@ -310,6 +309,7 @@ import { useMergeExport } from '@/composables/filmCreate/useMergeExport'
 import { useFramePrompts } from '@/composables/filmCreate/useFramePrompts'
 import { useUniversalSegments } from '@/composables/filmCreate/useUniversalSegments'
 import { useStoryboardPromptDialog } from '@/composables/filmCreate/useStoryboardPromptDialog'
+import { useStoryboardVideo } from '@/composables/filmCreate/useStoryboardVideo'
 
 const route = useRoute()
 const router = useRouter()
@@ -1452,22 +1452,6 @@ async function saveProjectSettings(includeGenerationStyle = false) {
   dramaAPI.saveOutline(store.dramaId, payload).catch(e => console.error('Settings auto-save failed', e))
 }
 
-/** 经典模式视频：首帧 URL（连贯帧可覆盖首帧）+ 可选尾帧 */
-function sbVideoFirstLastUrls(sb, universal, contiguityFirstFrameUrl) {
-  let first =
-    contiguityFirstFrameUrl ||
-    (universal ? '' : toAbsoluteImageUrl(getSbFirstFrameUrl(sb) || ''))
-  if (!first && !universal) {
-    first = toAbsoluteImageUrl(getSbFirstFrameUrl(sb) || '')
-  }
-  let last = undefined
-  if (storyboardUseFirstLastFrame.value && !universal) {
-    const lu = getSbLastFrameUrl(sb)
-    if (lu) last = toAbsoluteImageUrl(lu)
-  }
-  return { first: first || undefined, last }
-}
-
 /** 获取分镜主图的本地路径（用于超分辨率判断） */
 function getSbLocalImage(sb) {
   const img = getSbImage(sb.id)
@@ -1584,296 +1568,48 @@ async function onExportStoryboardSheet() {
   ElMessage.success(t('filmCreate.exportedStoryboardSheetCount', { count: result.count }))
 }
 
-/** 为视频生成获取参考图的真实 URL */
-async function getMainImageUrlForVideo(sb) {
-  return getSbFirstFrameUrl(sb)
-}
-
-/** 转为视频接口可请求的绝对 URL（后端/第三方需能访问） */
-function toAbsoluteImageUrl(url) {
-  if (!url || !String(url).trim()) return ''
-  const s = String(url).trim()
-  if (s.startsWith('http://') || s.startsWith('https://')) return s
-  const base = (baseUrl.value || '').replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : '')
-  return base ? base + (s.startsWith('/') ? s : '/' + s) : s
-}
-
-function sbCanSubmitVideo(sb) {
-  if (!sb) return false
-  const vp = (sb.video_prompt || '').toString().trim()
-  if (vp) return true
-  if (isSbUniversalMode(sb.id)) return !!sbUniversalSegmentTrimmed(sb)
-  return false
-}
-
-/** 提交给视频 API 的文案：全能模式有片段描述时仅提交该段（不拼接 video_prompt，避免动作/旁白盖过 @图片 等编排） */
-function buildSbVideoPromptForApi(sb, { preferClassicPrompt = false } = {}) {
-  const vp = (sb.video_prompt || '').toString().trim()
-  const seg = sbUniversalSegmentTrimmed(sb)
-  if (preferClassicPrompt) return vp || seg
-  if (isSbUniversalMode(sb.id)) {
-    if (seg) return seg
-    return vp
-  }
-  return vp
-}
-
-/** 全能模式：与 collectSbOmniReferenceAbsoluteUrls 同序的参考槽位（用于 @ 选择器缩略图） */
-function getSbUniversalOmniRefSlots(sb) {
-  if (!sb?.id) return []
-  const out = []
-  let idx = 1
-  const scene = getSbSelectedScene(sb.id)
-  if (scene && hasAssetImage(scene)) {
-    out.push({
-      index: idx++,
-      kind: 'scene',
-      name: (scene.name || t('filmCreate.scene')).toString(),
-      thumbUrl: assetImageUrl(scene),
-    })
-  }
-  for (const c of getSbSelectedCharacters(sb.id)) {
-    if (hasAssetImage(c)) {
-      out.push({
-        index: idx++,
-        kind: 'character',
-        name: (c.name || t('filmCreate.character')).toString(),
-        thumbUrl: assetImageUrl(c),
-      })
-    }
-  }
-  for (const p of getSbSelectedProps(sb.id)) {
-    if (hasAssetImage(p)) {
-      out.push({
-        index: idx++,
-        kind: 'prop',
-        name: (p.name || t('filmCreate.prop')).toString(),
-        thumbUrl: assetImageUrl(p),
-      })
-    }
-  }
-  return out
-}
-
-/** 全能模式：场景/角色/物品 → 绝对 URL 列表（不含经典分镜中间主图；供可灵 Omni / 火山多图参考，最多 10，方舟侧最多取 9 张） */
-function collectSbOmniReferenceAbsoluteUrls(sb) {
-  if (!sb?.id) return []
-  const urls = []
-  const seen = new Set()
-  function pushAbs(u) {
-    const abs = toAbsoluteImageUrl(u)
-    if (!abs || seen.has(abs)) return
-    seen.add(abs)
-    urls.push(abs)
-  }
-  const scene = getSbSelectedScene(sb.id)
-  if (scene && hasAssetImage(scene)) pushAbs(assetImageUrl(scene))
-  for (const c of getSbSelectedCharacters(sb.id)) {
-    if (hasAssetImage(c)) pushAbs(assetImageUrl(c))
-  }
-  for (const p of getSbSelectedProps(sb.id)) {
-    if (hasAssetImage(p)) pushAbs(assetImageUrl(p))
-  }
-  return urls.slice(0, 10)
-}
-
-/** 非 Seedance2 全能降级：仅场景参考图（若有） */
-function collectSbSceneOnlyReferenceAbsoluteUrls(sb) {
-  if (!sb?.id) return []
-  const scene = getSbSelectedScene(sb.id)
-  if (scene && hasAssetImage(scene)) {
-    const abs = toAbsoluteImageUrl(assetImageUrl(scene))
-    return abs ? [abs] : []
-  }
-  return []
-}
-
-let activeVideoAiConfigCache = null
-let activeVideoAiConfigCacheAt = 0
-const ACTIVE_VIDEO_AI_CONFIG_TTL_MS = 15000
-
-function invalidateActiveVideoAiConfigCache() {
-  activeVideoAiConfigCache = null
-  activeVideoAiConfigCacheAt = 0
-}
-
-async function getActiveVideoAiConfig() {
-  const now = Date.now()
-  if (activeVideoAiConfigCache && now - activeVideoAiConfigCacheAt < ACTIVE_VIDEO_AI_CONFIG_TTL_MS) {
-    return activeVideoAiConfigCache
-  }
-  try {
-    const rows = await aiAPI.list('video')
-    const list = Array.isArray(rows) ? rows : []
-    const active = list.filter((c) => c.is_active !== false)
-    activeVideoAiConfigCache = active.find((c) => c.is_default) || active[0] || null
-  } catch {
-    activeVideoAiConfigCache = null
-  }
-  activeVideoAiConfigCacheAt = now
-  return activeVideoAiConfigCache
-}
-
-async function confirmUniversalNonSeedance2Video() {
-  await ElMessageBox.confirm(
-    t('filmCreate.omniModelMismatchConfirm'),
-    t('filmCreate.omniModelMismatchTitle'),
-    { confirmButtonText: t('common.continue'), cancelButtonText: t('common.cancel'), type: 'warning' }
-  )
-}
-
-async function onGenerateSbVideo(sb) {
-  if (!dramaId.value || !sb?.id || !sbCanSubmitVideo(sb)) return
-  const universal = isSbUniversalMode(sb.id)
-  let universalOmniApi = universal
-  if (universal) {
-    const videoCfg = await getActiveVideoAiConfig()
-    if (!canUseUniversalOmniVideoApi(videoCfg)) {
-      try {
-        await confirmUniversalNonSeedance2Video()
-      } catch {
-        return
-      }
-      universalOmniApi = false
-    }
-  }
-  const omniRefs = universalOmniApi ? collectSbOmniReferenceAbsoluteUrls(sb) : []
-  const sceneOnlyRefs = universal && !universalOmniApi ? collectSbSceneOnlyReferenceAbsoluteUrls(sb) : []
-  const hasClassicFrame = !!getSbFirstFrameUrl(sb)
-  let hasAnyImage = false
-  if (universalOmniApi) {
-    hasAnyImage = omniRefs.length > 0
-  } else if (universal) {
-    hasAnyImage = hasClassicFrame || sceneOnlyRefs.length > 0
-  } else {
-    hasAnyImage = hasClassicFrame
-  }
-  if (!hasAnyImage) {
-    if (!universal) {
-      await ElMessageBox.alert(
-        t('filmCreate.traditionalMissingImageAlertMsg'),
-        t('filmCreate.traditionalMissingImageAlertTitle'),
-        { confirmButtonText: t('common.confirm'), type: 'warning' }
-      )
-      return
-    }
-    try {
-      await ElMessageBox.confirm(
-        universalOmniApi
-          ? t('filmCreate.omniNoRefImageConfirm')
-          : t('filmCreate.degradedNoRefImageConfirm'),
-        universalOmniApi ? t('filmCreate.omniNoRefImageTitle') : t('filmCreate.degradedNoRefImageTitle'),
-        { confirmButtonText: t('filmCreate.continueGenerate'), cancelButtonText: t('common.cancel'), type: 'warning' }
-      )
-    } catch {
-      return
-    }
-  }
-  generatingSbVideoIds.add(sb.id)
-  const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, t('filmCreate.storyboardVideo'))
-  genStore.markRunning(meta)
-  sbVideoErrors.value[sb.id] = ''
-  // 清除前端选中状态 + 清除后端手动指定的 video_url，让合成时自动取最新生成的视频
-  if (sbSelectedVideoId.value[sb.id] != null) {
-    const next = { ...sbSelectedVideoId.value }
-    delete next[sb.id]
-    sbSelectedVideoId.value = next
-  }
-  storyboardsAPI.update(sb.id, { video_url: null }).catch(() => {})
-  try {
-    let absoluteUrl = ''
-    let referenceUrls = undefined
-    if (universalOmniApi) {
-      referenceUrls = omniRefs.length ? omniRefs : undefined
-      absoluteUrl = omniRefs[0] || ''
-    } else if (universal) {
-      const firstFrameUrl = await getMainImageUrlForVideo(sb)
-      absoluteUrl = toAbsoluteImageUrl(firstFrameUrl)
-      if (absoluteUrl) {
-        referenceUrls = sceneOnlyRefs.length ? sceneOnlyRefs : [absoluteUrl]
-      } else {
-        referenceUrls = sceneOnlyRefs.length ? sceneOnlyRefs : undefined
-        absoluteUrl = sceneOnlyRefs[0] || ''
-      }
-    } else {
-      const firstFrameUrl = await getMainImageUrlForVideo(sb)
-      absoluteUrl = toAbsoluteImageUrl(firstFrameUrl)
-      referenceUrls = absoluteUrl ? [absoluteUrl] : undefined
-    }
-    const { first: vFirst, last: vLast } = sbVideoFirstLastUrls(sb, universalOmniApi, null)
-    if (!universalOmniApi && vLast && referenceUrls && !referenceUrls.includes(vLast)) {
-      referenceUrls = [...referenceUrls, vLast]
-    }
-    const preferClassicPrompt = universal && !universalOmniApi
-    const res = await videosAPI.create({
-      drama_id: dramaId.value,
-      storyboard_id: sb.id,
-      prompt: buildSbVideoPromptForApi(sb, { preferClassicPrompt }),
-      image_url: universalOmniApi ? undefined : ((vFirst || absoluteUrl) || undefined),
-      first_frame_url: universalOmniApi ? undefined : (vFirst || absoluteUrl || undefined),
-      last_frame_url: universalOmniApi ? undefined : vLast,
-      reference_image_urls: referenceUrls,
-      style: getSelectedStyle(),
-      aspect_ratio: projectAspectRatio.value || '16:9',
-      resolution: videoResolution.value || undefined,
-      duration: getSbVideoDurationForApi(sb),
-    })
-    if (res?.task_id) {
-      const pollRes = await pollTask(res.task_id, () => loadSingleStoryboardMedia(sb.id), meta)
-      if (pollRes?.status === 'failed') {
-        sbVideoErrors.value[sb.id] = pollRes.error || t('filmCreate.videoGenFailed')
-      } else if (pollRes?.status === 'completed') {
-        sbVideoErrors.value[sb.id] = ''
-        ElMessage.success(t('filmCreate.videoGenDone'))
-      }
-    } else {
-      await loadSingleStoryboardMedia(sb.id)
-      ElMessage.success(t('filmCreate.videoGenSubmittedTip'))
-    }
-  } catch (e) {
-    sbVideoErrors.value[sb.id] = e.message || t('filmCreate.msgSubmitFailed')
-    ElMessage.error(e.message || t('filmCreate.msgSubmitFailed'))
-  } finally {
-    generatingSbVideoIds.delete(sb.id)
-    genStore.markDone(meta)
-    await loadSingleStoryboardMedia(sb.id)
-  }
-}
-
-/** 失败后继续查询上游任务（复用 provider_task_id，不重新提交） */
-async function onResumeSbVideoPoll(sb) {
-  if (!sb?.id || isSbVideoGenerating(sb.id)) return
-  const failed = getSbResumableFailedVideo(sb.id)
-  if (!failed?.id) {
-    ElMessage.warning(t('filmCreate.cannotQueryFailedRecordWarning'))
-    return
-  }
-  generatingSbVideoIds.add(sb.id)
-  const meta = buildSbGenMeta(sb, GEN_RESOURCE.SB_VIDEO, t('filmCreate.continueQuery'))
-  genStore.markRunning(meta)
-  sbVideoErrors.value[sb.id] = ''
-  try {
-    const res = await videosAPI.resumePoll(failed.id)
-    const taskId = res?.task_id
-    if (!taskId) {
-      throw new Error(t('filmCreate.noTaskIdReturned'))
-    }
-    const pollRes = await pollTask(taskId, () => loadSingleStoryboardMedia(sb.id), meta)
-    if (pollRes?.status === 'failed') {
-      sbVideoErrors.value[sb.id] = pollRes.error || t('filmCreate.continueQueryFailed')
-    } else if (pollRes?.status === 'completed') {
-      sbVideoErrors.value[sb.id] = ''
-      ElMessage.success(t('filmCreate.videoQueryDone'))
-    }
-  } catch (e) {
-    sbVideoErrors.value[sb.id] = e.message || t('filmCreate.continueQueryFailed')
-    ElMessage.error(e.message || t('filmCreate.continueQueryFailed'))
-  } finally {
-    generatingSbVideoIds.delete(sb.id)
-    genStore.markDone(meta)
-    await loadSingleStoryboardMedia(sb.id)
-  }
-}
+// ── Composable: Storyboard Video ──────────────────────
+const {
+  toAbsoluteImageUrl,
+  getMainImageUrlForVideo,
+  sbCanSubmitVideo,
+  buildSbVideoPromptForApi,
+  getSbUniversalOmniRefSlots,
+  collectSbOmniReferenceAbsoluteUrls,
+  collectSbSceneOnlyReferenceAbsoluteUrls,
+  invalidateActiveVideoAiConfigCache,
+  getActiveVideoAiConfig,
+  confirmUniversalNonSeedance2Video,
+  sbVideoFirstLastUrls,
+  onGenerateSbVideo,
+  onResumeSbVideoPoll,
+} = useStoryboardVideo({
+  store,
+  dramaId,
+  videoResolution,
+  projectAspectRatio,
+  getSelectedStyle,
+  getSbVideoDurationForApi,
+  isSbUniversalMode,
+  sbUniversalSegmentTrimmed,
+  storyboardUseFirstLastFrame,
+  getSbFirstFrameUrl,
+  getSbLastFrameUrl,
+  isSbVideoGenerating,
+  getSbResumableFailedVideo,
+  sbVideoErrors,
+  sbSelectedVideoId,
+  generatingSbVideoIds,
+  getSbSelectedScene,
+  getSbSelectedCharacters,
+  getSbSelectedProps,
+  hasAssetImage,
+  assetImageUrl,
+  buildSbGenMeta,
+  pollTask: (...args) => pollTask(...args),
+  loadSingleStoryboardMedia: (...args) => loadSingleStoryboardMedia(...args),
+  genStore,
+})
 
 /** 尾帧衔接：提取当前视频最后一帧，设为下一个分镜的首帧 */
 async function onLinkTailFrameToNext(sb) {
