@@ -9,6 +9,10 @@ const taskService = require('./taskService');
 const { loadConfig } = require('../config');
 const { postJSONWithTimeout } = require('./aiClient');
 const { flattenModelIds, pickModelId } = require('./modelId');
+const {
+  isFlow2ApiConfig,
+  normalizeFlow2ApiImageAspectRatio,
+} = require('./flow2apiCompat');
 const seedance2AssetGuards = require('../utils/seedance2AssetGuards');
 
 /** 图生 POST 使用 Node http(s)，默认 10 分钟，避免 undici fetch 大包体/慢链路下模糊失败 */
@@ -93,7 +97,7 @@ function inferProtocol(provider, model) {
   const p = String(provider || '').toLowerCase();
   if (p === 'dashscope' || p === 'qwen_image') return 'dashscope';
   if (p === 'nano_banana') return 'nano_banana';
-  if (p === 'gemini' || p === 'google') return 'gemini';
+  if (p === 'gemini' || p === 'google' || p === 'flow2api') return 'gemini';
   if (p === 'volces' || p === 'volcengine' || p === 'volc') return 'volcengine';
   if (/seedream|doubao/i.test(model || '')) return 'volcengine';
   if (p === 'kling' || p === 'klingai') return 'kling';
@@ -1217,7 +1221,13 @@ async function callGeminiImageApi(db, config, log, opts) {
   const apiKey = config.api_key || '';
   const base = (config.base_url || 'https://generativelanguage.googleapis.com').replace(/\/$/, '');
   const modelName = model || 'gemini-2.5-flash-image';
-  const aspectRatio = geminiAspectRatio(size);
+  const flow2api = isFlow2ApiConfig(config);
+  const rawAspectRatio = geminiAspectRatio(size);
+  // flow2api 只支持 16:9 / 9:16 / 1:1 / 4:3 / 3:4（Imagen 4 仅 16:9 / 9:16），
+  // 否则它会静默降级成横屏，竖版图会变成横版。
+  const aspectRatio = flow2api
+    ? normalizeFlow2ApiImageAspectRatio(rawAspectRatio, modelName)
+    : rawAspectRatio;
   const geminiImageConfig = buildGeminiImageConfig(aspectRatio, modelName, size);
   const tStart = Date.now();
   const elapsed = () => `${Date.now() - tStart}ms`;
@@ -1429,8 +1439,9 @@ async function callGeminiImageApi(db, config, log, opts) {
     return { error: 'Gemini 图片生成返回格式异常' };
   }
 
-  // 从 candidates → content → parts 中找 inlineData（图片）
+  // 从 candidates → content → parts 中找 inlineData（图片）；flow2api 取图失败时会退化成 fileData.fileUri
   const candidates = data?.candidates || [];
+  let fallbackFileUri = null;
   for (const candidate of candidates) {
     for (const part of candidate?.content?.parts || []) {
       if (part.inlineData?.data) {
@@ -1439,7 +1450,16 @@ async function callGeminiImageApi(db, config, log, opts) {
         log.info('[Gemini图生] ✓ 成功', { image_gen_id, model: modelName, mime: mimeType, total_elapsed: elapsed() });
         return { image_url: dataUrl };
       }
+      if (!fallbackFileUri && part.fileData?.fileUri) {
+        fallbackFileUri = String(part.fileData.fileUri);
+      }
     }
+  }
+
+  if (fallbackFileUri) {
+    // ponytail: fileUri 返回 URL 而非 data URL，imageService 需确保下载到本地存储
+    log.info('[Gemini图生] ✓ 成功（fileUri 兜底）', { image_gen_id, model: modelName, total_elapsed: elapsed() });
+    return { image_url: fallbackFileUri };
   }
 
   log.warn('[Gemini图生] ✗ 响应中无图片内容', { image_gen_id, candidates_count: candidates.length, raw_preview: raw.slice(0, 500), total_elapsed: elapsed() });

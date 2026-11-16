@@ -14,6 +14,12 @@ const {
   isGeminiOfficialHost,
 } = require('./mediaAspectRatioSpec');
 const {
+  isFlow2ApiConfig,
+  normalizeFlow2ApiVideoAspectRatio,
+  normalizeFlow2ApiVideoDuration,
+  planFlow2ApiVideoImages,
+} = require('./flow2apiCompat');
+const {
   signKlingOfficialJwt,
   normalizeKlingCredential,
   unsafeDecodeKlingJwtPayload,
@@ -26,7 +32,7 @@ const {
 function inferVideoProtocol(provider) {
   const p = String(provider || '').toLowerCase();
   if (p === 'dashscope') return 'dashscope';
-  if (p === 'gemini' || p === 'google') return 'gemini';
+  if (p === 'gemini' || p === 'google' || p === 'flow2api') return 'gemini';
   if (p === 'volces' || p === 'volcengine' || p === 'volc') return 'volcengine';
   if (p === 'vidu') return 'vidu';
   if (p === 'ffir') return 'kling_omni';
@@ -1804,65 +1810,119 @@ async function callDashScopeVideoApi(config, log, opts) {
 }
 
 /**
- * ?? Google Gemini Veo ???? API?predictLongRunning ??????
- * ?????veo-3.1-generate-preview / veo-3.0-generate-preview / veo-3.0-fast-generate-preview
- * ?? t2v?????? i2v???????
+ * 读取一张参考图（data URL / 本地 static / 公网 URL）→ Gemini 图片对象 { bytesBase64Encoded, mimeType }
+ * 供视频首帧 / 尾帧 / 多参考图复用。
+ */
+async function readGeminiVideoImageBase64(rawUrl, files_base_url, storage_local_path, log, video_gen_id) {
+  const imgUrl = String(rawUrl || '').trim();
+  if (!imgUrl) return null;
+  if (imgUrl.startsWith('data:')) {
+    const m = imgUrl.match(/^data:([\w/]+);base64,(.+)$/);
+    if (!m) return null;
+    return { bytesBase64Encoded: m[2], mimeType: m[1] };
+  }
+  if ((files_base_url || '').match(/localhost|127\.0\.0\.1/i) && storage_local_path) {
+    const baseUrl = (files_base_url || '').replace(/\/$/, '');
+    const afterStatic = imgUrl.split('/static/')[1] || imgUrl.replace(baseUrl + '/', '').replace(baseUrl, '');
+    const relPath = afterStatic ? afterStatic.replace(/^\//, '') : null;
+    if (relPath) {
+      const filePath = path.join(storage_local_path, relPath);
+      try {
+        const buf = await fs.promises.readFile(filePath);
+        const ext = path.extname(filePath).toLowerCase();
+        const mimeType = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' }[ext] || 'image/jpeg';
+        return { bytesBase64Encoded: buf.toString('base64'), mimeType };
+      } catch (e) {
+        if (e && e.code !== 'ENOENT' && log) {
+          log.warn('Gemini 视频参考图 本地读取失败', { error: e.message, video_gen_id, file: filePath });
+        }
+      }
+    }
+    return null;
+  }
+  try {
+    const imgRes = await fetch(imgUrl, { method: 'GET' });
+    if (!imgRes.ok) return null;
+    const buf = Buffer.from(await imgRes.arrayBuffer());
+    const mimeType = (imgRes.headers.get('content-type') || 'image/jpeg').split(';')[0].trim();
+    return { bytesBase64Encoded: buf.toString('base64'), mimeType };
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * 调用 Google Gemini Veo 视频生成 API（predictLongRunning 异步任务）
+ * 支持模型：veo-3.1-generate-preview / veo-3.0-generate-preview / veo-3.0-fast-generate-preview
+ * 支持 t2v（纯文生）、i2v（首帧）、首尾帧与多参考图（flow2api）
  */
 async function callGeminiVideoApi(config, log, opts) {
-  const { prompt, duration, aspect_ratio, image_url, video_gen_id, files_base_url, storage_local_path, model } = opts;
+  const { prompt, duration, aspect_ratio, image_url, last_frame_url, reference_urls, video_gen_id, files_base_url, storage_local_path, model } = opts;
   const apiKey = config.api_key || '';
   const base = (config.base_url || 'https://generativelanguage.googleapis.com').replace(/\/$/, '');
   const modelName = model || 'veo-3.0-generate-preview';
+  const flow2api = isFlow2ApiConfig(config);
 
-  // durationSeconds ??? 5-8 ?
-  const durationSec = Math.min(8, Math.max(5, Math.round(Number(duration) || 8)));
-  const ratio = clampToGeminiImageAspectRatio(aspect_ratio || '16:9');
+  let durationSec = Math.min(8, Math.max(5, Math.round(Number(duration) || 8)));
+  let ratio = clampToGeminiImageAspectRatio(aspect_ratio || '16:9');
+  if (flow2api) {
+    ratio = normalizeFlow2ApiVideoAspectRatio(aspect_ratio || ratio);
+    durationSec = normalizeFlow2ApiVideoDuration(duration, modelName);
+  }
 
   const instance = { prompt: prompt || '' };
 
-  // i2v?????? base64?Gemini ??? localhost URL???????? fetch ?? URL?
-  if (image_url && image_url.trim()) {
-    let imageB64 = null;
-    let mimeType = 'image/jpeg';
-    const imgUrl = image_url.trim();
-    if (imgUrl.startsWith('data:')) {
-      const m = imgUrl.match(/^data:([\w/]+);base64,(.+)$/);
-      if (m) { imageB64 = m[2]; mimeType = m[1]; }
-    } else if ((files_base_url || '').match(/localhost|127\.0\.0\.1/i) && storage_local_path) {
-      const baseUrl = (files_base_url || '').replace(/\/$/, '');
-      const afterStatic = imgUrl.split('/static/')[1] || imgUrl.replace(baseUrl + '/', '').replace(baseUrl, '');
-      const relPath = afterStatic ? afterStatic.replace(/^\//, '') : null;
-      if (relPath) {
-        const filePath = path.join(storage_local_path, relPath);
-        try {
-          const buf = await fs.promises.readFile(filePath);
-          const ext = path.extname(filePath).toLowerCase();
-          mimeType = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' }[ext] || 'image/jpeg';
-          imageB64 = buf.toString('base64');
-        } catch (_) {}
+  const firstFrame = await readGeminiVideoImageBase64(image_url, files_base_url, storage_local_path, log, video_gen_id);
+  if (firstFrame) instance.image = firstFrame;
+
+  if (flow2api) {
+    const refUrls = (Array.isArray(reference_urls) ? reference_urls : [])
+      .map((u) => String(u || '').trim())
+      .filter(Boolean);
+    
+    const plan = planFlow2ApiVideoImages(modelName, {
+      hasFirst: !!firstFrame,
+      hasLast: !!(last_frame_url || '').trim(),
+      refCount: refUrls.length,
+    });
+
+    // 首尾帧：需要首帧
+    if (plan.useLastFrame && firstFrame) {
+      const lastFrame = await readGeminiVideoImageBase64(last_frame_url, files_base_url, storage_local_path, log, video_gen_id);
+      if (lastFrame) {
+        instance.lastFrame = lastFrame;
+      } else if ((last_frame_url || '').trim()) {
+        log.warn('[flow2api] 尾帧读取失败', { video_gen_id, model: modelName });
       }
-    } else {
-      try {
-        const imgRes = await fetch(imgUrl, { method: 'GET' });
-        if (imgRes.ok) {
-          const buf = Buffer.from(await imgRes.arrayBuffer());
-          const ct = imgRes.headers.get('content-type') || 'image/jpeg';
-          mimeType = ct.split(';')[0].trim();
-          imageB64 = buf.toString('base64');
-        }
-      } catch (_) {}
+    } else if ((last_frame_url || '').trim() && !plan.useLastFrame) {
+      log.warn('[flow2api] 尾帧被跳过（模型不支持）', { video_gen_id, model: modelName });
     }
-    if (imageB64) {
-      instance.image = { bytesBase64Encoded: imageB64, mimeType };
+
+    // 参考图（与尾帧互斥）
+    if (!instance.lastFrame && plan.refLimit > 0 && refUrls.length > 0) {
+      const toRead = refUrls.slice(0, plan.refLimit);
+      const dropped = refUrls.length - toRead.length;
+      if (dropped > 0) {
+        log.warn(`[flow2api] ${dropped} 张参考图被跳过（模型上限 ${plan.refLimit}）`, { video_gen_id, model: modelName });
+      }
+      
+      const referenceImages = [];
+      for (const refUrl of toRead) {
+        const img = await readGeminiVideoImageBase64(refUrl, files_base_url, storage_local_path, log, video_gen_id);
+        if (img) referenceImages.push({ image: img });
+      }
+      if (referenceImages.length > 0) instance.referenceImages = referenceImages;
+    } else if (refUrls.length > 0 && plan.refLimit === 0) {
+      log.warn(`[flow2api] ${refUrls.length} 张参考图被跳过（模型不支持或已使用尾帧）`, { video_gen_id, model: modelName });
     }
   }
 
   const parameters = {
     aspectRatio: ratio,
-    durationSeconds: durationSec,
     sampleCount: 1,
   };
-  if (!isGeminiOfficialHost(base)) {
+  if (durationSec != null) parameters.durationSeconds = durationSec;
+  if (!flow2api && !isGeminiOfficialHost(base)) {
     parameters.aspect_ratio = ratio;
   }
   const body = {
@@ -1876,8 +1936,11 @@ async function callGeminiVideoApi(config, log, opts) {
     ratio,
     official_field: 'parameters.aspectRatio',
     durationSec,
+    flow2api,
     video_gen_id,
     has_image: !!instance.image,
+    has_last_frame: !!instance.lastFrame,
+    reference_image_count: instance.referenceImages ? instance.referenceImages.length : 0,
   });
 
   const res = await fetch(url, {
@@ -4201,7 +4264,9 @@ async function callVideoApi(db, log, opts) {
       prompt, model,
       duration: opts.duration,
       aspect_ratio,
-      image_url: opts.image_url,
+      image_url: opts.image_url || opts.first_frame_url,
+      last_frame_url: opts.last_frame_url,
+      reference_urls: opts.reference_urls,
       video_gen_id: opts.video_gen_id,
       files_base_url: opts.files_base_url,
       storage_local_path: opts.storage_local_path,
