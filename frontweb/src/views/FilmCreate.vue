@@ -306,6 +306,7 @@ import { usePipeline } from '@/composables/filmCreate/usePipeline'
 import { useStoryboards } from '@/composables/filmCreate/useStoryboards'
 import { useStoryboardAssociations } from '@/composables/filmCreate/useStoryboardAssociations'
 import { useBatchGeneration } from '@/composables/filmCreate/useBatchGeneration'
+import { useMergeExport } from '@/composables/filmCreate/useMergeExport'
 
 const route = useRoute()
 const router = useRouter()
@@ -406,12 +407,6 @@ const videoResolution = storeVideoResolution
 const videoMusic = ref('')
 const videoSfx = ref('')
 const videoQuality = ref('high')
-const videoSubtitle = ref(false)
-/** 合成整集时把各镜对白 TTS（audio_local_path）按分镜时长对齐并混入成片 */
-const videoBurnDialogue = ref(false)
-const videoWatermark = ref(false)
-/** 水印开启时烧录到成片右下角 */
-const videoWatermarkText = ref('')
 
 const dramaId = computed(() => store.dramaId)
 const characters = computed(() => store.characters)
@@ -423,17 +418,29 @@ const currentEpisodeId = computed(() => store.currentEpisode?.id ?? null)
 const videoProgress = computed(() => store.videoProgress)
 const videoStatus = computed(() => store.videoStatus)
 
+// ── Composable: Merge & Export ────────────────────────
+const {
+  videoSubtitle,
+  videoBurnDialogue,
+  videoWatermark,
+  videoWatermarkText,
+  videoErrorMsg,
+  currentEpisodeVideoUrl,
+  getFinalizeMergeOptions,
+  onGenerateVideo,
+} = useMergeExport({
+  store,
+  dramaId,
+  currentEpisodeId,
+  currentEpisode,
+  genStore,
+  loadDrama: (...args) => loadDrama(...args),
+  pollTask: (...args) => pollTask(...args),
+})
+
 function trackFilmCreateAction(_action, _payload = {}) {
   // 单机版：无埋点上报
 }
-/** 当前集合成视频的播放地址（用于按钮下方预览） */
-const currentEpisodeVideoUrl = computed(() => {
-  const url = currentEpisode.value?.video_url
-  if (!url || !String(url).trim()) return ''
-  const s = String(url).trim()
-  if (s.startsWith('http://') || s.startsWith('https://')) return s
-  return '/static/' + s.replace(/^\//, '')
-})
 
 const storyboardGenerating = computed(() =>
   isEpisodeExtractRunning(genStore, dramaId.value, currentEpisodeId.value, GEN_RESOURCE.GENERATE_STORYBOARD)
@@ -444,7 +451,6 @@ const universalOmniPolishAbort = ref(false)
 const universalOmniPolishProgress = ref({ current: 0, total: 0, label: '' })
 const sbTruncatedWarning = ref(false)
 const sbTruncatedDismissed = ref(false)
-const videoErrorMsg = ref('')
 
 // ── Composable: Asset Media ───────────────────────────
 const assetMedia = useAssetMedia({ store, dramaId, loadDrama })
@@ -2403,77 +2409,6 @@ const {
   getSbVideoDurationForApi,
   buildSbGenMeta,
 })
-
-function getFinalizeMergeOptions() {
-  return {
-    burn_narration_subtitles: !!videoSubtitle.value,
-    burn_dialogue_audio: !!videoBurnDialogue.value,
-    watermark_text: videoWatermark.value ? String(videoWatermarkText.value || '').trim().slice(0, 200) : '',
-  }
-}
-
-async function onGenerateVideo() {
-  if (!currentEpisodeId.value) return
-  const epId = currentEpisodeId.value
-  const did = dramaId.value
-  const dramaTitle = store.drama?.title || ''
-  const epNum = store.currentEpisode?.episode_number
-  const epLabel = dramaTitle
-    ? t('generationStore.episodeWithTitle', { title: dramaTitle, num: epNum ?? '' })
-    : t('generationStore.episodeOnly', { num: epNum ?? '' })
-  const mergeMeta = {
-    dramaId: did,
-    episodeId: epId,
-    dramaTitle,
-    episodeNumber: epNum,
-    resourceType: GEN_RESOURCE.EPISODE_MERGE,
-    resourceId: epId,
-    label: `${epLabel} ${t('filmCreate.mergeFullEpisodeVideo')}`,
-  }
-  store.setVideoStatus('generating', did, epId)
-  store.setVideoProgress(5, did, epId)
-  genStore.markRunning(mergeMeta)
-  videoErrorMsg.value = ''
-  try {
-    const result = await dramaAPI.finalizeEpisode(epId, getFinalizeMergeOptions())
-    if (result?.task_id != null) {
-      store.setVideoProgress(10, did, epId)
-      ElMessage.success(result?.message || t('filmCreate.mergeVideoSubmittedTip'))
-      const pollResult = await pollTask(result.task_id, () => loadDrama(), mergeMeta)
-      await loadDrama()
-      if (pollResult?.status === 'completed') {
-        store.setVideoProgress(100, did, epId)
-        if (currentEpisodeVideoUrl.value) {
-          store.setVideoStatus('done', did, epId)
-          ElMessage.success(t('filmCreate.videoGenDone'))
-        } else {
-          store.setVideoStatus('error', did, epId)
-          videoErrorMsg.value = t('filmCreate.videoDoneNoUrlRefreshTip')
-          ElMessage.warning(videoErrorMsg.value)
-        }
-      } else if (pollResult?.status === 'failed') {
-        store.setVideoStatus('error', did, epId)
-        videoErrorMsg.value = pollResult?.error || t('filmCreate.videoGenFailed')
-      } else if (pollResult?.status === 'timeout') {
-        store.setVideoStatus('generating', did, epId)
-        videoErrorMsg.value = t('filmCreate.taskQueuedOrGenRefreshTip')
-        ElMessage.warning(videoErrorMsg.value)
-      }
-    } else {
-      store.setVideoStatus('error', did, epId)
-      const msg = result?.message || t('filmCreate.noClipsToMergeTip')
-      videoErrorMsg.value = msg
-      ElMessage.warning(msg)
-    }
-  } catch (e) {
-    videoErrorMsg.value = e.message || t('filmCreate.generationFailed')
-    store.setVideoStatus('error', did, epId)
-  } finally {
-    if (store.getVideoStatus(did, epId) !== 'generating') {
-      genStore.markDone(mergeMeta)
-    }
-  }
-}
 
 /** 无 task_id 时轮询刷新直到资源出现图片或超时（用于角色/道具/场景图生成） */
 async function pollUntilResourceHasImage(checker, maxAttempts = 20, intervalMs = 3000) {
