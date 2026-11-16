@@ -3,6 +3,10 @@
     <router-view />
     <button v-if="dramaId" class="assistant-launcher" type="button" @click="open = true">{{ $t('agent.title') }}</button>
     <AgentDrawer v-if="dramaId" v-model:open="open" :drama-id="dramaId" />
+    <button class="task-center-launcher" type="button" :aria-label="$t('taskCenter.title')" @click="taskCenterOpen = true">
+      <el-icon><List /></el-icon><span>{{ $t('taskCenter.title') }}</span>
+    </button>
+    <TaskCenter v-model:open="taskCenterOpen" />
   </div>
 </template>
 
@@ -10,9 +14,12 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import AgentDrawer from '@/components/AgentDrawer.vue'
+import TaskCenter from '@/components/TaskCenter.vue'
+import { List } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const open = ref(false)
+const taskCenterOpen = ref(false)
 const assistantRoutes = new Set(['drama-detail', 'film', 'film-canvas'])
 const dramaId = computed(() => {
   if (!assistantRoutes.has(route.name)) return 0
@@ -44,5 +51,15 @@ html, body, #app, .app {
   background: #1f6feb;
   color: #fff;
   cursor: pointer;
+}
+.task-center-launcher {
+  position: fixed; right: 24px; bottom: 78px; z-index: 20;
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  border: 1px solid var(--border-color); border-radius: 999px; padding: 9px 14px;
+  background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow); cursor: pointer;
+}
+@media (max-width: 600px) {
+  .task-center-launcher { right: 12px; bottom: 72px; padding: 10px; }
+  .task-center-launcher span { display: none; }
 }
 </style>

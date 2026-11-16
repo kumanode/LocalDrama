@@ -301,6 +301,15 @@ export const useGenerationTaskStore = defineStore('generationTask', () => {
             try { await onTick() } catch (_) {}
           }
           const t = await taskAPI.get(taskId)
+          const currentTask = tasks.value.get(key)
+          const remoteProgress = Number(t?.progress)
+          if (currentTask && t?.progress != null && t.progress !== '' && Number.isFinite(remoteProgress)) {
+            _setTask(key, {
+              ...currentTask,
+              progress: Math.max(0, Math.min(100, remoteProgress)),
+              message: t.message || currentTask.message || '',
+            })
+          }
           if (isAborted?.()) {
             markFailed(key, abortErrorMsg)
             const err = Object.assign(new Error(abortErrorMsg), { pipelineAborted: true })
