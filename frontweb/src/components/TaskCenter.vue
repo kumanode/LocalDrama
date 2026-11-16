@@ -36,7 +36,7 @@
           <el-tag size="small" :type="statusType(task.status)">{{ $t(statusLabel(task.status)) }}</el-tag>
         </div>
         <div class="task-center-message">{{ task.message || task.error || task.resource_id || task.id }}</div>
-        <el-progress v-if="isActive(task.status)" :percentage="Math.max(0, Math.min(100, Number(task.progress) || 0))" :stroke-width="6" />
+        <SegmentedProgress v-if="isActive(task.status)" :value="Number(task.progress) || 0" :status="task.status === 'failed' ? 'exception' : 'normal'" :segments="10" />
         <details v-if="task.error" class="task-center-error">
           <summary>{{ $t('taskCenter.error') }}</summary>
           <pre>{{ task.error }}</pre>
@@ -57,6 +57,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import SegmentedProgress from './SegmentedProgress.vue'
 import { taskAPI } from '@/api/task'
 import { dramaAPI } from '@/api/drama'
 import { t } from '@/i18n'

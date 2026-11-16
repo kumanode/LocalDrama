@@ -11,7 +11,7 @@
       {{ $t('filmCreate.composeVideoBtn') }}
     </el-button>
     <div v-if="videoStatus === 'generating'" class="video-progress">
-      <el-progress :percentage="videoProgress" :status="videoProgress >= 100 ? 'success' : undefined" />
+      <SegmentedProgress :value="videoProgress" :segments="20" />
       <p>{{ $t('filmCreate.videoGenerating') }}</p>
     </div>
     <div v-if="videoStatus === 'done'" class="video-done">
@@ -33,6 +33,8 @@
 </template>
 
 <script setup>
+import SegmentedProgress from '../SegmentedProgress.vue'
+
 defineProps({
   currentEpisodeId: { type: [Number, String], default: null },
   storyboardsLength: { type: Number, default: 0 },
