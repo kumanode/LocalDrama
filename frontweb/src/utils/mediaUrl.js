@@ -18,6 +18,25 @@ export function storyboardVideoUrl(sb) {
   return sb.video_url || ''
 }
 
+export function hasAssetImage(item) {
+  if (!item) return false
+  return !!(item.image_url || item.local_path)
+}
+
+export function imageUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return url.startsWith('/') ? url : '/' + url
+}
+
+export function assetVideoUrl(item) {
+  if (!item) return ''
+  const lp = item.local_path && String(item.local_path).trim()
+  if (lp) return '/static/' + lp.replace(/^\//, '')
+  if (item.video_url) return imageUrl(item.video_url)
+  return ''
+}
+
 export function audioUrl(localPath) {
   if (!localPath) return ''
   const p = String(localPath).trim()
