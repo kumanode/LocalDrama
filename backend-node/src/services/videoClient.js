@@ -1879,41 +1879,54 @@ async function callGeminiVideoApi(config, log, opts) {
     const refUrls = (Array.isArray(reference_urls) ? reference_urls : [])
       .map((u) => String(u || '').trim())
       .filter(Boolean);
-    
-    const plan = planFlow2ApiVideoImages(modelName, {
+    const lastUrl = String(last_frame_url || '').trim();
+
+    // 先按"有尾帧 URL"规划；尾帧真正读取成功后再决定参考图，避免读失败时参考图也被丢掉
+    let plan = planFlow2ApiVideoImages(modelName, {
       hasFirst: !!firstFrame,
-      hasLast: !!(last_frame_url || '').trim(),
+      hasLast: !!lastUrl,
       refCount: refUrls.length,
     });
 
-    // 首尾帧：需要首帧
-    if (plan.useLastFrame && firstFrame) {
-      const lastFrame = await readGeminiVideoImageBase64(last_frame_url, files_base_url, storage_local_path, log, video_gen_id);
-      if (lastFrame) {
-        instance.lastFrame = lastFrame;
-      } else if ((last_frame_url || '').trim()) {
-        log.warn('[flow2api] 尾帧读取失败', { video_gen_id, model: modelName });
+    if (lastUrl) {
+      if (plan.useLastFrame && firstFrame) {
+        const lastFrame = await readGeminiVideoImageBase64(lastUrl, files_base_url, storage_local_path, log, video_gen_id);
+        if (lastFrame) {
+          instance.lastFrame = lastFrame;
+        } else {
+          log.warn('[flow2api] 尾帧读取失败', { video_gen_id, model: modelName });
+          plan = planFlow2ApiVideoImages(modelName, { hasFirst: !!firstFrame, hasLast: false, refCount: refUrls.length });
+        }
+      } else if (!plan.useLastFrame) {
+        log.warn('[flow2api] 尾帧被跳过（模型不支持）', { video_gen_id, model: modelName });
+      } else {
+        log.warn('[flow2api] 尾帧被跳过（缺少首帧）', { video_gen_id, model: modelName });
+        plan = planFlow2ApiVideoImages(modelName, { hasFirst: false, hasLast: false, refCount: refUrls.length });
       }
-    } else if ((last_frame_url || '').trim() && !plan.useLastFrame) {
-      log.warn('[flow2api] 尾帧被跳过（模型不支持）', { video_gen_id, model: modelName });
     }
 
     // 参考图（与尾帧互斥）
-    if (!instance.lastFrame && plan.refLimit > 0 && refUrls.length > 0) {
-      const toRead = refUrls.slice(0, plan.refLimit);
-      const dropped = refUrls.length - toRead.length;
-      if (dropped > 0) {
-        log.warn(`[flow2api] ${dropped} 张参考图被跳过（模型上限 ${plan.refLimit}）`, { video_gen_id, model: modelName });
+    if (refUrls.length > 0) {
+      if (instance.lastFrame) {
+        log.warn(`[flow2api] ${refUrls.length} 张参考图被跳过（已使用尾帧）`, { video_gen_id, model: modelName });
+      } else if (plan.refLimit === 0) {
+        log.warn(`[flow2api] ${refUrls.length} 张参考图被跳过（模型不支持）`, { video_gen_id, model: modelName });
+      } else {
+        const toRead = refUrls.slice(0, plan.refLimit);
+        if (refUrls.length > toRead.length) {
+          log.warn(`[flow2api] ${refUrls.length - toRead.length} 张参考图被跳过（模型上限 ${plan.refLimit}）`, { video_gen_id, model: modelName });
+        }
+        const referenceImages = [];
+        for (const refUrl of toRead) {
+          const img = await readGeminiVideoImageBase64(refUrl, files_base_url, storage_local_path, log, video_gen_id);
+          if (img) referenceImages.push({ image: img });
+        }
+        if (referenceImages.length >= Math.max(1, plan.refMin)) {
+          instance.referenceImages = referenceImages;
+        } else if (referenceImages.length > 0) {
+          log.warn('[flow2api] 参考图数量不足，已忽略（否则会被当成尾帧）', { video_gen_id, model: modelName, count: referenceImages.length, need: plan.refMin });
+        }
       }
-      
-      const referenceImages = [];
-      for (const refUrl of toRead) {
-        const img = await readGeminiVideoImageBase64(refUrl, files_base_url, storage_local_path, log, video_gen_id);
-        if (img) referenceImages.push({ image: img });
-      }
-      if (referenceImages.length > 0) instance.referenceImages = referenceImages;
-    } else if (refUrls.length > 0 && plan.refLimit === 0) {
-      log.warn(`[flow2api] ${refUrls.length} 张参考图被跳过（模型不支持或已使用尾帧）`, { video_gen_id, model: modelName });
     }
   }
 

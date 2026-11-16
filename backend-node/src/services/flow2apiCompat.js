@@ -114,44 +114,43 @@ function isVeo31Quality(modelName) {
 
 /**
  * 计划 flow2api 视频输入图片（首帧、尾帧、参考图）。
- * 根据模型限制返回是否使用尾帧以及参考图上限。
+ *
+ * flow2api 把首帧 + 尾帧 + 参考图合并成一个图片列表，再按张数选模型，并检查该模型的 max_images：
+ *   - Veo Lite：I2V 只收 1 张；
+ *   - Veo Fast：有参考图 → R2V（总数 ≤ 3），否则 I2V 首尾帧（≤ 2）；
+ *   - Veo Quality：只有 I2V（≤ 2），没有参考图模式，多出来的图会被当成尾帧；
+ *   - Omni：1 张首帧、2 张首尾帧、3 张才是参考图模式，总数 ≤ 3。
+ * 所以 Omni 有首帧时参考图必须凑满 2 张（总数 3）才是参考图；只有 1 张会被误当成尾帧。
+ *
  * @param {string} modelName
  * @param {{ hasFirst: boolean, hasLast: boolean, refCount: number }} input
- * @returns {{ useLastFrame: boolean, refLimit: number }}
+ * @returns {{ useLastFrame: boolean, refLimit: number, refMin: number }}
+ *   refLimit：最多发送的参考图数；refMin：少于该张数时不要发送参考图（避免被误判成尾帧）
  */
 function planFlow2ApiVideoImages(modelName, input) {
-  const { hasFirst, hasLast, refCount } = input;
-  
+  const { hasFirst, hasLast } = input;
+
   // Veo 3.1 - Lite: 不支持尾帧和参考图
   if (isVeo31Lite(modelName)) {
-    return { useLastFrame: false, refLimit: 0 };
+    return { useLastFrame: false, refLimit: 0, refMin: 0 };
   }
-  
-  // Veo 3.1 - Fast
+
+  // Veo 3.1 - Fast：尾帧优先；否则参考图（有首帧最多 2 张，总数 ≤ 3）
   if (isVeo31Fast(modelName)) {
-    // 优先级：尾帧 > 参考图
-    if (hasLast) {
-      return { useLastFrame: true, refLimit: 0 };
-    }
-    // 无尾帧时允许参考图
-    const refLimit = hasFirst ? 2 : 3;
-    return { useLastFrame: false, refLimit };
+    if (hasLast) return { useLastFrame: true, refLimit: 0, refMin: 0 };
+    return { useLastFrame: false, refLimit: hasFirst ? 2 : 3, refMin: 0 };
   }
-  
-  // Veo 3.1 - Quality
+
+  // Veo 3.1 - Quality：没有参考图模式，只允许首帧 + 尾帧
   if (isVeo31Quality(modelName)) {
-    if (hasLast) {
-      return { useLastFrame: true, refLimit: 0 };
-    }
-    const refLimit = hasFirst ? 1 : 0;
-    return { useLastFrame: false, refLimit };
+    return { useLastFrame: !!hasLast, refLimit: 0, refMin: 0 };
   }
-  
-  // Omni 及其他：默认行为（支持尾帧，最多 3 张参考图）
-  if (hasLast) {
-    return { useLastFrame: true, refLimit: 0 };
-  }
-  return { useLastFrame: false, refLimit: 3 };
+
+  // Omni 及其他：尾帧优先；否则参考图总数 ≤ 3，且有首帧时至少 2 张才会走参考图模式
+  if (hasLast) return { useLastFrame: true, refLimit: 0, refMin: 0 };
+  return hasFirst
+    ? { useLastFrame: false, refLimit: 2, refMin: 2 }
+    : { useLastFrame: false, refLimit: 3, refMin: 0 };
 }
 
 /**

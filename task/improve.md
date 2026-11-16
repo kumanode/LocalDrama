@@ -1,7 +1,7 @@
 # Perbaikan integrasi flow2api
 
 Status: **Selesai dikerjakan.** Hasil perbaikan implementasi flow2api (lihat `task/flow2api.md`).
-Tes saat ini: backend 182 tes (180 lulus, 2 dilewati), frontend 55 lulus. Semua bug dan catatan kecil telah diselesaikan dan diuji.
+Tes saat ini: backend 186 tes (184 lulus, 2 dilewati), frontend 55 lulus. Belum diuji dengan server flow2api yang berjalan.
 
 ## 1. Bug utama: kombinasi gambar video ditolak flow2api (error 400)
 
@@ -70,6 +70,14 @@ Di `backend-node/test/flow2apiCompat.test.js`, tambah kasus untuk `planFlow2ApiV
 - Fast / Quality + frame awal + frame akhir → `useLastFrame: true`
 
 Jika memungkinkan, tambah tes `callGeminiVideoApi` dengan `fetch` di-mock untuk memeriksa body `instances[0]` yang dikirim.
+
+## 1b. Tindak lanjut review (selesai)
+
+- Omni: dengan frame awal, referensi harus tepat 2 (total 3 gambar = batas `max_images` Omni); 1 referensi akan dibaca flow2api sebagai frame akhir, jadi dibuang.
+- Veo Quality: tidak ada mode referensi, referensi selalu dibuang (hanya frame awal + frame akhir).
+- Keputusan referensi diambil setelah frame akhir benar-benar terbaca (jika gagal, referensi tetap terkirim).
+- `planFlow2ApiVideoImages` kini mengembalikan `refMin`; tes ditambah (34 tes di `flow2apiCompat.test.js`).
+- Fallback `fileData.fileUri` gambar: alur penyimpanan (`createAndGenerateImage` → `uploadService.downloadImageToLocal`) sudah mengunduh URL ke penyimpanan lokal dengan retry; URL relatif (`/tmp/...`) kini diberi Base URL flow2api.
 
 ## 2. Catatan kecil
 

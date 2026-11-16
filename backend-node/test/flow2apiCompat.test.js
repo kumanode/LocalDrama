@@ -126,50 +126,43 @@ describe('flow2api compat', () => {
   });
 
   describe('planFlow2ApiVideoImages', () => {
+    const plan = planFlow2ApiVideoImages;
+
     it('Veo 3.1 - Lite: 不支持尾帧和参考图', () => {
-      const result = planFlow2ApiVideoImages('Veo 3.1 - Lite', { hasFirst: true, hasLast: true, refCount: 2 });
-      assert.deepEqual(result, { useLastFrame: false, refLimit: 0 });
+      assert.deepEqual(plan('Veo 3.1 - Lite', { hasFirst: true, hasLast: true, refCount: 2 }), { useLastFrame: false, refLimit: 0, refMin: 0 });
     });
 
-    it('Veo 3.1 - Fast: 首帧 + 尾帧', () => {
-      const result = planFlow2ApiVideoImages('Veo 3.1 - Fast', { hasFirst: true, hasLast: true, refCount: 0 });
-      assert.deepEqual(result, { useLastFrame: true, refLimit: 0 });
+    it('Veo 3.1 - Fast: 首帧 + 尾帧 → 用尾帧、不要参考图', () => {
+      assert.deepEqual(plan('Veo 3.1 - Fast', { hasFirst: true, hasLast: true, refCount: 3 }), { useLastFrame: true, refLimit: 0, refMin: 0 });
     });
 
-    it('Veo 3.1 - Fast: 首帧 + 3 参考图 → 最多 2 张', () => {
-      const result = planFlow2ApiVideoImages('Veo 3.1 - Fast', { hasFirst: true, hasLast: false, refCount: 3 });
-      assert.deepEqual(result, { useLastFrame: false, refLimit: 2 });
+    it('Veo 3.1 - Fast: 首帧 + 参考图 → 最多 2 张；无首帧 → 最多 3 张', () => {
+      assert.deepEqual(plan('Veo 3.1 - Fast', { hasFirst: true, hasLast: false, refCount: 3 }), { useLastFrame: false, refLimit: 2, refMin: 0 });
+      assert.deepEqual(plan('Veo 3.1 - Fast', { hasFirst: false, hasLast: false, refCount: 3 }), { useLastFrame: false, refLimit: 3, refMin: 0 });
     });
 
-    it('Veo 3.1 - Fast: 无首帧 + 3 参考图 → 最多 3 张', () => {
-      const result = planFlow2ApiVideoImages('Veo 3.1 - Fast', { hasFirst: false, hasLast: false, refCount: 3 });
-      assert.deepEqual(result, { useLastFrame: false, refLimit: 3 });
+    it('Veo 3.1 - Quality: 只有首尾帧，没有参考图模式', () => {
+      assert.deepEqual(plan('Veo 3.1 - Quality', { hasFirst: true, hasLast: true, refCount: 0 }), { useLastFrame: true, refLimit: 0, refMin: 0 });
+      // 第二张图会被 flow2api 当成尾帧，所以不能把参考图发过去
+      assert.deepEqual(plan('Veo 3.1 - Quality', { hasFirst: true, hasLast: false, refCount: 2 }), { useLastFrame: false, refLimit: 0, refMin: 0 });
+      assert.deepEqual(plan('Veo 3.1 - Quality', { hasFirst: false, hasLast: false, refCount: 2 }), { useLastFrame: false, refLimit: 0, refMin: 0 });
     });
 
-    it('Veo 3.1 - Quality: 首帧 + 尾帧', () => {
-      const result = planFlow2ApiVideoImages('Veo 3.1 - Quality', { hasFirst: true, hasLast: true, refCount: 0 });
-      assert.deepEqual(result, { useLastFrame: true, refLimit: 0 });
+    it('Omni: 首帧 + 尾帧 → 用尾帧', () => {
+      assert.deepEqual(plan('Omni 1.1 Flash', { hasFirst: true, hasLast: true, refCount: 0 }), { useLastFrame: true, refLimit: 0, refMin: 0 });
     });
 
-    it('Veo 3.1 - Quality: 首帧 + 2 参考图 → 最多 1 张', () => {
-      const result = planFlow2ApiVideoImages('Veo 3.1 - Quality', { hasFirst: true, hasLast: false, refCount: 2 });
-      assert.deepEqual(result, { useLastFrame: false, refLimit: 1 });
+    it('Omni: 有首帧时参考图总数 ≤ 3，且至少 2 张才是参考图模式', () => {
+      assert.deepEqual(plan('Omni 1.1 Flash', { hasFirst: true, hasLast: false, refCount: 5 }), { useLastFrame: false, refLimit: 2, refMin: 2 });
+      assert.deepEqual(plan('Omni 1.2 Flash', { hasFirst: true, hasLast: false, refCount: 1 }), { useLastFrame: false, refLimit: 2, refMin: 2 });
     });
 
-    it('Veo 3.1 - Quality: 无首帧 + 参考图 → 0 张', () => {
-      const result = planFlow2ApiVideoImages('Veo 3.1 - Quality', { hasFirst: false, hasLast: false, refCount: 2 });
-      assert.deepEqual(result, { useLastFrame: false, refLimit: 0 });
+    it('Omni: 无首帧时参考图最多 3 张', () => {
+      assert.deepEqual(plan('Omni 1.1 Flash', { hasFirst: false, hasLast: false, refCount: 5 }), { useLastFrame: false, refLimit: 3, refMin: 0 });
     });
 
-    it('Omni / 其他模型: 支持尾帧 + 最多 3 张参考图', () => {
-      const resultOmni = planFlow2ApiVideoImages('Omni 1.1 Flash', { hasFirst: true, hasLast: true, refCount: 0 });
-      assert.deepEqual(resultOmni, { useLastFrame: true, refLimit: 0 });
-
-      const resultOmniRef = planFlow2ApiVideoImages('Omni 1.1 Flash', { hasFirst: true, hasLast: false, refCount: 5 });
-      assert.deepEqual(resultOmniRef, { useLastFrame: false, refLimit: 3 });
-
-      const resultUnknown = planFlow2ApiVideoImages('unknown-model', { hasFirst: true, hasLast: false, refCount: 2 });
-      assert.deepEqual(resultUnknown, { useLastFrame: false, refLimit: 3 });
+    it('未知模型按 Omni 规则处理', () => {
+      assert.deepEqual(plan('unknown-model', { hasFirst: true, hasLast: false, refCount: 2 }), { useLastFrame: false, refLimit: 2, refMin: 2 });
     });
   });
 
@@ -332,6 +325,68 @@ describe('flow2api compat', () => {
       assert.equal(result.error, undefined);
       assert.equal(result.task_id, 'operations/omni-task-1');
       assert.equal(calledBody.parameters.durationSeconds, 15);
+    });
+
+    function okFetch(capture, name) {
+      return async (url, options) => {
+        capture.body = JSON.parse(options.body);
+        return { ok: true, status: 200, text: async () => JSON.stringify({ name }) };
+      };
+    }
+
+    it('Omni 1.1 Flash: 首帧 + 3 参考图 → 只发 2 张参考图（总数 3）', async () => {
+      const cap = {};
+      global.fetch = okFetch(cap, 'operations/omni-ref-1');
+      aiConfigService.listConfigs = () => mockFlow2ApiConfig('Omni 1.1 Flash');
+      const result = await videoClient.callVideoApi(null, noopLog, {
+        prompt: 'omni ref', model: 'Omni 1.1 Flash', duration: 6, aspect_ratio: '16:9',
+        image_url: dummyPng, reference_urls: [dummyPng, dummyPng, dummyPng], video_gen_id: 105,
+      });
+      assert.equal(result.error, undefined);
+      const inst = cap.body.instances[0];
+      assert.ok(inst.image);
+      assert.equal(inst.referenceImages.length, 2);
+      assert.equal(inst.lastFrame, undefined);
+    });
+
+    it('Omni 1.1 Flash: 首帧 + 1 参考图 → 不发参考图（否则被当成尾帧）', async () => {
+      const cap = {};
+      global.fetch = okFetch(cap, 'operations/omni-ref-2');
+      aiConfigService.listConfigs = () => mockFlow2ApiConfig('Omni 1.1 Flash');
+      await videoClient.callVideoApi(null, noopLog, {
+        prompt: 'omni ref', model: 'Omni 1.1 Flash', duration: 6, aspect_ratio: '16:9',
+        image_url: dummyPng, reference_urls: [dummyPng], video_gen_id: 106,
+      });
+      const inst = cap.body.instances[0];
+      assert.ok(inst.image);
+      assert.equal(inst.referenceImages, undefined);
+      assert.equal(inst.lastFrame, undefined);
+    });
+
+    it('Veo 3.1 - Quality: 首帧 + 参考图 → 不发参考图', async () => {
+      const cap = {};
+      global.fetch = okFetch(cap, 'operations/quality-1');
+      aiConfigService.listConfigs = () => mockFlow2ApiConfig('Veo 3.1 - Quality');
+      await videoClient.callVideoApi(null, noopLog, {
+        prompt: 'quality', model: 'Veo 3.1 - Quality', aspect_ratio: '16:9',
+        image_url: dummyPng, reference_urls: [dummyPng, dummyPng], video_gen_id: 107,
+      });
+      const inst = cap.body.instances[0];
+      assert.ok(inst.image);
+      assert.equal(inst.referenceImages, undefined);
+    });
+
+    it('Veo 3.1 - Fast: 尾帧读取失败 → 参考图仍然发送', async () => {
+      const cap = {};
+      global.fetch = okFetch(cap, 'operations/fast-fallback');
+      aiConfigService.listConfigs = () => mockFlow2ApiConfig('Veo 3.1 - Fast');
+      await videoClient.callVideoApi(null, noopLog, {
+        prompt: 'fast', model: 'Veo 3.1 - Fast', aspect_ratio: '16:9',
+        image_url: dummyPng, last_frame_url: 'data:broken', reference_urls: [dummyPng], video_gen_id: 108,
+      });
+      const inst = cap.body.instances[0];
+      assert.equal(inst.lastFrame, undefined);
+      assert.equal(inst.referenceImages?.length, 1);
     });
   });
 });
