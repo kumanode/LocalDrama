@@ -357,15 +357,14 @@ const resourcePanelCollapsed = ref(false)
   padding: 16px 0;
 }
 :deep(html.light .asset-item) {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(139, 92, 246, 0.12);
-  box-shadow: 0 2px 10px rgba(139, 92, 246, 0.06);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
 }
 :deep(html.light .asset-item:hover) {
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.3);
-  transform: translateY(-2px);
-  transition: box-shadow 0.25s, transform 0.2s, border-color 0.25s;
+  border-color: var(--border-muted);
+  box-shadow: none;
+  transition: border-color var(--dur-fast) var(--ease-mech);
 }
 :deep(html.light .asset-cover) { background: #f3f4f6; }
 :deep(html.light .asset-name) { color: #18181b; }

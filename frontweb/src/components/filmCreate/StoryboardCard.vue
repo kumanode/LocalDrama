@@ -800,28 +800,26 @@ html.light .sb-ctrl-config-btn.el-button:hover {
 }
 .storyboard-row {
   display: flex;
-  background: #181920;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
   overflow: hidden;
   position: relative;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  transition: border-color var(--dur-fast) var(--ease-mech);
+  box-shadow: none;
 }
 .storyboard-row:hover {
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.25);
-  transform: translateY(-1px);
+  border-color: var(--border-muted);
+  box-shadow: none;
 }
 html.light .storyboard-row {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(139, 92, 246, 0.06);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 2px 12px rgba(99, 102, 241, 0.04);
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  box-shadow: none;
 }
 html.light .storyboard-row:hover {
-  border-color: rgba(139, 92, 246, 0.18);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 6px 24px rgba(99, 102, 241, 0.08);
-  transform: translateY(-1px);
+  border-color: var(--border-muted);
+  box-shadow: none;
 }
 .sb-panel {
   flex: 1;
