@@ -558,6 +558,10 @@ html.light .el-button--primary:not(.is-link):not(.is-text):hover {
   font-family: var(--font-mono);
 }
 .script-save-status.is-saved { color: var(--el-color-success); }
+.script-save-status.is-saved::before { content: '[SAVED] '; }
+.script-save-status.is-saving { color: var(--el-color-warning); }
+.script-save-status.is-saving::before { content: '[SYNCING] '; }
 .script-save-status.is-unsaved,
 .script-save-status.is-saveError { color: var(--danger-text); }
-.script-save-status.is-saving { color: var(--el-color-warning); }
+.script-save-status.is-unsaved::before { content: '[UNSAVED] '; }
+.script-save-status.is-saveError::before { content: '[ERR] '; }

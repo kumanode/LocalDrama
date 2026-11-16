@@ -412,8 +412,6 @@ export function useStoryScript({
       const result = await saveScriptToBackend(content)
       if (result?.created) {
         ElMessage.success(t('filmCreate.projectCreatedScriptSaved'))
-      } else {
-        ElMessage.success(t('filmCreate.scriptSaved'))
       }
       trackFilmCreateAction?.('save_script_complete', {
         extra: { created_project: !!result?.created },
