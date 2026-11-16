@@ -1,4 +1,9 @@
 import { createApp, h } from 'vue'
+import '@fontsource/space-grotesk/400.css'
+import '@fontsource/space-grotesk/600.css'
+import '@fontsource/space-grotesk/700.css'
+import '@fontsource/space-mono/400.css'
+import '@fontsource/space-mono/700.css'
 import './styles/theme.css'
 // 初始化主题（必须在挂载前执行）
 import './composables/useTheme.js'

@@ -67,6 +67,13 @@ function setStorage(key, val) {
 const savedLocale = getStorage(STORAGE_KEY)
 export const currentLocale = ref(savedLocale === 'en' ? 'en' : 'zh')
 
+function applyDocumentLang(lang) {
+  if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en'
+  }
+}
+applyDocumentLang(currentLocale.value)
+
 export const elementLocale = computed(() => {
   return currentLocale.value === 'en' ? enLocale : zhCn
 })
@@ -119,6 +126,7 @@ export async function setLocale(lang) {
   if (lang !== 'zh' && lang !== 'en') return
   currentLocale.value = lang
   setStorage(STORAGE_KEY, lang)
+  applyDocumentLang(lang)
   if (typeof window === 'undefined') return
   try {
     if (request && typeof request.put === 'function') {
@@ -138,6 +146,7 @@ export async function initLocaleFromBackend() {
         const stored = getStorage(STORAGE_KEY)
         if (!stored) {
           currentLocale.value = backendLang
+          applyDocumentLang(backendLang)
         }
       }
     }
