@@ -269,7 +269,6 @@ import { characterLibraryAPI } from '@/api/characterLibrary'
 import { sceneLibraryAPI } from '@/api/sceneLibrary'
 import { propLibraryAPI } from '@/api/propLibrary'
 import { generationSettingsAPI } from '@/api/prompts'
-import { parseScriptIntoEpisodes, episodesListToPlainScript } from '@/utils/scriptEpisodes'
 import { canUseUniversalOmniVideoApi } from '@/utils/videoOmniSupport'
 import { exportStoryboardSheet } from '@/utils/exportStoryboardSheet'
 import StylePickerButton from '@/components/StylePickerButton.vue'
@@ -298,7 +297,7 @@ import {
   CUSTOM_STYLE_VALUE,
 } from '@/constants/styleOptions'
 import { useNavigation } from '@/composables/filmCreate/useNavigation'
-import { runGenerateStoryFromPremise } from '@/composables/useStoryGeneration'
+import { useStoryScript } from '@/composables/filmCreate/useStoryScript'
 import { useCharacters } from '@/composables/filmCreate/useCharacters'
 import { useProps as usePropsComposable } from '@/composables/filmCreate/useProps'
 import { useScenes } from '@/composables/filmCreate/useScenes'
@@ -338,21 +337,8 @@ const storyInput = ref('')
 const storyStyle = ref('')
 const storyType = ref('')
 const storyEpisodeCount = ref(1)
-const storyGenerating = ref(false)
 /** 剧本工作台：create 创作 | select 选择预览 */
 const scriptWorkbenchMode = ref('create')
-const showSelectScriptDialog = ref(false)
-const selectScriptLoading = ref(false)
-const selectScriptImporting = ref(false)
-const selectScriptDramas = ref([])
-/** 选择剧本弹窗列表：排除当前打开的项目，避免误点「导入」到自身 */
-const selectableScriptDramas = computed(() => {
-  const cur = store.dramaId
-  const list = selectScriptDramas.value || []
-  if (cur == null) return list
-  return list.filter((d) => Number(d.id) !== Number(cur))
-})
-const selectPreviewEpisodeId = ref('')
 // P1-2: 小说导入
 const showNovelImport = ref(false)
 function onNovelImported({ multiple }) {
@@ -366,13 +352,6 @@ const selectedEpisodeId = ref(null)
 const savedCurrentEpisodeNumber = ref(1)
 const scriptLanguage = ref('zh')
 const scriptStoryboardStyle = ref('')
-const scriptGenerating = ref(false)
-const isStoryGenRunning = computed(() => {
-  if (storyGenerating.value || scriptGenerating.value) return true
-  return genStore.getAllRunningTasks().some(
-    (t) => Number(t.dramaId) === Number(dramaId.value) && t.resourceType === GEN_RESOURCE.GENERATE_STORY
-  )
-})
 const generationStyle = ref('')
 const customStylePrompt = ref('')
 const projectAspectRatio = ref('16:9')
@@ -499,7 +478,7 @@ const videoParamsComposable = useVideoParams({
   dramaId,
   currentEpisodeId,
   loadDrama,
-  refreshStoryboardsOnly,
+  refreshStoryboardsOnly: (...args) => refreshStoryboardsOnly(...args),
 })
 const {
   showVideoParamsDialog,
@@ -818,12 +797,6 @@ const editingFramePromptRegenerating = ref(false)
 
 const dragOverSbId = ref(null)
 // 公共库弹窗状态已移至各 composable
-const storyboardCount = ref(null) // 分镜数量
-const videoDuration = ref(null) // 视频总长度
-/** 分镜生成时是否要求 AI 输出 narration（解说旁白） */
-const storyboardIncludeNarration = ref(false)
-/** 分镜生成是否使用全能模式（universal_segment_text，对接 Seedance / 可灵 Omni） */
-const storyboardUniversalOmni = ref(false)
 const storyboardUseFirstLastFrame = ref(false)
 const exportingStoryboardSheet = ref(false)
 /** 生成尾帧时是否注入首帧作站位/构图参考（默认开启） */
@@ -946,101 +919,91 @@ const {
   sbSelectedImgId,
 })
 
-// ── 剧本长度 → 估算总时长；自动分镜数与项目「每段秒数」(videoClipDuration) 对齐 ──
-
-/** 用于估算的每段时长（秒），与一键成片处「X秒/段」一致 */
-function clipSecondsForStoryboardEstimate() {
-  const c = Number(videoClipDuration.value)
-  return Math.max(2, Math.min(60, Number.isFinite(c) && c > 0 ? c : 5))
-}
-
-/** 由估算总时长与每段秒数得镜数中枢与宽松参考区间（±1 镜） */
-function shotCountEstimateFromDurationSec(sec) {
-  const s = Math.max(10, Math.min(600, Math.round(Number(sec) || 0)))
-  const clip = clipSecondsForStoryboardEstimate()
-  const ideal = s / clip
-  const locked = Math.max(1, Math.min(200, Math.round(ideal)))
-  const minR = Math.max(1, locked - 1)
-  const maxR = Math.min(200, locked + 1)
-  const range = minR >= maxR ? { min: locked, max: locked } : { min: minR, max: maxR }
-  return { locked, range, clip }
-}
-
-/** 由剧本字符数粗估成片总时长（短剧偏长镜）：秒数 = round(10 + (字数/600)×60)，夹在 10–600s */
-function estimateVideoDurationSecFromCharLen(charLen) {
-  const len = Math.max(0, Math.floor(Number(charLen) || 0))
-  if (len < 1) return null
-  const raw = Math.round(10 + (len / 600) * 60)
-  return Math.min(600, Math.max(10, raw))
-}
-
-/** 当前剧本下的估算：总秒数、镜数中枢、镜数区间、采用的每段秒数 */
-const scriptStoryboardEstimate = computed(() => {
-  const script = (scriptContent.value || '').toString().trim()
-  const len = script.length
-  if (!len) return null
-  const sec = estimateVideoDurationSecFromCharLen(len)
-  if (sec == null) return null
-  const { locked, range, clip } = shotCountEstimateFromDurationSec(sec)
-  return { sec, locked, range, clip, len }
+// ── Composable: Story Script ─────────────────────────
+const {
+  storyboardCount,
+  videoDuration,
+  storyboardIncludeNarration,
+  storyboardUniversalOmni,
+  storyGenerating,
+  scriptGenerating,
+  showSelectScriptDialog,
+  selectScriptLoading,
+  selectScriptImporting,
+  selectScriptDramas,
+  selectPreviewEpisodeId,
+  clipSecondsForStoryboardEstimate,
+  shotCountEstimateFromDurationSec,
+  estimateVideoDurationSecFromCharLen,
+  scriptStoryboardEstimate,
+  scriptEstimateVideoDurationHint,
+  scriptEstimateVideoDurationTitle,
+  scriptEstimateStoryboardHint,
+  scriptEstimateStoryboardTitle,
+  scriptTextTrimmedForEstimate,
+  userFilledStoryboardCount,
+  userFilledVideoDuration,
+  getVideoDurationForApi,
+  getStoryboardCountForApi,
+  saveScriptToBackend,
+  onGenerateStory,
+  openSelectScriptDialog,
+  loadSelectScriptList,
+  onPickScriptFromDialog,
+  onGenerateScript,
+  onAddEpisode,
+  refreshStoryboardsForEpisode,
+  refreshStoryboardsOnly,
+  onGenerateStoryboard,
+  onAddSingleStoryboard,
+  onDeleteSingleStoryboard,
+  onInsertStoryboardBefore,
+} = useStoryScript({
+  store,
+  route,
+  router,
+  dramaId,
+  currentEpisodeId,
+  scriptTitle,
+  scriptContent,
+  storyInput,
+  storyStyle,
+  storyType,
+  storyEpisodeCount,
+  scriptLanguage,
+  scriptStoryboardStyle,
+  generationStyle,
+  customStylePrompt,
+  projectAspectRatio,
+  videoClipDuration,
+  savedCurrentEpisodeNumber,
+  selectedEpisodeId,
+  scriptWorkbenchMode,
+  loadDrama,
+  pollTask,
+  genStore,
+  getSelectedStyle,
+  projectStylePromptMetadata,
+  polishUniversalSegmentsAfterGeneration: (...args) => polishUniversalSegmentsAfterGeneration(...args),
+  sbTruncatedWarning,
+  sbTruncatedDismissed,
+  trackFilmCreateAction,
+  onEpisodeSelect,
 })
 
-const scriptEstimateVideoDurationHint = computed(() => {
-  const e = scriptStoryboardEstimate.value
-  if (!e) return ''
-  return `(${t('filmCreate.approxSec', { sec: e.sec })})`
+const selectableScriptDramas = computed(() => {
+  const cur = store.dramaId
+  const list = selectScriptDramas.value || []
+  if (cur == null) return list
+  return list.filter((d) => Number(d.id) !== Number(cur))
 })
 
-const scriptEstimateVideoDurationTitle = computed(() => {
-  const e = scriptStoryboardEstimate.value
-  if (!e) return ''
-  return t('filmCreate.estVideoDurationTitle', { len: e.len, sec: e.sec })
+const isStoryGenRunning = computed(() => {
+  if (storyGenerating.value || scriptGenerating.value) return true
+  return genStore.getAllRunningTasks().some(
+    (t) => Number(t.dramaId) === Number(dramaId.value) && t.resourceType === GEN_RESOURCE.GENERATE_STORY
+  )
 })
-
-const scriptEstimateStoryboardHint = computed(() => {
-  const e = scriptStoryboardEstimate.value
-  if (!e) return ''
-  if (e.range && e.range.min !== e.range.max) {
-    return `(${t('filmCreate.approxShotsRange', { locked: e.locked, min: e.range.min, max: e.range.max })})`
-  }
-  return `(${t('filmCreate.approxShots', { locked: e.locked })})`
-})
-
-const scriptEstimateStoryboardTitle = computed(() => {
-  const e = scriptStoryboardEstimate.value
-  if (!e) return ''
-  return t('filmCreate.estStoryboardTitle', { sec: e.sec, clip: e.clip, locked: e.locked })
-})
-
-function scriptTextTrimmedForEstimate() {
-  return (scriptContent.value || '').toString().trim()
-}
-
-function userFilledStoryboardCount() {
-  const v = storyboardCount.value
-  return v != null && Number.isFinite(Number(v)) && Number(v) >= 1
-}
-
-function userFilledVideoDuration() {
-  const v = videoDuration.value
-  return v != null && Number.isFinite(Number(v)) && Number(v) >= 10
-}
-
-/** 请求后端的视频总时长：仅未手动填时传剧本估算 */
-function getVideoDurationForApi() {
-  if (userFilledVideoDuration()) return Math.round(Number(videoDuration.value))
-  const len = scriptTextTrimmedForEstimate().length
-  if (len < 1) return undefined
-  return estimateVideoDurationSecFromCharLen(len) ?? undefined
-}
-
-/** 请求后端的分镜数量：仅未手动填时按「估算总时长 ÷ 每段秒数」推算，与项目 X秒/段 一致 */
-function getStoryboardCountForApi() {
-  if (userFilledStoryboardCount()) return Math.round(Number(storyboardCount.value))
-  const sec = getVideoDurationForApi()
-  if (sec == null || !Number.isFinite(sec)) return undefined
-  return shotCountEstimateFromDurationSec(sec).locked
-}
 
 
 function onSbImageDragOver(e, sbId) {
@@ -1511,116 +1474,6 @@ function updateStoryboardDialogue(sbId) {
   // 可在此防抖后调用后端更新 dialogue
 }
 
-/** 将当前剧本内容保存到后端（创建/更新项目与集数），供「保存剧本」与「AI 生成」后自动保存共用 */
-async function saveScriptToBackend(content) {
-  const trimmed = (content ?? '').toString().trim()
-  if (!trimmed) return
-  const parsed = parseScriptIntoEpisodes(trimmed)
-  const multiFromMarkers = parsed.split && parsed.episodes.length >= 2
-  const toPayload = (list) =>
-    list.map((e, i) => ({
-      episode_number: i + 1,
-      title: (e.title && String(e.title).trim()) || t('filmCreate.episodeNum', { num: i + 1 }),
-      script_content: e.script_content ?? '',
-      description: null,
-      duration: 0,
-    }))
-
-  let dramaId = store.dramaId
-  const curEp = store.currentEpisode
-  if (!dramaId) {
-    const drama = await dramaAPI.create({
-      title: scriptTitle.value || t('filmCreate.newStoryTitle'),
-      description: storyInput.value?.trim() || trimmed.slice(0, 200),
-      genre: storyType.value || undefined,
-      style: generationStyle.value || undefined,
-      metadata: {
-        ...projectStylePromptMetadata(),
-        story_style: storyStyle.value || undefined,
-        aspect_ratio: projectAspectRatio.value || '16:9',
-      },
-    })
-    store.setDrama(drama)
-    dramaId = drama.id
-    savedCurrentEpisodeNumber.value = 1
-    const first = parsed.episodes[0] || { title: '', script_content: trimmed }
-    const episodes = multiFromMarkers
-      ? toPayload(parsed.episodes)
-      : [
-          {
-            episode_number: 1,
-            title: scriptTitle.value || first.title || t('filmCreate.episodeNum', { num: 1 }),
-            script_content: first.script_content || trimmed,
-          },
-        ]
-    await dramaAPI.saveEpisodes(dramaId, episodes)
-    await loadDrama()
-    if (route.params.id === 'new') {
-      router.replace('/film/' + dramaId)
-    }
-    if (multiFromMarkers) {
-      ElMessage.success(t('filmCreate.splitIntoEpisodesSuccess', { count: episodes.length }))
-    }
-    return { created: true }
-  }
-  if (multiFromMarkers) {
-    savedCurrentEpisodeNumber.value = 1
-    const payload = toPayload(parsed.episodes)
-    await dramaAPI.saveEpisodes(dramaId, payload)
-    if (storyInput.value?.trim()) {
-      await dramaAPI.saveOutline(dramaId, {
-        summary: storyInput.value.trim(),
-        genre: storyType.value || undefined,
-        style: generationStyle.value || undefined,
-        metadata: {
-          ...projectStylePromptMetadata(),
-          story_style: storyStyle.value || undefined,
-          aspect_ratio: projectAspectRatio.value || '16:9',
-        },
-      }).catch(() => {})
-    }
-    await loadDrama()
-    ElMessage.success(t('filmCreate.splitIntoEpisodesSuccess', { count: payload.length }))
-    return { created: false, splitEpisodes: true }
-  }
-  const episodes = store.drama?.episodes || []
-  savedCurrentEpisodeNumber.value = curEp?.episode_number ?? 1
-  const updated = episodes.map((ep, i) => {
-    const num = ep.episode_number ?? i + 1
-    const isCurrent = curEp && Number(ep.id) === Number(curEp.id)
-    const first = parsed.episodes[0]
-    const singleBody = first?.script_content ?? trimmed
-    const singleTitle = first?.title && String(first.title).trim()
-    return {
-      episode_number: num,
-      title: isCurrent
-        ? scriptTitle.value || singleTitle || t('filmCreate.episodeNum', { num })
-        : ep.title || '',
-      script_content: isCurrent ? (parsed.episodes.length === 1 && singleTitle ? singleBody : trimmed) : (ep.script_content || ''),
-      description: ep.description,
-      duration: ep.duration,
-    }
-  })
-  if (updated.length === 0) {
-    updated.push({ episode_number: 1, title: scriptTitle.value || t('filmCreate.episodeNum', { num: 1 }), script_content: trimmed })
-  }
-  await dramaAPI.saveEpisodes(dramaId, updated)
-  if (storyInput.value?.trim()) {
-    await dramaAPI.saveOutline(dramaId, {
-      summary: storyInput.value.trim(),
-      genre: storyType.value || undefined,
-      style: generationStyle.value || undefined,
-      metadata: {
-        ...projectStylePromptMetadata(),
-        story_style: storyStyle.value || undefined,
-        aspect_ratio: projectAspectRatio.value || '16:9',
-      },
-    }).catch(() => {})
-  }
-  await loadDrama()
-  return { created: false }
-}
-
 /**
  * @param {boolean} includeGenerationStyle - 仅在选择「画面风格」为 true：写入 dramas.style 与 style_prompt_*。
  * 其它项目设置改为 false，避免界面未刷新时仍用旧的 generationStyle 覆盖外部已更新的画风（如直接调 API PUT outline）。
@@ -1648,217 +1501,6 @@ async function saveProjectSettings(includeGenerationStyle = false) {
   }
   dramaAPI.saveOutline(store.dramaId, payload).catch(e => console.error('Settings auto-save failed', e))
 }
-
-async function onGenerateStory() {
-  trackFilmCreateAction('generate_script_click')
-  await runGenerateStoryFromPremise({
-    premise: storyInput.value,
-    storyStyle: storyStyle.value,
-    storyType: storyType.value,
-    storyEpisodeCount: storyEpisodeCount.value,
-    scriptTitle: scriptTitle.value,
-    generationStyle: generationStyle.value,
-    customStylePrompt: customStylePrompt.value,
-    projectAspectRatio: projectAspectRatio.value,
-    store,
-    router,
-    route,
-    loadDrama,
-    savedCurrentEpisodeNumber,
-    selectedEpisodeId,
-    onEpisodeSelect,
-  storyGenerating,
-  scriptGenerating,
-  pollTask,
-  replaceRouteWhenNew: true,
-    skipPostLoad: false,
-    onComplete: ({ episodeCount }) => {
-      trackFilmCreateAction('generate_script_complete', {
-        extra: { episode_count: episodeCount },
-      })
-    },
-  })
-}
-
-function openSelectScriptDialog() {
-  showSelectScriptDialog.value = true
-}
-
-async function loadSelectScriptList() {
-  selectScriptLoading.value = true
-  try {
-    const res = await dramaAPI.list({ page: 1, page_size: 100 })
-    const items = res?.items ?? []
-    selectScriptDramas.value = items.filter((d) => d?.metadata?.script_template === true)
-  } catch {
-    selectScriptDramas.value = []
-  } finally {
-    selectScriptLoading.value = false
-  }
-}
-
-/**
- * 将源剧本的梗概 + 各集剧本写入当前工程（不跳转、不导入角色/分镜/视频）。
- * 在「新建故事」且尚未落库时，会创建新项目并跳转。
- */
-async function onPickScriptFromDialog(sourceId) {
-  if (!sourceId || selectScriptImporting.value) return
-  const srcNum = Number(sourceId)
-  const routeId = route.params.id
-  const targetFromRoute = routeId && routeId !== 'new' ? Number(routeId) : null
-  const targetId = store.dramaId ?? targetFromRoute ?? null
-
-  if (targetId != null && Number(targetId) === srcNum) {
-    ElMessage.info(t('filmCreate.currentProjectAlreadyOpened'))
-    return
-  }
-
-  if (targetId != null) {
-    try {
-      await ElMessageBox.confirm(
-        t('filmCreate.importScriptConfirmMsg'),
-        t('filmCreate.importScriptConfirmTitle'),
-        { type: 'warning', confirmButtonText: t('common.import'), cancelButtonText: t('common.cancel') }
-      )
-    } catch {
-      return
-    }
-  }
-
-  selectScriptImporting.value = true
-  try {
-    const src = await dramaAPI.get(srcNum)
-    const rawEps = [...(src.episodes || [])].sort(
-      (a, b) => (Number(a.episode_number) || 0) - (Number(b.episode_number) || 0)
-    )
-    const summary = (src.description || '').toString().trim()
-    const episodesPayload = rawEps.map((ep, i) => ({
-      episode_number: ep.episode_number != null ? Number(ep.episode_number) : i + 1,
-      title: (ep.title || '').toString(),
-      script_content: ep.script_content ?? '',
-      description: ep.description ?? null,
-      duration: ep.duration ?? 0,
-    }))
-
-    if (!targetId) {
-      if (episodesPayload.length === 0 && !summary) {
-        ElMessage.warning(t('filmCreate.noSummaryOrEpisodesToImport'))
-        return
-      }
-      const title = (src.title || t('filmCreate.newStoryTitle')).toString().trim() || t('filmCreate.newStoryTitle')
-      const created = await dramaAPI.create({
-        title,
-        description: summary || undefined,
-        metadata: {},
-      })
-      const workId = created.id
-      store.setDrama({ id: workId })
-      if (episodesPayload.length > 0) {
-        await dramaAPI.saveEpisodes(workId, episodesPayload)
-      }
-      if (summary) {
-        await dramaAPI.saveOutline(workId, { summary }).catch(() => {})
-      }
-      showSelectScriptDialog.value = false
-      router.replace('/film/' + workId)
-      ElMessage.success(t('filmCreate.createdAndImportedSuccess'))
-      scriptWorkbenchMode.value = 'select'
-      return
-    }
-
-    if (summary) {
-      await dramaAPI.saveOutline(targetId, { summary }).catch(() => {})
-    }
-    if (episodesPayload.length > 0) {
-      await dramaAPI.saveEpisodes(targetId, episodesPayload)
-    } else if (!summary) {
-      ElMessage.warning(t('filmCreate.noSummaryOrEpisodesToImport'))
-      return
-    }
-
-    showSelectScriptDialog.value = false
-    await loadDrama()
-    ElMessage.success(t('filmCreate.importedScriptSuccessNoSwitch'))
-    scriptWorkbenchMode.value = 'select'
-  } catch (e) {
-    ElMessage.error(e.message || t('filmCreate.importFailed'))
-  } finally {
-    selectScriptImporting.value = false
-  }
-}
-
-watch(
-  () => [store.drama?.episodes, selectedEpisodeId.value],
-  () => {
-    const eps = store.drama?.episodes || []
-    if (eps.length > 1) {
-      const cur = selectedEpisodeId.value
-      const hit = cur != null && eps.some((e) => Number(e.id) === Number(cur))
-      selectPreviewEpisodeId.value = hit ? String(cur) : String(eps[0].id)
-    } else {
-      selectPreviewEpisodeId.value = ''
-    }
-  },
-  { deep: true, immediate: true }
-)
-
-async function onGenerateScript() {
-  trackFilmCreateAction('save_script_click')
-  const content = (scriptContent.value ?? store.scriptContent ?? '').toString().trim()
-  if (!content) {
-    ElMessage.warning(t('filmCreate.generateOrInputScriptFirst'))
-    return
-  }
-  scriptGenerating.value = true
-  try {
-    const result = await saveScriptToBackend(content)
-    if (result?.created) {
-      ElMessage.success(t('filmCreate.projectCreatedScriptSaved'))
-    } else {
-      ElMessage.success(t('filmCreate.scriptSaved'))
-    }
-    trackFilmCreateAction('save_script_complete', {
-      extra: { created_project: !!result?.created },
-    })
-  } catch (e) {
-    ElMessage.error(e.message || t('common.saveFailed'))
-  } finally {
-    scriptGenerating.value = false
-  }
-}
-
-async function onAddEpisode() {
-  if (!store.dramaId) return
-  const list = store.drama?.episodes || []
-  const nextNum = list.length > 0
-    ? Math.max(...list.map((e) => Number(e.episode_number) || 0), 0) + 1
-    : 1
-  const updated = list.map((ep, i) => ({
-    episode_number: ep.episode_number ?? i + 1,
-    title: ep.title || t('filmCreate.episodeNum', { num: ep.episode_number ?? i + 1 }),
-    script_content: ep.script_content || '',
-    description: ep.description,
-    duration: ep.duration
-  }))
-  updated.push({
-    episode_number: nextNum,
-    title: t('filmCreate.episodeNum', { num: nextNum }),
-    script_content: '',
-    description: null,
-    duration: 0
-  })
-  try {
-    await dramaAPI.saveEpisodes(store.dramaId, updated)
-    savedCurrentEpisodeNumber.value = nextNum
-    await loadDrama()
-    ElMessage.success(t('filmCreate.addedEpisodeSuccess', { num: nextNum }))
-  } catch (e) {
-    ElMessage.error(e.message || t('filmCreate.msgAddFailed'))
-  }
-}
-
-
-
 
 /** 经典模式视频：首帧 URL（连贯帧可覆盖首帧）+ 可选尾帧 */
 function sbVideoFirstLastUrls(sb, universal, contiguityFirstFrameUrl) {
@@ -2710,130 +2352,6 @@ async function onUsePrevTailAsFirst(sb) {
     ElMessage.error(e.message || t('filmCreate.prevTailFrameFailed'))
   } finally {
     usingPrevTailAsFirstIds.delete(sb.id)
-  }
-}
-
-/** 生成期间轻量刷新分镜列表（只更新指定集 storyboards，不重载整个 drama） */
-async function refreshStoryboardsForEpisode(episodeId) {
-  if (!episodeId) return
-  try {
-    const res = await dramaAPI.getStoryboards(episodeId)
-    const list = Array.isArray(res) ? res : (res?.storyboards ?? null)
-    if (!Array.isArray(list)) return
-    if (Number(store.currentEpisode?.id) === Number(episodeId)) {
-      store.currentEpisode.storyboards = list
-    }
-    const epInDrama = store.drama?.episodes?.find((e) => Number(e.id) === Number(episodeId))
-    if (epInDrama) {
-      epInDrama.storyboards = list
-    }
-  } catch (_) { /* 静默忽略，不影响主流程 */ }
-}
-
-/** @deprecated 使用 refreshStoryboardsForEpisode */
-async function refreshStoryboardsOnly() {
-  return refreshStoryboardsForEpisode(currentEpisodeId.value)
-}
-
-async function onGenerateStoryboard() {
-  trackFilmCreateAction('generate_storyboard_click')
-  const epId = currentEpisodeId.value
-  if (!epId) return
-  const meta = buildExtractTaskMeta(store, dramaId.value, epId, GEN_RESOURCE.GENERATE_STORYBOARD, t('filmCreate.aiGenerateStoryboard'))
-  genStore.markRunning(meta)
-  // 生成期间每 2 秒刷新该集分镜列表，让已解析的分镜逐步出现（切集后仍更新原集缓存）
-  const refreshTimer = setInterval(() => refreshStoryboardsForEpisode(epId), 2000)
-  try {
-    const res = await dramaAPI.generateStoryboard(epId, {
-      model: undefined,
-      style: getSelectedStyle(),
-      storyboard_count: getStoryboardCountForApi(),
-      video_duration: getVideoDurationForApi(),
-      aspect_ratio: projectAspectRatio.value || '16:9',
-      include_narration: !!storyboardIncludeNarration.value,
-      universal_omni_storyboard: !!storyboardUniversalOmni.value,
-    })
-    const taskId = res?.task_id ?? (typeof res === 'string' ? res : null)
-    if (taskId) {
-      const pollRes = await pollTask(taskId, () => loadDrama(), meta)
-      // failed / timeout：pollTask 内已展示对应提示，直接返回，不显示「完成」
-      if (pollRes?.status !== 'completed') return
-      if (pollRes?.result?.truncated) {
-        sbTruncatedWarning.value = true
-        sbTruncatedDismissed.value = false
-      }
-    }
-    await loadDrama()
-    // 生成完成后静默补全空缺的摄影参数（只填未填字段，不覆盖 AI 已填的）
-    storyboardsAPI.batchInferParams(epId, false).catch(() => {})
-    const polishRes = await polishUniversalSegmentsAfterGeneration({})
-    const polishedN = polishRes?.polished ?? 0
-    ElMessage.success(
-      storyboardUniversalOmni.value
-        ? polishedN > 0
-          ? t('filmCreate.omniSbGenDoneWithPolish', { count: polishedN })
-          : t('filmCreate.omniSbGenDone')
-        : t('filmCreate.storyboardGenDone')
-    )
-    trackFilmCreateAction('generate_storyboard_complete', {
-      extra: { storyboard_count: (store.storyboards || []).length },
-    })
-  } catch (e) {
-    // HTTP 错误由 request 拦截器统一展示，此处仅处理拦截器未覆盖的异常
-    if (!e.response) ElMessage.error(e.message || t('filmCreate.generationFailed'))
-  } finally {
-    clearInterval(refreshTimer)
-    genStore.markDone(meta)
-  }
-}
-
-async function onAddSingleStoryboard(){
-  if (!currentEpisodeId.value) {
-    ElMessage.warning(t('filmCreate.msgSelectEpisodeFirst'))
-    return
-  }
-  try {
-    // 获取当前最大序号（仅计算当前集的分镜）
-    const maxNum = (store.storyboards || [])
-      .filter(sb => sb.episode_id === currentEpisodeId.value)
-      .reduce((max, sb) => Math.max(max, sb.storyboard_number || 0), 0)
-    await storyboardsAPI.create({
-      episode_id: currentEpisodeId.value,
-      storyboard_number: maxNum + 1,
-      title: t('filmCreate.shotTitleDefault', { num: maxNum + 1 }),
-      description: '',
-    })
-    ElMessage.success(t('common.addSuccess'))
-    await loadDrama() // 刷新列表
-  } catch (e) {
-    ElMessage.error(e.message || t('filmCreate.msgAddFailed'))
-  }
-}
-
-async function onDeleteSingleStoryboard(id){
-  try {
-    await ElMessageBox.confirm(t('filmCreate.confirmDeleteStoryboard'), t('common.warning'), {
-      confirmButtonText: t('common.delete'),
-      cancelButtonText: t('common.cancel'),
-      type: 'warning'
-    })
-    await storyboardsAPI.delete(id)
-    ElMessage.success(t('common.deleteSuccess'))
-    await loadDrama() // 刷新列表
-  } catch (e) {
-    if (e !== 'cancel') {
-      ElMessage.error(e.message || t('filmCreate.deleteFailed'))
-    }
-  }
-}
-
-async function onInsertStoryboardBefore(sb) {
-  try {
-    await storyboardsAPI.insertBefore(sb.id)
-    ElMessage.success(t('filmCreate.insertedBlankShotSuccess'))
-    await loadDrama()
-  } catch (e) {
-    ElMessage.error(e.message || t('filmCreate.insertFailed'))
   }
 }
 
