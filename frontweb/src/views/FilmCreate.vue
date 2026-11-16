@@ -271,7 +271,7 @@ import { useVideoParams } from '@/composables/filmCreate/useVideoParams'
 import { useAssetMedia } from '@/composables/filmCreate/useAssetMedia'
 import { useI18n } from '@/i18n'
 import { generationStyleOptions } from '@/constants/styleOptions'
-import { useNavigation } from '@/composables/filmCreate/useNavigation'
+import { useWorkflowNavigation } from '@/composables/filmCreate/useWorkflowNavigation'
 import { useProjectScript } from '@/composables/filmCreate/useProjectScript'
 import { useResourceAssets } from '@/composables/filmCreate/useResourceAssets'
 import { useNarration } from '@/composables/filmCreate/useNarration'
@@ -281,8 +281,6 @@ import { useStoryboardAssociations } from '@/composables/filmCreate/useStoryboar
 import { useMergeExport } from '@/composables/filmCreate/useMergeExport'
 import { useStoryboardPrompts } from '@/composables/filmCreate/useStoryboardPrompts'
 import { useTaskPolling } from '@/composables/filmCreate/useTaskPolling'
-import { useActiveTasks } from '@/composables/filmCreate/useActiveTasks'
-import { useStepNavigation } from '@/composables/filmCreate/useStepNavigation'
 import { useGenerationStyle } from '@/composables/filmCreate/useGenerationStyle'
 import { useStoryboardStudio } from '@/composables/filmCreate/useStoryboardStudio'
 
@@ -292,10 +290,6 @@ const { t } = useI18n()
 const store = useFilmStore()
 const genStore = useGenerationTaskStore()
 const { videoResolution: storeVideoResolution } = storeToRefs(store)
-
-// ── Composable: Navigation ─────────────────────────────
-const { navCollapsed, storyboardMenuExpanded, toggleNav, scrollToAnchor } = useNavigation()
-
 
 const showAiConfigDialog = ref(false)
 watch(showAiConfigDialog, (open) => {
@@ -1061,13 +1055,17 @@ onBeforeUnmount(() => {
   agentContext.clear()
 })
 
-// ── Composable: Active Tasks ──────────────────────────
+// ── Composable: Workflow Navigation & Active Tasks ───
 const {
-  isStoryGenRunning,
+  navCollapsed,
+  storyboardMenuExpanded,
+  toggleNav,
+  scrollToAnchor,
   allActiveTaskItems,
   allActiveTaskLabels,
   cancelActiveTask,
-} = useActiveTasks({
+  navSteps,
+} = useWorkflowNavigation({
   dramaId,
   genStore,
   pipelineRunning,
@@ -1084,15 +1082,8 @@ const {
   batchVideoRunning,
   batchVideoStopping,
   batchVideoProgress,
-})
-
-// ── Composable: Step Navigation ───────────────────────
-const { navSteps } = useStepNavigation({
-  genStore,
-  dramaId,
   currentEpisodeId,
   scriptContent,
-  isStoryGenRunning,
   characters,
   charactersGenerating,
   generatingCharIds,
@@ -1105,10 +1096,8 @@ const { navSteps } = useStepNavigation({
   generatingSceneIds,
   storyboards,
   storyboardGenerating,
-  universalOmniPolishRunning,
   hasSbImage,
   generatingSbImageIds,
-  batchImageRunning,
   getSbAllVideos,
   generatingSbVideoIds,
   batchVideoRunning,
